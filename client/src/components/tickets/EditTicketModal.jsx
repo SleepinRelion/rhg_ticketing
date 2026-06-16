@@ -1,0 +1,201 @@
+import { useState, useEffect } from 'react';
+import api from '../../api/client.js';
+import { useToast } from '../../context/ToastContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { X, Save } from 'lucide-react';
+
+export default function EditTicketModal({ ticket, onClose, onSave }) {
+  const [formData, setFormData] = useState({
+    title: ticket.title || '',
+    description: ticket.description || '',
+    priority: ticket.priority || 'medium',
+    category_id: ticket.category_id || '',
+    room_id: ticket.room_id || '',
+    asset_id: ticket.asset_id || '',
+    guest_impact: ticket.guest_impact || 'none',
+    guest_room_occupied: ticket.guest_room_occupied || 'unknown',
+    guest_name: ticket.guest_name || '',
+  });
+
+  const [categories, setCategories] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  const { error, success } = useToast();
+  const { user } = useAuth();
+  const isIT = ['admin', 'manager', 'technician'].includes(user?.role);
+
+  useEffect(() => {
+    Promise.all([
+      api('/categories'),
+      api('/rooms'),
+      api('/assets')
+    ]).then(([catRes, roomRes, assetRes]) => {
+      setCategories(catRes.categories || []);
+      setRooms(roomRes.rooms || []);
+      setAssets(assetRes.assets || []);
+    }).catch(() => error('Failed to load form data'));
+  }, [error]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = { ...formData };
+      if (!payload.category_id) payload.category_id = null;
+      if (!payload.room_id) payload.room_id = null;
+      if (!payload.asset_id) payload.asset_id = null;
+
+      const updatedTicket = await api(`/tickets/${ticket.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      success('Ticket updated successfully');
+      onSave(updatedTicket);
+    } catch (err) {
+      error(err.message || 'Failed to update ticket');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" style={{ maxWidth: '800px', width: '90%' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Edit Ticket {ticket.ticket_number}</h2>
+          <button className="btn-icon" onClick={onClose}><X /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
+          <div className="form-group">
+            <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
+            <input
+              type="text"
+              className="form-input"
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Priority</label>
+              <select
+                className="form-select"
+                value={formData.priority}
+                onChange={e => setFormData({ ...formData, priority: e.target.value })}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select
+                className="form-select"
+                value={formData.category_id || ''}
+                onChange={e => setFormData({ ...formData, category_id: e.target.value })}
+              >
+                <option value="">Select Category...</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
+              <label className="form-label">Room</label>
+              <select
+                className="form-select"
+                value={formData.room_id || ''}
+                onChange={e => setFormData({ ...formData, room_id: e.target.value })}
+              >
+                <option value="">None</option>
+                {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
+              </select>
+            </div>
+            
+            {isIT && (
+              <div className="form-group">
+                <label className="form-label">Asset</label>
+                <select
+                  className="form-select"
+                  value={formData.asset_id || ''}
+                  onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
+                >
+                  <option value="">None</option>
+                  {assets.filter(a => !formData.room_id || a.room_id == formData.room_id).map(a => (
+                    <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Guest Impact</label>
+              <select
+                className="form-select"
+                value={formData.guest_impact}
+                onChange={e => setFormData({ ...formData, guest_impact: e.target.value })}
+              >
+                <option value="none">None</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          {formData.guest_impact === 'high' && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Guest Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={formData.guest_name}
+                  onChange={e => setFormData({ ...formData, guest_name: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Room Occupied?</label>
+                <select
+                  className="form-select"
+                  value={formData.guest_room_occupied}
+                  onChange={e => setFormData({ ...formData, guest_room_occupied: e.target.value })}
+                >
+                  <option value="unknown">Unknown</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              className="form-textarea"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={5}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

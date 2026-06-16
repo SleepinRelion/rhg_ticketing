@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Database
+data/
+*.db
+*.sqlite
+db.sqlite
+db.sqlite-journal
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Build output
+client/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Logs
+*.log

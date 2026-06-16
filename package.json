@@ -1,0 +1,49 @@
+{
+  "name": "hotel-ticketing-system",
+  "version": "1.0.0",
+  "description": "Best-in-class Hotel Operations Ticketing System",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "node --watch server/index.js",
+    "client:dev": "cd client && npx vite --host",
+    "build": "cd client && npx vite build",
+    "start": "NODE_ENV=production node server/index.js",
+    "migrate": "npx knex migrate:latest --knexfile knexfile.js",
+    "migrate:rollback": "npx knex migrate:rollback --knexfile knexfile.js",
+    "seed": "npx knex seed:run --knexfile knexfile.js",
+    "db:reset": "npx knex migrate:rollback --all --knexfile knexfile.js && npx knex migrate:latest --knexfile knexfile.js && npx knex seed:run --knexfile knexfile.js",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:api": "vitest run tests/api",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.16",
+    "otplib": "^12.0.1",
+    "pg": "^8.13.1",
+    "qrcode": "^1.5.4",
+    "sanitize-html": "^2.14.0",
+    "sqlite3": "^6.0.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "supertest": "^7.0.0",
+    "vitest": "^3.1.0"
+  }
+}
