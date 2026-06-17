@@ -14,6 +14,7 @@
     "migrate:rollback": "npx knex migrate:rollback --knexfile knexfile.js",
     "seed": "npx knex seed:run --knexfile knexfile.js",
     "db:reset": "npx knex migrate:rollback --all --knexfile knexfile.js && npx knex migrate:latest --knexfile knexfile.js && npx knex seed:run --knexfile knexfile.js",
+    "dedup:tickets": "node server/scripts/dedup_imported_tickets.js",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:api": "vitest run tests/api",

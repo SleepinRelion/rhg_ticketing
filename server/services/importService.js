@@ -1,7 +1,17 @@
 import xlsx from 'xlsx';
 import db from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { generateTicketNumber } from '../utils/ticketNumber.js';
+
+/**
+ * Generates a stable fingerprint for a legacy import row.
+ * Used to detect re-imports of the same data and skip duplicates.
+ */
+function makeFingerprint(hotelId, dateStr, title, agentUsername) {
+  const raw = `${hotelId}|${dateStr}|${(title || '').substring(0, 80).toLowerCase().trim()}|${agentUsername || ''}`;
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
 
 /**
  * Normalizes Excel serial date to JS Date
@@ -66,6 +76,7 @@ export async function processImportedFiles(files, adminUserId) {
     totalFiles: files.length,
     processedRows: 0,
     createdTickets: 0,
+    skippedDuplicates: 0,
     createdUsers: 0,
     errors: [],
   };
@@ -279,14 +290,29 @@ export async function processImportedFiles(files, adminUserId) {
             else if (s.includes('resolved') || s.includes('completed')) ticketStatus = 'closed';
           }
 
-          // Create ticket
+          // Create ticket (idempotent via fingerprint)
           const categoryId = guessCategoryId(issue) || othersCategory.id;
-          
+          let ticketTitle = issue ? issue.toString() : (action ? action.toString() : 'Imported Intervention');
+
+          // Build a stable fingerprint for this row so re-importing the same files
+          // does not create duplicate tickets.
+          const agentUsername = agentName ? agentName.trim().toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '').substring(0, 50) : '';
+          const fingerprint = makeFingerprint(
+            rowHotelId,
+            recordDate.toISOString().substring(0, 10),
+            ticketTitle,
+            agentUsername
+          );
+
+          const existingTicket = await trx('tickets').where('import_fingerprint', fingerprint).first();
+          if (existingTicket) {
+            results.skippedDuplicates++;
+            continue;
+          }
+
           lastNum++;
           const ticketNumber = `${prefix}${String(lastNum).padStart(4, '0')}`;
-          
-          let ticketTitle = issue ? issue.toString() : (action ? action.toString() : 'Imported Intervention');
-          
+
           const [insertedTicketId] = await trx('tickets').insert({
             ticket_number: ticketNumber,
             title: ticketTitle.substring(0, 255),
@@ -299,7 +325,8 @@ export async function processImportedFiles(files, adminUserId) {
             created_by: agentId || adminUserId,
             created_at: recordDate.toISOString(),
             updated_at: recordDate.toISOString(),
-            resolved_at: ticketStatus === 'closed' ? recordDate.toISOString() : null
+            resolved_at: ticketStatus === 'closed' ? recordDate.toISOString() : null,
+            import_fingerprint: fingerprint,
           }).returning('id');
 
           const tId = typeof insertedTicketId === 'object' ? insertedTicketId.id : insertedTicketId;
