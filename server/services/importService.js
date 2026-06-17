@@ -201,37 +201,44 @@ export async function processImportedFiles(files, adminUserId) {
             if (agentCache.has(username)) {
               agentId = agentCache.get(username);
             } else {
-              // Look up by email OR username — handles partial matches
+              // Look up by username first
               let agent = await trx('users')
-                .where('email', agentEmail)
-                .orWhere('username', username)
+                .where('username', username)
+                .orWhere('email', agentEmail)
                 .first();
 
               if (!agent) {
-                // INSERT OR IGNORE — do NOT use .returning() here.
-                // SQLite throws on RETURNING when the row is ignored due to conflict.
-                // We measure creation by comparing row count before and after.
-                const countBefore = await trx('users').where('username', username).count('id as n').first();
-                await trx('users').insert({
-                  full_name: agentName.trim(),
-                  username,
-                  email: agentEmail,
-                  password_hash: defaultPassword,
-                  role: 'technician',
-                  primary_hotel_id: rowHotelId,
-                  is_active: true,
-                  created_at: new Date()
-                }).onConflict(['username']).ignore();
-                const countAfter = await trx('users').where('username', username).count('id as n').first();
+                // Use a savepoint so a duplicate-key error doesn't abort the whole transaction.
+                // PostgreSQL requires this — a failed statement inside a transaction marks
+                // the entire transaction as aborted unless you roll back to a savepoint first.
+                const sp = `sp_user_${username.replace(/[^a-z0-9]/g, '_')}`;
+                try {
+                  await trx.raw(`SAVEPOINT "${sp}"`);
+                  await trx('users').insert({
+                    full_name:        agentName.trim(),
+                    username,
+                    email:            agentEmail,
+                    password_hash:    defaultPassword,
+                    role:             'technician',
+                    primary_hotel_id: rowHotelId,
+                    is_active:        true,
+                    created_at:       new Date(),
+                  });
+                  await trx.raw(`RELEASE SAVEPOINT "${sp}"`);
+                  results.createdUsers++;
+                } catch (insertErr) {
+                  // 23505 = unique_violation (PostgreSQL error code)
+                  if (insertErr.code === '23505' || (insertErr.message && insertErr.message.includes('unique constraint'))) {
+                    await trx.raw(`ROLLBACK TO SAVEPOINT "${sp}"`);
+                  } else {
+                    throw insertErr;
+                  }
+                }
 
-                const before = parseInt(countBefore?.n ?? 0, 10);
-                const after  = parseInt(countAfter?.n  ?? 0, 10);
-                if (after > before) results.createdUsers++;
-
-                // Always re-fetch to get the id
+                // Re-fetch regardless of whether insert succeeded or was skipped
                 agent = await trx('users')
-                  .where('email', agentEmail)
-                  .orWhere('username', username)
+                  .where('username', username)
+                  .orWhere('email', agentEmail)
                   .first();
               }
 
@@ -239,19 +246,30 @@ export async function processImportedFiles(files, adminUserId) {
                 agentId = agent.id;
                 agentCache.set(username, agentId);
 
-                // Ensure hotel access
-                const hasAccess = await trx('user_hotels')
-                  .where({ user_id: agentId, hotel_id: rowHotelId })
-                  .first();
-                if (!hasAccess && rowHotelId) {
-                  await trx('user_hotels').insert({
-                    user_id: agentId,
-                    hotel_id: rowHotelId
-                  }).onConflict(['user_id', 'hotel_id']).ignore();
+                // Ensure hotel access — same savepoint pattern
+                if (rowHotelId) {
+                  const hasAccess = await trx('user_hotels')
+                    .where({ user_id: agentId, hotel_id: rowHotelId })
+                    .first();
+                  if (!hasAccess) {
+                    const sp2 = `sp_uh_${agentId}_${rowHotelId}`;
+                    try {
+                      await trx.raw(`SAVEPOINT "${sp2}"`);
+                      await trx('user_hotels').insert({ user_id: agentId, hotel_id: rowHotelId });
+                      await trx.raw(`RELEASE SAVEPOINT "${sp2}"`);
+                    } catch (uhErr) {
+                      if (uhErr.code === '23505' || (uhErr.message && uhErr.message.includes('unique constraint'))) {
+                        await trx.raw(`ROLLBACK TO SAVEPOINT "${sp2}"`);
+                      } else {
+                        throw uhErr;
+                      }
+                    }
+                  }
                 }
               }
             }
           }
+
 
           // Map status
           let ticketStatus = 'closed';
