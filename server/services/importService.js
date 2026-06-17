@@ -106,7 +106,9 @@ export async function processImportedFiles(files, adminUserId) {
           defaultDate = new Date(dateMatch[1]);
         }
 
-        // Start transaction per sheet
+        // Cache agent lookups within this file to avoid repeat queries
+        const agentCache = new Map();
+
         // Start transaction per sheet
       await db.transaction(async (trx) => {
         // Find header row index
@@ -191,52 +193,58 @@ export async function processImportedFiles(files, adminUserId) {
 
           let agentId = null;
           if (agentName) {
-            // Find or create agent
             let username = agentName.trim().toLowerCase().replace(/\s+/g, '.');
-            username = username.replace(/[^a-z0-9.]/g, ''); // Ensure safe username
-            
-            // Limit username length to avoid potential DB constraints
-            username = username.substring(0, 50);
-
+            username = username.replace(/[^a-z0-9.]/g, '').substring(0, 50);
             const agentEmail = `${username}@legacy-import.com`;
 
-            let agent = await trx('users')
-              .where('email', agentEmail)
-              .orWhere('username', username)
-              .first();
-
-            if (!agent) {
-              const [insertedId] = await trx('users').insert({
-                full_name: agentName.trim(),
-                username: username,
-                email: agentEmail,
-                password_hash: defaultPassword,
-                role: 'technician',
-                primary_hotel_id: rowHotelId,
-                is_active: true,
-                created_at: new Date()
-              }).returning('id');
-              
-              agentId = typeof insertedId === 'object' ? insertedId.id : insertedId;
-              
-              // Also add them to user_hotels for this hotel
-              await trx('user_hotels').insert({
-                user_id: agentId,
-                hotel_id: rowHotelId
-              });
-              
-              results.createdUsers++;
+            // Check in-memory cache first (same file, same transaction)
+            if (agentCache.has(username)) {
+              agentId = agentCache.get(username);
             } else {
-              agentId = agent.id;
-              // Ensure they have access to this hotel if they didn't already
-              const hasAccess = await trx('user_hotels')
-                .where({ user_id: agentId, hotel_id: rowHotelId })
+              // Look up by email OR username — handles partial matches
+              let agent = await trx('users')
+                .where('email', agentEmail)
+                .orWhere('username', username)
                 .first();
-              if (!hasAccess) {
-                await trx('user_hotels').insert({
-                  user_id: agentId,
-                  hotel_id: rowHotelId
-                });
+
+              if (!agent) {
+                // Attempt insert; if another file in the batch already created this
+                // user (username unique constraint), the conflict is silently ignored.
+                const [inserted] = await trx('users').insert({
+                  full_name: agentName.trim(),
+                  username,
+                  email: agentEmail,
+                  password_hash: defaultPassword,
+                  role: 'technician',
+                  primary_hotel_id: rowHotelId,
+                  is_active: true,
+                  created_at: new Date()
+                }).onConflict(['username']).ignore().returning('id');
+
+                // inserted is defined only when a real row was created
+                if (inserted) results.createdUsers++;
+
+                // Re-fetch to get the id regardless of outcome
+                agent = await trx('users')
+                  .where('email', agentEmail)
+                  .orWhere('username', username)
+                  .first();
+              }
+
+              if (agent) {
+                agentId = agent.id;
+                agentCache.set(username, agentId);
+
+                // Ensure hotel access
+                const hasAccess = await trx('user_hotels')
+                  .where({ user_id: agentId, hotel_id: rowHotelId })
+                  .first();
+                if (!hasAccess && rowHotelId) {
+                  await trx('user_hotels').insert({
+                    user_id: agentId,
+                    hotel_id: rowHotelId
+                  }).onConflict(['user_id', 'hotel_id']).ignore();
+                }
               }
             }
           }
