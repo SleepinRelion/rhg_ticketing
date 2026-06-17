@@ -208,9 +208,11 @@ export async function processImportedFiles(files, adminUserId) {
                 .first();
 
               if (!agent) {
-                // Attempt insert; if another file in the batch already created this
-                // user (username unique constraint), the conflict is silently ignored.
-                const [inserted] = await trx('users').insert({
+                // INSERT OR IGNORE — do NOT use .returning() here.
+                // SQLite throws on RETURNING when the row is ignored due to conflict.
+                // We measure creation by comparing row count before and after.
+                const countBefore = await trx('users').where('username', username).count('id as n').first();
+                await trx('users').insert({
                   full_name: agentName.trim(),
                   username,
                   email: agentEmail,
@@ -219,12 +221,14 @@ export async function processImportedFiles(files, adminUserId) {
                   primary_hotel_id: rowHotelId,
                   is_active: true,
                   created_at: new Date()
-                }).onConflict(['username']).ignore().returning('id');
+                }).onConflict(['username']).ignore();
+                const countAfter = await trx('users').where('username', username).count('id as n').first();
 
-                // inserted is defined only when a real row was created
-                if (inserted) results.createdUsers++;
+                const before = parseInt(countBefore?.n ?? 0, 10);
+                const after  = parseInt(countAfter?.n  ?? 0, 10);
+                if (after > before) results.createdUsers++;
 
-                // Re-fetch to get the id regardless of outcome
+                // Always re-fetch to get the id
                 agent = await trx('users')
                   .where('email', agentEmail)
                   .orWhere('username', username)
