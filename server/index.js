@@ -67,6 +67,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:"],
       connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
+      upgradeInsecureRequests: null, // Disable automatic HTTPS upgrades
     },
   } : false,
 }));
