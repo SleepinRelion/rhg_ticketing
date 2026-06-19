@@ -162,11 +162,22 @@ router.get('/charts', authenticate, async (req, res) => {
       .groupByRaw(weekFormat)
       .orderBy('week');
 
+    // PostgreSQL returns count as string (bigint); Recharts needs numbers.
+    const parseCount = (rows) => rows.map(r => ({ ...r, count: parseInt(r.count, 10) || 0 }));
+
     res.json({
       charts: {
-        byStatus, byPriority, byDepartment, byCategory,
-        topRooms, topAssets, topRoomTypes, techWorkload, monthlyTrend,
-        slaCompliance, weeklyInterventions,
+        byStatus: parseCount(byStatus),
+        byPriority: parseCount(byPriority),
+        byDepartment: parseCount(byDepartment),
+        byCategory: parseCount(byCategory),
+        topRooms: parseCount(topRooms),
+        topAssets: parseCount(topAssets),
+        topRoomTypes: parseCount(topRoomTypes),
+        techWorkload: parseCount(techWorkload),
+        monthlyTrend: parseCount(monthlyTrend),
+        slaCompliance: parseCount(slaCompliance),
+        weeklyInterventions: parseCount(weeklyInterventions),
       },
     });
   } catch (error) {
