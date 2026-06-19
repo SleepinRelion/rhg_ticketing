@@ -6,14 +6,13 @@ import QRCode from 'qrcode';
 import db from '../config/database.js';
 import authConfig from '../config/auth.js';
 import { authenticate } from '../middleware/auth.js';
-import { loginRateLimiter } from '../middleware/rateLimiter.js';
 import { createAuditEntry } from '../middleware/auditLog.js';
 import { sendMFACodeEmail } from '../services/emailService.js';
 
 const router = Router();
 
 // POST /api/auth/login
-router.post('/login', loginRateLimiter, async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password, mfaCode, _email_confirm } = req.body;
 
@@ -132,7 +131,6 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       last_login_at: new Date(),
     });
 
-    if (req.resetRateLimit) req.resetRateLimit();
     await createAuditEntry(user.id, 'login_success', 'user', user.id, req.ip, req.headers['user-agent'], {});
 
     res.json({

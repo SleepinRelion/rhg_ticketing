@@ -1,31 +1,12 @@
 import rateLimit from 'express-rate-limit';
 
-const MAX_ATTEMPTS = parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5');
-const WINDOW_MS = parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'); // 15 min
-
-/**
- * Rate limiter for login endpoint using express-rate-limit.
- */
-export const loginRateLimiter = rateLimit({
-  windowMs: WINDOW_MS,
-  max: MAX_ATTEMPTS,
-  message: {
-    error: 'Too many login attempts. Please try again later.',
-  },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  handler: (req, res, next, options) => {
-    res.status(options.statusCode).json(options.message);
-  },
-});
-
 /**
  * Global API rate limiter to prevent general DDoS/scraping.
  * 300 requests per 15 minutes per IP.
  */
 export const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000, // High limit for internal shared-IP networks
   message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -55,12 +36,4 @@ export const publicEndpointLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Create a middleware to reset the limit on successful login
-// Note: express-rate-limit's memory store allows resetting via req.rateLimit.resetTime
-export function resetLoginLimit(req, res, next) {
-  if (req.rateLimit) {
-    // In express-rate-limit v7, we can use req.rateLimit.resetTime to calculate or we can just decrement. 
-    // We'll leave it simple for now, resetting the specific IP if needed requires an external store.
-  }
-  next();
-}
+
