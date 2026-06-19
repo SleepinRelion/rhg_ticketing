@@ -14,6 +14,69 @@ import { guestTicketLimiter, publicEndpointLimiter } from '../middleware/rateLim
 
 const router = Router();
 
+function applyTicketFilters(query, filters, db) {
+  const {
+    search, status, priority, sla_status,
+    department, category_id, room_id, asset_id, assignee_id,
+    created_by, date_from, date_to, month, year, tag_id
+  } = filters;
+
+  if (search) {
+    const s = `%${search}%`;
+    query = query.where(function () {
+      this.where('tickets.title', 'like', s)
+        .orWhere('tickets.ticket_number', 'like', s)
+        .orWhere('tickets.description', 'like', s)
+        .orWhere('tickets.guest_name', 'like', s);
+    });
+  }
+  if (status) {
+    const statuses = status.split(',');
+    query = query.whereIn('tickets.status', statuses);
+  }
+  if (priority) {
+    const priorities = priority.split(',');
+    query = query.whereIn('tickets.priority', priorities);
+  }
+  if (sla_status) query = query.where('tickets.sla_status', sla_status);
+  if (department) query = query.where('tickets.department', department);
+  if (category_id) query = query.where('tickets.category_id', category_id);
+  if (room_id) query = query.where('tickets.room_id', room_id);
+  if (asset_id) query = query.where('tickets.asset_id', asset_id);
+  if (created_by) query = query.where('tickets.created_by', created_by);
+  if (date_from) query = query.where('tickets.created_at', '>=', date_from);
+  if (date_to) query = query.where('tickets.created_at', '<=', date_to);
+  
+  if (month) {
+    if (db.client.config.client === 'pg') {
+      query = query.whereRaw('EXTRACT(MONTH FROM tickets.created_at) = ?', [parseInt(month, 10)]);
+    } else {
+      query = query.whereRaw(`strftime('%m', tickets.created_at) = ?`, [month.padStart(2, '0')]);
+    }
+  }
+  if (year) {
+    if (db.client.config.client === 'pg') {
+      query = query.whereRaw('EXTRACT(YEAR FROM tickets.created_at) = ?', [parseInt(year, 10)]);
+    } else {
+      query = query.whereRaw(`strftime('%Y', tickets.created_at) = ?`, [year]);
+    }
+  }
+
+  if (assignee_id) {
+    query = query.whereIn('tickets.id',
+      db('ticket_assignees').select('ticket_id').where('user_id', assignee_id)
+    );
+  }
+
+  if (tag_id) {
+    query = query.whereIn('tickets.id',
+      db('ticket_tags').select('ticket_id').where('tag_id', tag_id)
+    );
+  }
+
+  return query;
+}
+
 // GET /api/tickets/years - Get available years for filtering
 router.get('/years', authenticate, async (req, res) => {
   try {
@@ -66,58 +129,7 @@ router.get('/', authenticate, async (req, res) => {
     query = buildTicketVisibilityQuery(query, req.user);
 
     // Filters
-    if (search) {
-      const s = `%${search}%`;
-      query = query.where(function () {
-        this.where('tickets.title', 'like', s)
-          .orWhere('tickets.ticket_number', 'like', s)
-          .orWhere('tickets.description', 'like', s)
-          .orWhere('tickets.guest_name', 'like', s);
-      });
-    }
-    if (status) {
-      const statuses = status.split(',');
-      query = query.whereIn('tickets.status', statuses);
-    }
-    if (priority) {
-      const priorities = priority.split(',');
-      query = query.whereIn('tickets.priority', priorities);
-    }
-    if (sla_status) query = query.where('tickets.sla_status', sla_status);
-    if (department) query = query.where('tickets.department', department);
-    if (category_id) query = query.where('tickets.category_id', category_id);
-    if (room_id) query = query.where('tickets.room_id', room_id);
-    if (asset_id) query = query.where('tickets.asset_id', asset_id);
-    if (created_by) query = query.where('tickets.created_by', created_by);
-    if (date_from) query = query.where('tickets.created_at', '>=', date_from);
-    if (date_to) query = query.where('tickets.created_at', '<=', date_to);
-    
-    if (month) {
-      if (db.client.config.client === 'pg') {
-        query = query.whereRaw('EXTRACT(MONTH FROM tickets.created_at) = ?', [parseInt(month, 10)]);
-      } else {
-        query = query.whereRaw(`strftime('%m', tickets.created_at) = ?`, [month.padStart(2, '0')]);
-      }
-    }
-    if (year) {
-      if (db.client.config.client === 'pg') {
-        query = query.whereRaw('EXTRACT(YEAR FROM tickets.created_at) = ?', [parseInt(year, 10)]);
-      } else {
-        query = query.whereRaw(`strftime('%Y', tickets.created_at) = ?`, [year]);
-      }
-    }
-
-    if (assignee_id) {
-      query = query.whereIn('tickets.id',
-        db('ticket_assignees').select('ticket_id').where('user_id', assignee_id)
-      );
-    }
-
-    if (tag_id) {
-      query = query.whereIn('tickets.id',
-        db('ticket_tags').select('ticket_id').where('tag_id', tag_id)
-      );
-    }
+    query = applyTicketFilters(query, req.query, db);
 
     // Count total
     const countQuery = query.clone();
@@ -193,6 +205,7 @@ router.get('/export', authenticate, async (req, res) => {
       .whereNull('tickets.deleted_at');
 
     query = buildTicketVisibilityQuery(query, req.user);
+    query = applyTicketFilters(query, req.query, db);
     const tickets = await query.orderBy('tickets.created_at', 'desc');
 
     const csv = toCSV(tickets);

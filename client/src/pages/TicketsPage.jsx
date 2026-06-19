@@ -89,7 +89,8 @@ export default function TicketsPage() {
 
   const handleExport = async () => {
     try {
-      const blob = await api('/tickets/export');
+      const query = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([_, v]) => v))).toString();
+      const blob = await api(`/tickets/export?${query}`);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -122,6 +123,25 @@ export default function TicketsPage() {
       fetchTickets(pagination.page);
     } catch (err) {
       error('Bulk action failed');
+    }
+  };
+
+  const handleSingleAction = async (ticketId, action, value = null) => {
+    if (!confirm('Are you sure you want to perform this action?')) return;
+
+    try {
+      await api('/tickets/bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          ticket_ids: [ticketId],
+          action,
+          value
+        })
+      });
+      success('Action completed');
+      fetchTickets(pagination.page);
+    } catch (err) {
+      error('Action failed');
     }
   };
 
@@ -227,7 +247,7 @@ export default function TicketsPage() {
           {showMoreFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           More Filters
           {(() => {
-            const count = [filters.category_id, filters.department, filters.sla_status, filters.assignee_id].filter(Boolean).length;
+            const count = [filters.category_id, filters.department, filters.sla_status, filters.assignee_id, filters.date_from, filters.date_to].filter(Boolean).length;
             return count > 0 ? (
               <span style={{
                 position: 'absolute', top: -6, right: -6, background: 'var(--error)', color: '#fff',
@@ -330,6 +350,28 @@ export default function TicketsPage() {
               {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
             </SearchableSelect>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date From</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filters.date_from || ''}
+              onChange={e => setFilters({ ...filters, date_from: e.target.value })}
+              style={{ minHeight: '42px', fontSize: '14px', width: 140 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date To</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filters.date_to || ''}
+              onChange={e => setFilters({ ...filters, date_to: e.target.value })}
+              style={{ minHeight: '42px', fontSize: '14px', width: 140 }}
+            />
+          </div>
         </div>
       )}
 
@@ -360,6 +402,7 @@ export default function TicketsPage() {
                 <th>Room/Asset</th>
                 <th>Created</th>
                 <th>SLA</th>
+                {isManager() && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -392,6 +435,27 @@ export default function TicketsPage() {
                      ticket.sla_status === 'at_risk' ? <span className="badge badge-sla-at_risk">At Risk</span> :
                      <span className="badge badge-sla-breached">Breached</span>}
                   </td>
+                  {isManager() && (
+                    <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                        {ticket.status !== 'in_progress' && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0 }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'in_progress')} title="Mark In Progress">
+                            <Play size={16} />
+                          </button>
+                        )}
+                        {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--success)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'resolved')} title="Mark Resolved">
+                            <CheckCircle2 size={16} />
+                          </button>
+                        )}
+                        {user.role === 'admin' && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--error)' }} onClick={() => handleSingleAction(ticket.id, 'soft_delete')} title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
