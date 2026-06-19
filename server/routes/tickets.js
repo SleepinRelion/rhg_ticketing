@@ -21,13 +21,15 @@ function applyTicketFilters(query, filters, db) {
     created_by, date_from, date_to, month, year, tag_id
   } = filters;
 
+  const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
+
   if (search) {
     const s = `%${search}%`;
     query = query.where(function () {
-      this.where('tickets.title', 'like', s)
-        .orWhere('tickets.ticket_number', 'like', s)
-        .orWhere('tickets.description', 'like', s)
-        .orWhere('tickets.guest_name', 'like', s);
+      this.where('tickets.title', operator, s)
+        .orWhere('tickets.ticket_number', operator, s)
+        .orWhere('tickets.description', operator, s)
+        .orWhere('tickets.guest_name', operator, s);
     });
   }
   if (status) {
@@ -44,8 +46,8 @@ function applyTicketFilters(query, filters, db) {
   if (room_id) query = query.where('tickets.room_id', room_id);
   if (asset_id) query = query.where('tickets.asset_id', asset_id);
   if (created_by) query = query.where('tickets.created_by', created_by);
-  if (date_from) query = query.where('tickets.created_at', '>=', date_from);
-  if (date_to) query = query.where('tickets.created_at', '<=', date_to);
+  if (date_from) query = query.where('tickets.created_at', '>=', `${date_from} 00:00:00`);
+  if (date_to) query = query.where('tickets.created_at', '<=', `${date_to} 23:59:59`);
   
   if (month) {
     if (db.client.config.client === 'pg') {

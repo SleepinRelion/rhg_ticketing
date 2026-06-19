@@ -9,7 +9,7 @@ export default function KBSuggestions({ query, categoryId, discrete = true }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!query || query.length < 3) {
+    if (!query || query.length < 2) {
       setSuggestions([]);
       return;
     }

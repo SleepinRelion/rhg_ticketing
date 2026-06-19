@@ -46,8 +46,9 @@ router.get('/suggestions', authenticate, async (req, res) => {
       const words = title.toLowerCase().split(/\s+/).filter((w) => w.length > 1).slice(0, 5);
       if (words.length > 0) {
         query = query.where(function () {
+          const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
           for (const word of words) {
-            this.orWhere('title', 'like', `%${word}%`).orWhere('symptoms', 'like', `%${word}%`);
+            this.orWhere('title', operator, `%${word}%`).orWhere('symptoms', operator, `%${word}%`);
           }
         });
       }
