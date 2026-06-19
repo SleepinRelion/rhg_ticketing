@@ -4,16 +4,19 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2 } from 'lucide-react';
+import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '' });
+  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '' });
   const [selectedTickets, setSelectedTickets] = useState(new Set());
   const [availableYears, setAvailableYears] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +27,14 @@ export default function TicketsPage() {
   useEffect(() => {
     api('/tickets/years').then(data => {
       if (data.years) setAvailableYears(data.years);
+    }).catch(console.error);
+
+    api('/categories').then(data => {
+      if (data.categories) setCategories(data.categories);
+    }).catch(console.error);
+
+    api('/users').then(data => {
+      if (data.users) setTechnicians(data.users.filter(u => ['technician', 'admin', 'manager'].includes(u.role)));
     }).catch(console.error);
   }, []);
 
@@ -142,7 +153,7 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="toolbar">
+      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
         <div className="search-input-wrapper">
           <Filter />
           <select
@@ -208,6 +219,35 @@ export default function TicketsPage() {
           ))}
         </select>
 
+        <button
+          className={`btn btn-sm ${showMoreFilters ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setShowMoreFilters(!showMoreFilters)}
+          style={{ position: 'relative' }}
+        >
+          {showMoreFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          More Filters
+          {(() => {
+            const count = [filters.category_id, filters.department, filters.sla_status, filters.assignee_id].filter(Boolean).length;
+            return count > 0 ? (
+              <span style={{
+                position: 'absolute', top: -6, right: -6, background: 'var(--error)', color: '#fff',
+                borderRadius: '50%', width: 18, height: 18, fontSize: 11, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{count}</span>
+            ) : null;
+          })()}
+        </button>
+
+        {Object.values(filters).some(v => v) && (
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setFilters({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '' })}
+            style={{ color: 'var(--error)', fontSize: 12 }}
+          >
+            <X size={14} /> Clear All
+          </button>
+        )}
+
         <div className="toolbar-spacer" />
 
         {selectedTickets.size > 0 && isManager() && (
@@ -222,6 +262,76 @@ export default function TicketsPage() {
           </div>
         )}
       </div>
+
+      {showMoreFilters && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 10, padding: '12px 16px',
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-color)', margin: '0 0 16px 0',
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
+            <select
+              className="form-select"
+              value={filters.category_id}
+              onChange={e => setFilters({ ...filters, category_id: e.target.value })}
+              style={{ width: 180 }}
+            >
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Department</label>
+            <select
+              className="form-select"
+              value={filters.department}
+              onChange={e => setFilters({ ...filters, department: e.target.value })}
+              style={{ width: 160 }}
+            >
+              <option value="">All Departments</option>
+              <option value="IT">IT</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Housekeeping">Housekeeping</option>
+              <option value="Front Office">Front Office</option>
+              <option value="F&B">F&B</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Security">Security</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SLA Status</label>
+            <select
+              className="form-select"
+              value={filters.sla_status}
+              onChange={e => setFilters({ ...filters, sla_status: e.target.value })}
+              style={{ width: 150 }}
+            >
+              <option value="">All SLA</option>
+              <option value="on_track">On Track</option>
+              <option value="at_risk">At Risk</option>
+              <option value="breached">Breached</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Assigned To</label>
+            <select
+              className="form-select"
+              value={filters.assignee_id}
+              onChange={e => setFilters({ ...filters, assignee_id: e.target.value })}
+              style={{ width: 180 }}
+            >
+              <option value="">All Assignees</option>
+              {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="data-table-container">
         {loading && tickets.length === 0 ? (
