@@ -203,14 +203,14 @@ export default function SettingsPage() {
         <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{field.key}</span>
       </label>
       {field.type === 'select' ? (
-        <select 
+        <SearchableSelect 
           className="form-select" 
           value={envConfig[field.key] || ''} 
           onChange={e => handleEnvChange(field.key, e.target.value)}
         >
           <option value="">-- Select --</option>
           {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
+        </SearchableSelect>
       ) : (
         <input 
           type={field.type} 
@@ -287,7 +287,7 @@ export default function SettingsPage() {
 
             <div className="form-group">
               <label className="form-label">Default Priority</label>
-              <select 
+              <SearchableSelect 
                 className="form-select" 
                 value={hotelSettings.DEFAULT_PRIORITY || 'medium'}
                 onChange={e => handleHotelSettingChange('DEFAULT_PRIORITY', e.target.value)}
@@ -296,31 +296,31 @@ export default function SettingsPage() {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
                 <option value="critical">Critical</option>
-              </select>
+              </SearchableSelect>
             </div>
 
             <div className="form-group">
               <label className="form-label">Allow Guest Tickets</label>
-              <select 
+              <SearchableSelect 
                 className="form-select" 
                 value={hotelSettings.ALLOW_GUEST_TICKETS || 'false'}
                 onChange={e => handleHotelSettingChange('ALLOW_GUEST_TICKETS', e.target.value)}
               >
                 <option value="true">Yes</option>
                 <option value="false">No</option>
-              </select>
+              </SearchableSelect>
             </div>
 
             <div className="form-group">
               <label className="form-label">Auto-Assign Tickets</label>
-              <select 
+              <SearchableSelect 
                 className="form-select" 
                 value={hotelSettings.AUTO_ASSIGN || 'false'}
                 onChange={e => handleHotelSettingChange('AUTO_ASSIGN', e.target.value)}
               >
                 <option value="true">Yes</option>
                 <option value="false">No</option>
-              </select>
+              </SearchableSelect>
             </div>
           </div>
         </form>
@@ -339,7 +339,7 @@ export default function SettingsPage() {
               <div className="form-row">
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Frequency</label>
-                  <select 
+                  <SearchableSelect 
                     className="form-select" 
                     value={newSchedule.frequency}
                     onChange={e => setNewSchedule({ ...newSchedule, frequency: e.target.value })}
@@ -349,7 +349,7 @@ export default function SettingsPage() {
                     <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly</option>
                     <option value="yearly">Yearly</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Recipients (comma separated)</label>

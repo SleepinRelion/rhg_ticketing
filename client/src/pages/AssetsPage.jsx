@@ -187,33 +187,33 @@ export default function AssetsPage() {
               <div className="form-row">
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Category</label>
-                  <select className="form-select" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
+                  <SearchableSelect className="form-select" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
                     <option value="">Select Category...</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Status</label>
-                  <select className="form-select" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                  <SearchableSelect className="form-select" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
                     <option value="operational">Operational</option>
                     <option value="needs_repair">Needs Repair</option>
                     <option value="in_repair">In Repair</option>
                     <option value="retired">Retired</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Room</label>
-                  <select className="form-select" value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})}>
+                  <SearchableSelect className="form-select" value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})}>
                     <option value="">No specific room</option>
                     {rooms.map(r => (
                       <option key={r.id} value={r.id}>Room {r.room_number}</option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Location Details</label>

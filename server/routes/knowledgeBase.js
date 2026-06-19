@@ -43,7 +43,7 @@ router.get('/suggestions', authenticate, async (req, res) => {
 
     if (category_id) query = query.where('category_id', category_id);
     if (title) {
-      const words = title.toLowerCase().split(/\s+/).filter((w) => w.length > 3).slice(0, 5);
+      const words = title.toLowerCase().split(/\s+/).filter((w) => w.length > 1).slice(0, 5);
       if (words.length > 0) {
         query = query.where(function () {
           for (const word of words) {

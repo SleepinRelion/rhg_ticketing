@@ -214,7 +214,7 @@ export default function RoomsPage() {
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Filter:</span>
-            <select
+            <SearchableSelect
               className="form-select"
               value={filterBlock}
               onChange={e => setFilterBlock(e.target.value)}
@@ -225,12 +225,12 @@ export default function RoomsPage() {
                 <option key={block} value={block}>Block {block}</option>
               ))}
               <option value="other">Other Areas</option>
-            </select>
+            </SearchableSelect>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Sort:</span>
-            <select
+            <SearchableSelect
               className="form-select"
               value={sortOption}
               onChange={e => setSortOption(e.target.value)}
@@ -240,7 +240,7 @@ export default function RoomsPage() {
               <option value="block-desc">Block (Highest First)</option>
               <option value="num-asc">Room Number (Lowest First)</option>
               <option value="num-desc">Room Number (Highest First)</option>
-            </select>
+            </SearchableSelect>
           </div>
         </div>
       </div>
@@ -311,12 +311,12 @@ export default function RoomsPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Room Type</label>
-                <select className="form-select" value={formData.room_type} onChange={e => setFormData({...formData, room_type: e.target.value})}>
+                <SearchableSelect className="form-select" value={formData.room_type} onChange={e => setFormData({...formData, room_type: e.target.value})}>
                   <option value="guest">Guest Room</option>
                   <option value="public">Public Area</option>
                   <option value="back_office">Back Office</option>
                   <option value="facility">Facility</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>

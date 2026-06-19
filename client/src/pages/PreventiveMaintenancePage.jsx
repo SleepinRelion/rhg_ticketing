@@ -208,7 +208,7 @@ export default function PreventiveMaintenancePage() {
               
               <div className="form-group">
                 <label className="form-label">Asset</label>
-                <select 
+                <SearchableSelect 
                   className="form-input" 
                   required
                   value={formData.asset_id}
@@ -219,7 +219,7 @@ export default function PreventiveMaintenancePage() {
                   {assets.map(a => (
                     <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
                   ))}
-                </select>
+                </SearchableSelect>
               </div>
 
               <div className="form-group">
@@ -235,7 +235,7 @@ export default function PreventiveMaintenancePage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label className="form-label">Frequency</label>
-                  <select 
+                  <SearchableSelect 
                     className="form-input" 
                     value={formData.frequency}
                     onChange={e => setFormData({...formData, frequency: e.target.value})}
@@ -248,7 +248,7 @@ export default function PreventiveMaintenancePage() {
                     <option value="quarterly">Quarterly</option>
                     <option value="semiannual">Semi-annual</option>
                     <option value="annual">Annual</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
                 
                 <div className="form-group">

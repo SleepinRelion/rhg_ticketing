@@ -119,23 +119,23 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
               </div>
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <select 
+                <SearchableSelect 
                   className="form-select" 
                   value={template.category_id} onChange={e => setTemplate({...template, category_id: e.target.value})}
                 >
                   <option value="">Select...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
               <div className="form-group">
                 <label className="form-label">Default Room (Optional)</label>
-                <select 
+                <SearchableSelect 
                   className="form-select" 
                   value={template.room_id} onChange={e => setTemplate({...template, room_id: e.target.value})}
                 >
                   <option value="">None</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
             </div>
 

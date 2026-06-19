@@ -155,7 +155,7 @@ export default function DashboardPage() {
           <div className="chart-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 className="chart-card-title" style={{ margin: 0 }}>Top Problem Areas</h3>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <select 
+              <SearchableSelect 
                 className="form-input" 
                 style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.5rem', height: 'auto' }}
                 value={topProblemFilter}
@@ -166,7 +166,7 @@ export default function DashboardPage() {
                 <option value="assets">By Device/Asset</option>
                 <option value="categories">By Category</option>
                 <option value="departments">By Department</option>
-              </select>
+              </SearchableSelect>
               <button className="btn-icon" onClick={() => setExpandedChart(true)} title="Expand"><Maximize2 size={16} /></button>
             </div>
           </div>

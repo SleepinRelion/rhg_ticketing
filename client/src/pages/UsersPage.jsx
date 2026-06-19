@@ -219,20 +219,20 @@ export default function UsersPage() {
               <div className="form-row">
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Role</label>
-                  <select className="form-select" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                  <SearchableSelect className="form-select" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
                     <option value="staff">Staff</option>
                     <option value="technician">Technician</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
                 {editingUser && (
                   <div className="form-group" style={{ flex: 1 }}>
                     <label className="form-label">Status</label>
-                    <select className="form-select" value={formData.is_active ? 'active' : 'inactive'} onChange={e => setFormData({...formData, is_active: e.target.value === 'active'})}>
+                    <SearchableSelect className="form-select" value={formData.is_active ? 'active' : 'inactive'} onChange={e => setFormData({...formData, is_active: e.target.value === 'active'})}>
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
-                    </select>
+                    </SearchableSelect>
                   </div>
                 )}
               </div>

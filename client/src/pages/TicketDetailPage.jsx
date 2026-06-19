@@ -375,12 +375,12 @@ export default function TicketDetailPage() {
 
             {isManager() && isActive && (
               <div style={{ display: 'flex', gap: '8px' }}>
-                <select className="form-select" value={selectedTech} onChange={e => setSelectedTech(e.target.value)} style={{ padding: '6px 10px' }}>
+                <SearchableSelect className="form-select" value={selectedTech} onChange={e => setSelectedTech(e.target.value)} style={{ padding: '6px 10px' }}>
                   <option value="">Select tech...</option>
                   {technicians.filter(t => !assignees.find(a => a.id === t.id)).map(t => (
                     <option key={t.id} value={t.id}>{t.full_name}</option>
                   ))}
-                </select>
+                </SearchableSelect>
                 <button className="btn btn-secondary btn-sm" onClick={handleAssign} disabled={!selectedTech}>Assign</button>
               </div>
             )}

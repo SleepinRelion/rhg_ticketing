@@ -156,7 +156,7 @@ export default function TicketsPage() {
       <div className="toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
         <div className="search-input-wrapper">
           <Filter />
-          <select
+          <SearchableSelect
             className="form-select"
             value={filters.status}
             onChange={e => setFilters({ ...filters, status: e.target.value })}
@@ -167,12 +167,12 @@ export default function TicketsPage() {
             <option value="in_progress">In Progress</option>
             <option value="waiting_for_parts,waiting_for_vendor,waiting_for_guest">Waiting/Blocked</option>
             <option value="resolved,closed">Resolved/Closed</option>
-          </select>
+          </SearchableSelect>
         </div>
 
         <div className="search-input-wrapper">
           <Filter />
-          <select
+          <SearchableSelect
             className="form-select"
             value={filters.priority}
             onChange={e => setFilters({ ...filters, priority: e.target.value })}
@@ -183,10 +183,10 @@ export default function TicketsPage() {
             <option value="high">High</option>
             <option value="medium">Medium</option>
             <option value="low">Low</option>
-          </select>
+          </SearchableSelect>
         </div>
 
-        <select
+        <SearchableSelect
           className="form-select"
           value={filters.month || ''}
           onChange={e => setFilters({ ...filters, month: e.target.value })}
@@ -205,9 +205,9 @@ export default function TicketsPage() {
           <option value="10">October</option>
           <option value="11">November</option>
           <option value="12">December</option>
-        </select>
+        </SearchableSelect>
 
-        <select
+        <SearchableSelect
           className="form-select"
           value={filters.year || ''}
           onChange={e => setFilters({ ...filters, year: e.target.value })}
@@ -217,7 +217,7 @@ export default function TicketsPage() {
           {availableYears.map(y => (
             <option key={y} value={y}>{y}</option>
           ))}
-        </select>
+        </SearchableSelect>
 
         <button
           className={`btn btn-sm ${showMoreFilters ? 'btn-primary' : 'btn-secondary'}`}
@@ -272,7 +272,7 @@ export default function TicketsPage() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
-            <select
+            <SearchableSelect
               className="form-select"
               value={filters.category_id}
               onChange={e => setFilters({ ...filters, category_id: e.target.value })}
@@ -280,12 +280,12 @@ export default function TicketsPage() {
             >
               <option value="">All Categories</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            </SearchableSelect>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Department</label>
-            <select
+            <SearchableSelect
               className="form-select"
               value={filters.department}
               onChange={e => setFilters({ ...filters, department: e.target.value })}
@@ -300,12 +300,12 @@ export default function TicketsPage() {
               <option value="Maintenance">Maintenance</option>
               <option value="Security">Security</option>
               <option value="Admin">Admin</option>
-            </select>
+            </SearchableSelect>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SLA Status</label>
-            <select
+            <SearchableSelect
               className="form-select"
               value={filters.sla_status}
               onChange={e => setFilters({ ...filters, sla_status: e.target.value })}
@@ -315,12 +315,12 @@ export default function TicketsPage() {
               <option value="on_track">On Track</option>
               <option value="at_risk">At Risk</option>
               <option value="breached">Breached</option>
-            </select>
+            </SearchableSelect>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Assigned To</label>
-            <select
+            <SearchableSelect
               className="form-select"
               value={filters.assignee_id}
               onChange={e => setFilters({ ...filters, assignee_id: e.target.value })}
@@ -328,7 +328,7 @@ export default function TicketsPage() {
             >
               <option value="">All Assignees</option>
               {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
-            </select>
+            </SearchableSelect>
           </div>
         </div>
       )}
@@ -417,7 +417,7 @@ export default function TicketsPage() {
                 <span style={{ opacity: 0.7 }}>/ {pagination.totalPages}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
-              <select 
+              <SearchableSelect 
                 style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer', appearance: 'none', textAlign: 'center' }}
                 value={pagination.page}
                 onChange={(e) => fetchTickets(Number(e.target.value))}
@@ -426,7 +426,7 @@ export default function TicketsPage() {
                 {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
                   <option key={page} value={page} style={{ textAlign: 'center' }}>{page}</option>
                 ))}
-              </select>
+              </SearchableSelect>
             </div>
 
             <button

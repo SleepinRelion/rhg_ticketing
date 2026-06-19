@@ -81,7 +81,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Priority</label>
-              <select
+              <SearchableSelect
                 className="form-select"
                 value={formData.priority}
                 onChange={e => setFormData({ ...formData, priority: e.target.value })}
@@ -90,38 +90,38 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
                 <option value="critical">Critical</option>
-              </select>
+              </SearchableSelect>
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>
-              <select
+              <SearchableSelect
                 className="form-select"
                 value={formData.category_id || ''}
                 onChange={e => setFormData({ ...formData, category_id: e.target.value })}
               >
                 <option value="">Select Category...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              </SearchableSelect>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
               <label className="form-label">Room</label>
-              <select
+              <SearchableSelect
                 className="form-select"
                 value={formData.room_id || ''}
                 onChange={e => setFormData({ ...formData, room_id: e.target.value })}
               >
                 <option value="">None</option>
                 {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
-              </select>
+              </SearchableSelect>
             </div>
             
             {isIT && (
               <div className="form-group">
                 <label className="form-label">Asset</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.asset_id || ''}
                   onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
@@ -130,7 +130,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                   {assets.filter(a => !formData.room_id || a.room_id == formData.room_id).map(a => (
                     <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
                   ))}
-                </select>
+                </SearchableSelect>
               </div>
             )}
           </div>
@@ -138,7 +138,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
           <div className="form-row">
             <div className="form-group" style={{ flex: 1 }}>
               <label className="form-label">Guest Impact</label>
-              <select
+              <SearchableSelect
                 className="form-select"
                 value={formData.guest_impact}
                 onChange={e => setFormData({ ...formData, guest_impact: e.target.value })}
@@ -146,7 +146,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                 <option value="none">None</option>
                 <option value="low">Low</option>
                 <option value="high">High</option>
-              </select>
+              </SearchableSelect>
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
               </div>
               <div className="form-group">
                 <label className="form-label">Room Occupied?</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.guest_room_occupied}
                   onChange={e => setFormData({ ...formData, guest_room_occupied: e.target.value })}
@@ -171,7 +171,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                   <option value="unknown">Unknown</option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
-                </select>
+                </SearchableSelect>
               </div>
             </div>
           )}

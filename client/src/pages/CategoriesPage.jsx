@@ -218,20 +218,20 @@ export default function CategoriesPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Parent Category</label>
-                <select className="form-select" value={catForm.parent_id} onChange={e => setCatForm({...catForm, parent_id: e.target.value})}>
+                <SearchableSelect className="form-select" value={catForm.parent_id} onChange={e => setCatForm({...catForm, parent_id: e.target.value})}>
                   <option value="">None (Top Level)</option>
                   {categories.filter(c => c.id !== editingCat?.id && !c.parent_id).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                </select>
+                </SearchableSelect>
               </div>
               {editingCat && (
                 <div className="form-group">
                   <label className="form-label">Status</label>
-                  <select className="form-select" value={catForm.is_active ? 'active' : 'inactive'} onChange={e => setCatForm({...catForm, is_active: e.target.value === 'active'})}>
+                  <SearchableSelect className="form-select" value={catForm.is_active ? 'active' : 'inactive'} onChange={e => setCatForm({...catForm, is_active: e.target.value === 'active'})}>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>

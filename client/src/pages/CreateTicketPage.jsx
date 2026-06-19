@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import { Save, X } from 'lucide-react';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function CreateTicketPage() {
   const [formData, setFormData] = useState({
@@ -120,7 +121,7 @@ export default function CreateTicketPage() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Priority</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.priority}
                   onChange={e => setFormData({ ...formData, priority: e.target.value })}
@@ -129,38 +130,38 @@ export default function CreateTicketPage() {
                   <option value="medium">Medium (3 days resolution)</option>
                   <option value="high">High (24 hours resolution)</option>
                   <option value="critical">Critical (4 hours resolution)</option>
-                </select>
+                </SearchableSelect>
               </div>
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.category_id}
                   onChange={e => setFormData({ ...formData, category_id: e.target.value })}
                 >
                   <option value="">Select Category...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
                 <label className="form-label">Location / Room</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.room_id}
                   onChange={e => setFormData({ ...formData, room_id: e.target.value })}
                 >
                   <option value="">Select Room/Area...</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
               
               {isIT && (
                 <div className="form-group">
                   <label className="form-label">Asset / Equipment</label>
-                  <select
+                  <SearchableSelect
                     className="form-select"
                     value={formData.asset_id}
                     onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
@@ -169,7 +170,7 @@ export default function CreateTicketPage() {
                     {assets.filter(a => !formData.room_id || a.room_id == formData.room_id).map(a => (
                       <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </div>
               )}
             </div>
@@ -177,7 +178,7 @@ export default function CreateTicketPage() {
             <div className="form-row">
               <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label">Guest Impact</label>
-                <select
+                <SearchableSelect
                   className="form-select"
                   value={formData.guest_impact}
                   onChange={e => setFormData({ ...formData, guest_impact: e.target.value })}
@@ -185,7 +186,7 @@ export default function CreateTicketPage() {
                   <option value="none">None</option>
                   <option value="low">Low (Minor inconvenience)</option>
                   <option value="high">High (Major issue, needs immediate fix)</option>
-                </select>
+                </SearchableSelect>
               </div>
             </div>
 
@@ -202,7 +203,7 @@ export default function CreateTicketPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Room Occupied?</label>
-                  <select
+                  <SearchableSelect
                     className="form-select"
                     value={formData.guest_room_occupied}
                     onChange={e => setFormData({ ...formData, guest_room_occupied: e.target.value })}
@@ -210,7 +211,7 @@ export default function CreateTicketPage() {
                     <option value="unknown">Unknown</option>
                     <option value="yes">Yes</option>
                     <option value="no">No (Vacant)</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
               </div>
             )}

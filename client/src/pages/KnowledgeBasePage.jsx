@@ -148,14 +148,14 @@ export default function KnowledgeBasePage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <select 
+                <SearchableSelect 
                   className="form-input" 
                   value={formData.category_id} 
                   onChange={e => setFormData({...formData, category_id: e.target.value})}
                 >
                   <option value="">Select Category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
               <div className="form-group">
                 <label className="form-label">Symptoms (Markdown)</label>

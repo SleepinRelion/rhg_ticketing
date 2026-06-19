@@ -137,7 +137,7 @@ export default function GuestPortalPage() {
             <label className="form-label">Hotel Location <span className="text-error">*</span></label>
             <div className="input-group">
               <span className="input-icon"><Building2 size={18} /></span>
-              <select 
+              <SearchableSelect 
                 className="form-input" 
                 value={formData.hotel_id} 
                 onChange={e => setFormData({...formData, hotel_id: e.target.value})}
@@ -145,7 +145,7 @@ export default function GuestPortalPage() {
               >
                 <option value="">Select Hotel</option>
                 {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-              </select>
+              </SearchableSelect>
             </div>
           </div>
 
@@ -186,7 +186,7 @@ export default function GuestPortalPage() {
               <label className="form-label">Department <span className="text-error">*</span></label>
               <div className="input-group">
                 <span className="input-icon"><Building size={18} /></span>
-                <select 
+                <SearchableSelect 
                   className="form-input" 
                   value={formData.department} 
                   onChange={e => setFormData({...formData, department: e.target.value})}
@@ -201,7 +201,7 @@ export default function GuestPortalPage() {
                   <option value="restaurant">Restaurant / F&B</option>
                   <option value="management">Management</option>
                   <option value="IT">IT / Systems</option>
-                </select>
+                </SearchableSelect>
               </div>
             </div>
 
@@ -209,7 +209,7 @@ export default function GuestPortalPage() {
               <label className="form-label">Room / Area</label>
               <div className="input-group">
                 <span className="input-icon"><MapPin size={18} /></span>
-                <select 
+                <SearchableSelect 
                   className="form-input" 
                   value={formData.room_id} 
                   onChange={e => setFormData({...formData, room_id: e.target.value})}
@@ -217,7 +217,7 @@ export default function GuestPortalPage() {
                 >
                   <option value="">Select Location</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>{r.room_number} {r.room_type ? `(${r.room_type})` : ''}</option>)}
-                </select>
+                </SearchableSelect>
               </div>
             </div>
           </div>
@@ -241,14 +241,14 @@ export default function GuestPortalPage() {
             <label className="form-label">Issue Category</label>
             <div className="input-group">
               <span className="input-icon"><Tag size={18} /></span>
-              <select 
+              <SearchableSelect 
                 className="form-input" 
                 value={formData.category_id} 
                 onChange={e => setFormData({...formData, category_id: e.target.value})}
               >
                 <option value="">Select Category</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              </SearchableSelect>
             </div>
           </div>
 

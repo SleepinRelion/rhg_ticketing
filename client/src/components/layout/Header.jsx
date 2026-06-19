@@ -117,7 +117,7 @@ export default function Header({ onMenuToggle }) {
         {/* Hotel Switcher */}
         {hotels.length > 0 && (
           <div style={{ marginRight: '16px' }}>
-            <select
+            <SearchableSelect
               className="form-select"
               value={activeHotelId || ''}
               onChange={handleHotelChange}
@@ -126,7 +126,7 @@ export default function Header({ onMenuToggle }) {
               {hotels.map(h => (
                 <option key={h.id} value={h.id}>{h.name}</option>
               ))}
-            </select>
+            </SearchableSelect>
           </div>
         )}
 
