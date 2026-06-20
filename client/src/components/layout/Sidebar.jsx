@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <nav className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-brand" style={{ justifyContent: 'center', padding: '16px' }}>
         <Link to="/" onClick={onClose} style={{ display: 'inline-block' }}>
-          <img src="/logo.png" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
         </Link>
       </div>
 

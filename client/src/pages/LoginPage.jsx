@@ -37,9 +37,10 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">
-          <img src="/logo.png" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain' }} />
-          <p className="login-subtitle">Sign in to your account</p>
+        <div className="login-header">
+          <img src="/logo.png" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <h2>Welcome Back</h2>
+          <p>Hotel Ticketing & Operations System</p>
         </div>
 
         {error && <div className="login-error">{error}</div>}
