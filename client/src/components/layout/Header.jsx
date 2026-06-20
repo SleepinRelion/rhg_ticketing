@@ -104,6 +104,7 @@ export default function Header({ onMenuToggle }) {
           <Search />
           <input
             type="text"
+            id="global-search-input"
             className="form-input"
             placeholder="Search tickets..."
             value={searchQuery}

@@ -4,6 +4,30 @@ import api from '../api/client.js';
 import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Maximize2, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import { useNavigate } from 'react-router-dom';
+
+function DashboardSkeleton() {
+  return (
+    <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+      <div className="page-header">
+        <div>
+          <div style={{ height: '32px', width: '250px', backgroundColor: 'var(--bg-elevated)', borderRadius: '4px', marginBottom: '8px' }}></div>
+          <div style={{ height: '20px', width: '350px', backgroundColor: 'var(--bg-elevated)', borderRadius: '4px' }}></div>
+        </div>
+      </div>
+      <div className="stat-cards">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="stat-card" style={{ height: '90px', backgroundColor: 'var(--bg-elevated)' }}></div>
+        ))}
+      </div>
+      <div className="charts-grid">
+        <div className="chart-card" style={{ height: '400px', backgroundColor: 'var(--bg-elevated)' }}></div>
+        <div className="chart-card" style={{ height: '400px', backgroundColor: 'var(--bg-elevated)' }}></div>
+        <div className="chart-card" style={{ height: '400px', backgroundColor: 'var(--bg-elevated)' }}></div>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
@@ -13,6 +37,7 @@ export default function DashboardPage() {
   const [topProblemFilter, setTopProblemFilter] = useState('rooms');
   const [expandedChart, setExpandedChart] = useState(false);
   const { error } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -46,7 +71,7 @@ export default function DashboardPage() {
   }
 
   if (loading || !stats || !charts) {
-    return <div className="loading-spinner"><div className="spinner"></div></div>;
+    return <DashboardSkeleton />;
   }
 
   const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#0ea5e9'];
@@ -124,7 +149,17 @@ export default function DashboardPage() {
                   <XAxis dataKey="department" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                  <Bar dataKey="count" fill="var(--primary-500)" radius={[4, 4, 0, 0]} />
+                  <Bar 
+                    dataKey="count" 
+                    fill="var(--primary-500)" 
+                    radius={[4, 4, 0, 0]} 
+                    onClick={(data) => {
+                      if (data && data.department) {
+                        navigate(`/tickets?search=${encodeURIComponent(data.department)}`);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

@@ -5,7 +5,7 @@ export async function seed(knex) {
 
   // Create 3 hotels
   const hotels = await knex('hotels').insert([
-    { id: 1, name: 'Crystal Beach, A member of the radisson resorts', address: 'Mauritius', contact_email: 'info@crystalbeach.com' },
+    { id: 1, name: 'Crystals Beach Resort Belle Mare, a member of Radisson Individuals', address: 'Mauritius', contact_email: 'info@crystalbeach.com' },
     { id: 2, name: 'Radisson Blu, Poste Lafayette', address: 'Poste Lafayette, Mauritius', contact_email: 'info@radissonblupl.com' },
     { id: 3, name: 'Radisson Blu, Azuri', address: 'Azuri, Mauritius', contact_email: 'info@radissonbluazuri.com' },
   ]).returning('id');
