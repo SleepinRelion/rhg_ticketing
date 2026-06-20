@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-logo">
-          <img src="/radisson-logo.svg" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain' }} />
           <p className="login-subtitle">Sign in to your account</p>
         </div>
 

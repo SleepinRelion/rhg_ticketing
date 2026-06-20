@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <nav className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-brand" style={{ justifyContent: 'center', padding: '16px' }}>
-        <img src="/radisson-logo.svg" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain' }} />
+        <img src="/logo.png" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain' }} />
       </div>
 
       <div className="sidebar-nav">
