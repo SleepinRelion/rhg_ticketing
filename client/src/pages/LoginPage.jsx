@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
 
     let fullEmail = emailPrefix.trim();
-    if (domain !== 'other' && !fullEmail.includes('@')) {
+    if (domain !== 'other' && domain !== 'username' && !fullEmail.includes('@')) {
       fullEmail = `${fullEmail}${domain}`;
     }
 
@@ -76,6 +76,7 @@ export default function LoginPage() {
                     <option value="@radissonindividuals.com">@radissonindividuals.com</option>
                     <option value="@radissonblu.com">@radissonblu.com</option>
                     <option value="@radissonhotels.com">@radissonhotels.com</option>
+                    <option value="username">Username (No Domain)</option>
                     <option value="other">Other...</option>
                   </select>
                 </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Edit2, Trash2, Plus, Key, X, Save, Shield, ShieldOff } from 'lucide-react';
+import { Edit2, Trash2, Plus, Key, X, Save, Shield, ShieldOff, Unlock } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function UsersPage() {
@@ -112,6 +112,17 @@ export default function UsersPage() {
     }
   }
 
+  async function handleUnlock(id) {
+    if (!confirm('Are you sure you want to unlock this account?')) return;
+    try {
+      await api(`/users/${id}/unlock`, { method: 'POST' });
+      success('User account unlocked successfully');
+      fetchUsers();
+    } catch (err) {
+      error(err.message || 'Failed to unlock account');
+    }
+  }
+
   async function handleResetMfa(id) {
     if (!confirm('Are you sure you want to reset and disable MFA for this user? They will need to set it up again.')) return;
     try {
@@ -162,14 +173,26 @@ export default function UsersPage() {
                   <td>{u.email}</td>
                   <td style={{ textTransform: 'capitalize' }}>{u.role}</td>
                   <td>
-                    <span className="badge" style={{ background: u.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: u.is_active ? '#34d399' : '#f87171' }}>
-                      {u.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                      <span className="badge" style={{ background: u.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: u.is_active ? '#34d399' : '#f87171' }}>
+                        {u.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      {u.locked_until && new Date(u.locked_until) > new Date() && (
+                        <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+                          Locked
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {(isAdmin() || currentUser?.role === 'manager') && (
                         <>
+                          {u.locked_until && new Date(u.locked_until) > new Date() && (
+                            <button className="btn-icon" onClick={() => handleUnlock(u.id)} title="Unlock Account" style={{ color: '#fbbf24' }}>
+                              <Unlock size={16} />
+                            </button>
+                          )}
                           <button className="btn-icon" onClick={() => openResetModal(u.id)} title="Reset Password"><Key size={16} /></button>
                           {!!u.mfa_enabled && isAdmin() && (
                             <button className="btn-icon" onClick={() => handleResetMfa(u.id)} title="Reset MFA (Disable)"><ShieldOff size={16} /></button>

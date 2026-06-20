@@ -14,7 +14,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
   try {
     const { role, is_active, search } = req.query;
     let query = db('users')
-      .select('id', 'username', 'email', 'full_name', 'role', 'is_active', 'mfa_enabled', 'last_login_at', 'created_at')
+      .select('id', 'username', 'email', 'full_name', 'role', 'is_active', 'mfa_enabled', 'last_login_at', 'created_at', 'locked_until')
       .whereNull('deleted_at');
 
     if (role) query = query.where({ role });
@@ -203,6 +203,23 @@ router.post('/:id/reset-mfa', authenticate, authorize('admin'), async (req, res)
   } catch (error) {
     console.error('Reset MFA error:', error);
     res.status(500).json({ error: 'Failed to reset MFA.' });
+  }
+});
+
+// POST /api/users/:id/unlock (Admin only)
+router.post('/:id/unlock', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await db('users').where({ id: req.params.id }).update({
+      locked_until: null,
+      failed_login_attempts: 0,
+      updated_at: new Date(),
+    });
+
+    await createAuditEntry(req.user.id, 'account_unlocked', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], {});
+    res.json({ message: 'User account has been unlocked.' });
+  } catch (error) {
+    console.error('Unlock account error:', error);
+    res.status(500).json({ error: 'Failed to unlock account.' });
   }
 });
 
