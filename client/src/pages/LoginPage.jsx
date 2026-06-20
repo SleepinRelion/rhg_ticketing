@@ -4,7 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, ExternalLink } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [emailPrefix, setEmailPrefix] = useState('');
+  const [domain, setDomain] = useState('@radissonindividuals.com');
   const [emailConfirm, setEmailConfirm] = useState(''); // honeypot
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -20,8 +21,10 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    const fullEmail = domain === 'other' ? emailPrefix : `${emailPrefix}${domain}`;
+
     try {
-      const res = await login(email, password, mfaCode, emailConfirm);
+      const res = await login(fullEmail, password, mfaCode, emailConfirm);
       if (res.mfaRequired) {
         setRequiresMfa(true);
       } else if (res.success) {
@@ -37,10 +40,8 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-header">
-          <div style={{ display: 'inline-block', backgroundColor: '#ffffff', padding: '12px 24px', borderRadius: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', marginBottom: '24px' }}>
-            <img src="/logo.png" alt="Radisson Logo" style={{ height: '60px', objectFit: 'contain' }} />
-          </div>
+        <div className="login-header" style={{ textAlign: 'center' }}>
+          <img src="/logo.png" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           <h2>Welcome Back</h2>
           <p>Hotel Ticketing & Operations System</p>
         </div>
@@ -52,15 +53,29 @@ export default function LoginPage() {
             <>
               <div className="form-group">
                 <label className="form-label">Email address</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="name@hotel.com"
-                  autoComplete="email"
-                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type={domain === 'other' ? 'email' : 'text'}
+                    className="form-input"
+                    value={emailPrefix}
+                    onChange={(e) => setEmailPrefix(e.target.value)}
+                    required
+                    placeholder={domain === 'other' ? 'name@hotel.com' : 'name'}
+                    autoComplete="email"
+                    style={{ flex: 1 }}
+                  />
+                  <select 
+                    className="form-select" 
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    style={{ width: '220px', flexShrink: 0 }}
+                  >
+                    <option value="@radissonindividuals.com">@radissonindividuals.com</option>
+                    <option value="@radissonblu.com">@radissonblu.com</option>
+                    <option value="@radissonhotels.com">@radissonhotels.com</option>
+                    <option value="other">Other...</option>
+                  </select>
+                </div>
               </div>
 
               {/* Honeypot field - Bots will fill this, humans won't see it */}
@@ -106,7 +121,7 @@ export default function LoginPage() {
                 required
                 placeholder="000000"
                 maxLength={6}
-                style={{ textAlign: 'center', fontSize: 'var(--font-xl)', letterSpacing: '0.2em' }}
+                style={{ textAlign: 'center', fontSize: 'var(--font-xl)', letterSpacing: '0.5em', marginTop: '24px', marginBottom: '24px', padding: '16px' }}
                 autoFocus
               />
             </div>
