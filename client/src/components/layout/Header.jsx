@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { Bell, LogOut, User, Search, Menu } from 'lucide-react';
 import api from '../../api/client.js';
 import { formatDistanceToNow } from 'date-fns';
+import SearchableSelect from '../ui/SearchableSelect.jsx';
 
 export default function Header({ onMenuToggle }) {
   const { user, logout } = useAuth();
