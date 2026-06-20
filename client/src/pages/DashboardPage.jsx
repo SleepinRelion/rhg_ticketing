@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import api from '../api/client.js';
 import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Maximize2, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext.jsx';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);

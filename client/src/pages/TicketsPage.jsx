@@ -6,6 +6,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { format } from 'date-fns';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);

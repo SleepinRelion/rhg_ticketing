@@ -3,6 +3,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Edit2, Trash2, Plus, Key, X, Save, Shield, ShieldOff } from 'lucide-react';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);

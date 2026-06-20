@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import SearchableSelect from '../ui/SearchableSelect.jsx';
 
 export default function BulkScanModal({ onClose, onComplete, categories, rooms }) {
   const [template, setTemplate] = useState({ name: '', category_id: '', room_id: '' });

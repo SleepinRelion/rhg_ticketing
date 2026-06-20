@@ -3,6 +3,7 @@ import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { X, Save } from 'lucide-react';
+import SearchableSelect from '../ui/SearchableSelect.jsx';
 
 export default function EditTicketModal({ ticket, onClose, onSave }) {
   const [formData, setFormData] = useState({

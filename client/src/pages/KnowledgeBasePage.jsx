@@ -3,6 +3,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { BookOpen, Plus, Edit, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function KnowledgeBasePage() {
   const [articles, setArticles] = useState([]);

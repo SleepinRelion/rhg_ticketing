@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories');

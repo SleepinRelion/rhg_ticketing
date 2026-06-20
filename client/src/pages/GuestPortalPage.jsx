@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Ticket, Send, CheckCircle2, Building, Building2, User, Briefcase, MapPin, Tag, Search } from 'lucide-react';
 import api from '../api/client.js';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function GuestPortalPage() {
   const [searchParams] = useSearchParams();

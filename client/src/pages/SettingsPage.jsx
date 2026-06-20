@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Save, Plus, Trash2, Download, Server, Mail, Shield, Settings as SettingsIcon } from 'lucide-react';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('backups');

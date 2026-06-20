@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import EditTicketModal from '../components/tickets/EditTicketModal.jsx';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function TicketDetailPage() {
   const { id } = useParams();

@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { HardDrive, Plus, Edit2, Trash2, X, Save, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import BulkScanModal from '../components/assets/BulkScanModal.jsx';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState([]);

@@ -3,6 +3,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { DoorOpen, Plus, Edit2, Trash2, X, Save, Search, Filter as FilterIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState([]);

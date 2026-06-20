@@ -3,6 +3,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Calendar, Plus, CheckCircle, Edit, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
+import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function PreventiveMaintenancePage() {
   const [schedules, setSchedules] = useState([]);
