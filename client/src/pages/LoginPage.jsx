@@ -56,7 +56,7 @@ export default function LoginPage() {
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
                   required
-                  placeholder="name@hotel.com"
+                  placeholder="name@radissonhotels.com"
                   autoComplete="username"
                   autoFocus
                 />
