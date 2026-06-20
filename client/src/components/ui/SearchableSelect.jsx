@@ -36,14 +36,28 @@ export default function SearchableSelect({ value, onChange, children, className,
     }
   };
 
+  // Intercept layout styles for wrapper and visual styles for control
+  const { 
+    width, height, flex, flexGrow, flexShrink, margin, marginTop, marginBottom, marginLeft, marginRight,
+    paddingLeft, padding, backgroundColor, border, borderColor, borderRadius,
+    ...wrapperStyle 
+  } = style || {};
+
+  // Strip conflicting classes
+  const wrapperClass = (className || '').replace(/\b(form-select|form-input)\b/g, '').trim();
+
   const customStyles = {
     control: (base, state) => ({
       ...base,
-      backgroundColor: 'var(--bg-elevated)',
-      borderColor: state.isFocused ? 'var(--primary-400)' : 'var(--border-color)',
-      borderRadius: 'var(--radius-md)',
-      minHeight: '42px',
+      backgroundColor: backgroundColor || 'var(--bg-secondary)',
+      borderColor: state.isFocused ? 'var(--primary-400)' : (borderColor || 'var(--border-color)'),
+      borderRadius: borderRadius || 'var(--radius-md)',
+      minHeight: height || '36px',
+      height: height || 'auto',
       boxShadow: state.isFocused ? '0 0 0 1px var(--primary-400)' : 'none',
+      cursor: 'pointer',
+      paddingLeft: paddingLeft || padding || 0,
+      border: border || base.border,
       '&:hover': {
         borderColor: 'var(--primary-400)'
       }
@@ -84,12 +98,26 @@ export default function SearchableSelect({ value, onChange, children, className,
       '&:active': {
         backgroundColor: state.isSelected ? 'var(--primary-700)' : 'var(--primary-100)'
       }
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      padding: '2px 8px'
+    }),
+    indicatorSeparator: () => ({
+      display: 'none'
+    }),
+    dropdownIndicator: (base) => ({
+      ...base,
+      padding: '4px',
+      color: 'var(--text-secondary)',
+      '&:hover': {
+        color: 'var(--text-primary)'
+      }
     })
   };
 
-  // If running in dark mode, you might need to adjust variables, but we are using CSS variables which is perfect.
   return (
-    <div style={style} className={className} id={id}>
+    <div style={{ width: width || '100%', flex, flexGrow, flexShrink, margin, marginTop, marginBottom, marginLeft, marginRight, ...wrapperStyle }} className={wrapperClass} id={id}>
       <Select
         value={selectedOption}
         onChange={handleChange}
