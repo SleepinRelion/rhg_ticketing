@@ -21,7 +21,10 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const fullEmail = domain === 'other' ? emailPrefix : `${emailPrefix}${domain}`;
+    let fullEmail = emailPrefix.trim();
+    if (domain !== 'other' && !fullEmail.includes('@')) {
+      fullEmail = `${fullEmail}${domain}`;
+    }
 
     try {
       const res = await login(fullEmail, password, mfaCode, emailConfirm);
