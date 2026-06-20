@@ -38,7 +38,9 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <img src="/logo.png" alt="Radisson Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <div style={{ display: 'inline-block', backgroundColor: '#ffffff', padding: '12px 24px', borderRadius: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', marginBottom: '24px' }}>
+            <img src="/logo.png" alt="Radisson Logo" style={{ height: '60px', objectFit: 'contain' }} />
+          </div>
           <h2>Welcome Back</h2>
           <p>Hotel Ticketing & Operations System</p>
         </div>

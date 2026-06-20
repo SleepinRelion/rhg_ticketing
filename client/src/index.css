@@ -1251,6 +1251,17 @@ body {
   margin-bottom: var(--space-xl);
 }
 
+.login-card .form-input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.login-card .form-input:focus {
+  border-color: var(--primary-400);
+  background: rgba(0, 0, 0, 0.3);
+}
+
 .login-logo-icon {
   width: 56px;
   height: 56px;
