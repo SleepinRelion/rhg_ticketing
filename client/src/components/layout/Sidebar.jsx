@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
   LayoutDashboard, Ticket, Plus, DoorOpen, HardDrive, Users, FolderOpen,
@@ -38,7 +38,9 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <nav className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-brand" style={{ justifyContent: 'center', padding: '16px' }}>
-        <img src="/logo.png" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain' }} />
+        <Link to="/" onClick={onClose} style={{ display: 'inline-block' }}>
+          <img src="/logo.png" alt="Radisson Logo" style={{ height: '40px', maxWidth: '100%', objectFit: 'contain' }} />
+        </Link>
       </div>
 
       <div className="sidebar-nav">
