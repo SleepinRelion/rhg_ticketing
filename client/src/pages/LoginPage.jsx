@@ -4,8 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, ExternalLink } from 'lucide-react';
 
 export default function LoginPage() {
-  const [emailPrefix, setEmailPrefix] = useState('');
-  const [domain, setDomain] = useState('@radissonindividuals.com');
+  const [loginId, setLoginId] = useState('');
   const [emailConfirm, setEmailConfirm] = useState(''); // honeypot
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -21,13 +20,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    let fullEmail = emailPrefix.trim();
-    if (domain !== 'other' && domain !== 'username' && !fullEmail.includes('@')) {
-      fullEmail = `${fullEmail}${domain}`;
-    }
-
     try {
-      const res = await login(fullEmail, password, mfaCode, emailConfirm);
+      const res = await login(loginId.trim(), password, mfaCode, emailConfirm);
       if (res.mfaRequired) {
         setRequiresMfa(true);
       } else if (res.success) {
@@ -55,31 +49,17 @@ export default function LoginPage() {
           {!requiresMfa ? (
             <>
               <div className="form-group">
-                <label className="form-label">Email address</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type={domain === 'other' ? 'email' : 'text'}
-                    className="form-input"
-                    value={emailPrefix}
-                    onChange={(e) => setEmailPrefix(e.target.value)}
-                    required
-                    placeholder={domain === 'other' ? 'name@hotel.com' : 'name'}
-                    autoComplete="email"
-                    style={{ flex: 1 }}
-                  />
-                  <select 
-                    className="form-select" 
-                    value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
-                    style={{ width: '220px', flexShrink: 0 }}
-                  >
-                    <option value="@radissonindividuals.com">@radissonindividuals.com</option>
-                    <option value="@radissonblu.com">@radissonblu.com</option>
-                    <option value="@radissonhotels.com">@radissonhotels.com</option>
-                    <option value="username">Username (No Domain)</option>
-                    <option value="other">Other...</option>
-                  </select>
-                </div>
+                <label className="form-label">Email or Username</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
+                  required
+                  placeholder="name@hotel.com"
+                  autoComplete="username"
+                  autoFocus
+                />
               </div>
 
               {/* Honeypot field - Bots will fill this, humans won't see it */}
