@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import SearchableSelect from '../ui/SearchableSelect.jsx';
+
+const BARCODE_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.CODE_93,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.CODABAR,
+  Html5QrcodeSupportedFormats.DATA_MATRIX,
+];
 
 export default function BulkScanModal({ onClose, onComplete, categories, rooms }) {
   const [template, setTemplate] = useState({ name: '', category_id: '', room_id: '' });
@@ -29,12 +43,16 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
         const cameraId = backCamera ? backCamera.id : devices[0].id;
         
-        html5QrCode = new Html5Qrcode('reader');
+        html5QrCode = new Html5Qrcode('reader', {
+          formatsToSupport: BARCODE_FORMATS,
+          verbose: false,
+        });
         await html5QrCode.start(
           cameraId,
           {
-            fps: 10,
-            qrbox: { width: 250, height: 150 }
+            fps: 15,
+            qrbox: { width: 300, height: 150 },
+            disableFlip: false, // Try both normal and mirrored frames (critical for laptop webcams)
           },
           (decodedText) => {
             setScannedAssets(prev => {
