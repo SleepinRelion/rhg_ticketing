@@ -23,7 +23,7 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         
         html5QrCode = new Html5Qrcode('reader');
         await html5QrCode.start(
-          { facingMode: "environment" }, 
+          { facingMode: { ideal: "environment" } }, 
           {
             fps: 10,
             qrbox: { width: 250, height: 150 }
@@ -54,7 +54,11 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         );
       } catch (err) {
         console.error("Failed to start scanner:", err);
-        error("Camera failed to start. Please ensure you have granted camera permissions.");
+        if (window.isSecureContext === false) {
+          error("Camera access blocked: Insecure connection (HTTP). Please connect via HTTPS or use localhost.");
+        } else {
+          error("Camera failed to start. Please ensure you have granted camera permissions.");
+        }
         setIsScanning(false);
       }
     };
