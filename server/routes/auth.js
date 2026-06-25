@@ -69,7 +69,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     // Authenticator App (TOTP) MFA
     if (user.mfa_enabled) {
-      const cleanMfaCode = mfaCode ? mfaCode.toString().trim() : null;
+      const cleanMfaCode = mfaCode ? mfaCode.toString().replace(/\s+/g, '') : null;
       if (!cleanMfaCode) {
         return res.status(200).json({ mfaRequired: true, message: 'Please enter the code from your Authenticator App.' });
       }

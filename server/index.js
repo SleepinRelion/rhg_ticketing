@@ -39,6 +39,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (e.g. Nginx) to get correct req.ip
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {

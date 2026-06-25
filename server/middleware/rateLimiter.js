@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
  */
 export const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000, // High limit for internal shared-IP networks
+  max: 5000, // Very high limit for internal shared-IP networks
   message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
