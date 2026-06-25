@@ -24,14 +24,28 @@ export function AuthProvider({ children }) {
     // Verify token on mount
     const token = sessionStorage.getItem('accessToken');
     if (token) {
-      api('/auth/me')
-        .then((data) => {
-          setUser(data.user);
-          sessionStorage.setItem('user', JSON.stringify(data.user));
+      fetch(`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api'}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+            sessionStorage.setItem('user', JSON.stringify(data.user));
+          } else if (res.status === 401) {
+            // Token is truly invalid — log out
+            clearTokens();
+            setUser(null);
+          } else {
+            // Server error (500, 503, etc.) — keep existing session, don't kick user out
+            const stored = sessionStorage.getItem('user');
+            if (stored) setUser(JSON.parse(stored));
+          }
         })
         .catch(() => {
-          clearTokens();
-          setUser(null);
+          // Network error — keep existing session
+          const stored = sessionStorage.getItem('user');
+          if (stored) setUser(JSON.parse(stored));
         })
         .finally(() => setLoading(false));
     } else {

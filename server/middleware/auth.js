@@ -34,18 +34,25 @@ export async function authenticate(req, res, next) {
       return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
     }
 
-    // Fetch user's allowed hotels
-    const userHotels = await db('user_hotels').where('user_id', user.id);
-    const hotelIds = userHotels.map(uh => uh.hotel_id);
+    // Fetch user's allowed hotels (resilient to missing data)
+    let hotelIds = [];
+    let activeHotelId = null;
+    try {
+      const userHotels = await db('user_hotels').where('user_id', user.id);
+      hotelIds = userHotels.map(uh => uh.hotel_id);
 
-    // Determine active hotel context
-    const requestedHotelId = req.headers['x-hotel-id'] ? parseInt(req.headers['x-hotel-id']) : null;
-    let activeHotelId = user.primary_hotel_id;
+      // Determine active hotel context
+      const requestedHotelId = req.headers['x-hotel-id'] ? parseInt(req.headers['x-hotel-id']) : null;
+      activeHotelId = user.primary_hotel_id || null;
 
-    if (requestedHotelId && hotelIds.includes(requestedHotelId)) {
-      activeHotelId = requestedHotelId;
-    } else if (hotelIds.length > 0 && !hotelIds.includes(activeHotelId)) {
-      activeHotelId = hotelIds[0];
+      if (requestedHotelId && hotelIds.includes(requestedHotelId)) {
+        activeHotelId = requestedHotelId;
+      } else if (hotelIds.length > 0 && !hotelIds.includes(activeHotelId)) {
+        activeHotelId = hotelIds[0];
+      }
+    } catch (hotelErr) {
+      // If user_hotels table doesn't exist or query fails, proceed without hotel context
+      console.warn('Hotel context unavailable:', hotelErr.message);
     }
 
     // Attach user to request (excluding sensitive fields)
