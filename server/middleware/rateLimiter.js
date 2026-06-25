@@ -12,6 +12,14 @@ export const globalApiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+export const loginLimiter = rateLimit({
+  windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
+  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5'),
+  message: { error: 'Too many login attempts from this IP. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * Strict rate limiter for guest/staff ticket creation to prevent spam.
  * 50 requests per hour per IP (allows staff to submit multiple legitimate issues).

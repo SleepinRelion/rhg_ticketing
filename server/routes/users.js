@@ -84,7 +84,13 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters.' });
     }
 
-    const existing = await db('users').where({ email: email.toLowerCase().trim() }).orWhere({ username: sanitize(username) }).first();
+    const cleanEmail = email.trim();
+    const cleanUsername = sanitize(username);
+    const existing = await db('users')
+      .whereRaw('LOWER(email) = LOWER(?)', [cleanEmail])
+      .orWhereRaw('LOWER(username) = LOWER(?)', [cleanUsername])
+      .first();
+      
     if (existing) {
       return res.status(409).json({ error: 'A user with this email or username already exists.' });
     }
@@ -148,7 +154,18 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
     if (full_name) updates.full_name = sanitize(full_name);
     if (role && ['admin', 'manager', 'technician', 'staff'].includes(role)) updates.role = role;
     if (is_active !== undefined) updates.is_active = is_active;
-    if (email) updates.email = email.toLowerCase().trim();
+    if (email) {
+      const cleanEmail = email.trim();
+      const existing = await db('users')
+        .whereRaw('LOWER(email) = LOWER(?)', [cleanEmail])
+        .whereNot('id', req.params.id)
+        .first();
+        
+      if (existing) {
+        return res.status(409).json({ error: 'A user with this email already exists.' });
+      }
+      updates.email = cleanEmail.toLowerCase();
+    }
 
     await db('users').where({ id: req.params.id }).update(updates);
     await createAuditEntry(req.user.id, 'user_updated', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], { fields: Object.keys(updates) });
