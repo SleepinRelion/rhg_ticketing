@@ -18,21 +18,28 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
     let html5QrCode;
     const startScanner = async () => {
       try {
-        // Slight delay to ensure the DOM element is ready
         await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices || devices.length === 0) {
+          throw new Error("No cameras found.");
+        }
+        
+        // Try to find a back camera, otherwise use the first available (usually webcam)
+        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
+        const cameraId = backCamera ? backCamera.id : devices[0].id;
         
         html5QrCode = new Html5Qrcode('reader');
         await html5QrCode.start(
-          { facingMode: { ideal: "environment" } }, 
+          cameraId,
           {
             fps: 10,
             qrbox: { width: 250, height: 150 }
           },
           (decodedText) => {
-            // Automatically add the decoded serial number to the list
             setScannedAssets(prev => {
               if (prev.find(a => a.serial_number === decodedText)) {
-                return prev; // Ignore duplicates in the same session
+                return prev;
               }
               
               const newAsset = {
@@ -49,7 +56,7 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
             success(`Scanned: ${decodedText}`);
           },
           (err) => {
-            // ignore scan errors, happens constantly when no code is in view
+            // ignore scan errors
           }
         );
       } catch (err) {
