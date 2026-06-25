@@ -15,9 +15,14 @@ export const globalApiLimiter = rateLimit({
 export const loginLimiter = rateLimit({
   windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
   max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5'),
-  message: { error: 'Too many login attempts from this IP. Please try again after 15 minutes.' },
+  message: { error: 'Too many login attempts for this account. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // On an intranet, many users share the same IP. 
+    // Rate limit based on the targeted account instead of the shared IP.
+    return req.body.email ? req.body.email.trim().toLowerCase() : req.ip;
+  }
 });
 
 /**
