@@ -7,10 +7,11 @@ import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
+  const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'staff' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [] });
   const [saving, setSaving] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetUserId, setResetUserId] = useState(null);
@@ -20,7 +21,17 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    fetchHotels();
   }, []);
+
+  async function fetchHotels() {
+    try {
+      const data = await api('/hotels');
+      setHotels(data.hotels || []);
+    } catch (err) {
+      console.error('Failed to load hotels', err);
+    }
+  }
 
   async function fetchUsers() {
     try {
@@ -35,13 +46,21 @@ export default function UsersPage() {
 
   function openCreateModal() {
     setEditingUser(null);
-    setFormData({ username: '', email: '', password: '', full_name: '', role: 'staff' });
+    setFormData({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [] });
     setShowModal(true);
   }
 
   function openEditModal(user) {
     setEditingUser(user);
-    setFormData({ username: user.username, email: user.email, password: '', full_name: user.full_name, role: user.role, is_active: user.is_active });
+    setFormData({ 
+      username: user.username, 
+      email: user.email, 
+      password: '', 
+      full_name: user.full_name, 
+      role: user.role, 
+      is_active: user.is_active,
+      hotel_ids: user.hotel_ids || (user.primary_hotel_id ? [user.primary_hotel_id] : [])
+    });
     setShowModal(true);
   }
 
@@ -56,7 +75,8 @@ export default function UsersPage() {
             full_name: formData.full_name,
             role: formData.role,
             is_active: formData.is_active,
-            email: formData.email
+            email: formData.email,
+            hotel_ids: formData.hotel_ids.map(id => parseInt(id))
           })
         });
         success('User updated successfully');
@@ -259,6 +279,24 @@ export default function UsersPage() {
                     </SearchableSelect>
                   </div>
                 )}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Assigned Hotels</label>
+                <select 
+                  multiple 
+                  className="form-select" 
+                  style={{ minHeight: '120px', padding: '8px' }}
+                  value={formData.hotel_ids || []}
+                  onChange={e => {
+                    const selectedOptions = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                    setFormData({...formData, hotel_ids: selectedOptions});
+                  }}
+                >
+                  {hotels.map(h => (
+                    <option key={h.id} value={h.id} style={{ padding: '6px' }}>{h.name}</option>
+                  ))}
+                </select>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Hold Ctrl (or Cmd) to select multiple hotels</div>
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>Cancel</button>

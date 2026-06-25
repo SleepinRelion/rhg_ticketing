@@ -70,46 +70,56 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 // POST /api/users — Create user (Admin only)
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
   try {
-    const { username, email, password, full_name, role } = req.body;
-
+    const { username, email, password, full_name, role, hotel_ids } = req.body;
+    
+    // Validate required fields
     if (!username || !email || !password || !full_name || !role) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    if (!['admin', 'manager', 'technician', 'staff'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role.' });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-    }
-
-    const cleanEmail = email.trim();
-    const cleanUsername = sanitize(username);
+    // Check existing email
+    const cleanEmail = email.toLowerCase().trim();
     const existing = await db('users')
       .whereRaw('LOWER(email) = LOWER(?)', [cleanEmail])
-      .orWhereRaw('LOWER(username) = LOWER(?)', [cleanUsername])
+      .orWhereRaw('LOWER(username) = LOWER(?)', [username.trim()])
       .first();
-      
+
     if (existing) {
       return res.status(409).json({ error: 'A user with this email or username already exists.' });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    
+    let createdUser;
+    
+    await db.transaction(async trx => {
+      const primary_hotel_id = (hotel_ids && hotel_ids.length > 0) ? hotel_ids[0] : null;
 
-    const [user] = await db('users').insert({
-      username: sanitize(username),
-      email: email.toLowerCase().trim(),
-      password_hash: passwordHash,
-      full_name: sanitize(full_name),
-      role,
-      is_active: true,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }).returning(['id', 'username', 'email', 'full_name', 'role']);
+      const [user] = await trx('users').insert({
+        username: sanitize(username),
+        email: cleanEmail,
+        password_hash: passwordHash,
+        full_name: sanitize(full_name),
+        role,
+        is_active: true,
+        primary_hotel_id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }).returning(['id', 'username', 'email', 'full_name', 'role', 'primary_hotel_id']);
+      
+      createdUser = user;
 
-    await createAuditEntry(req.user.id, 'user_created', 'user', user.id, req.ip, req.headers['user-agent'], { username: user.username, role: user.role });
-    res.status(201).json({ user });
+      if (hotel_ids && hotel_ids.length > 0) {
+        const hotelInserts = hotel_ids.map(hotelId => ({
+          user_id: user.id,
+          hotel_id: hotelId
+        }));
+        await trx('user_hotels').insert(hotelInserts);
+      }
+    });
+
+    await createAuditEntry(req.user.id, 'user_created', 'user', createdUser.id, req.ip, req.headers['user-agent'], { username: createdUser.username, role: createdUser.role });
+    res.status(201).json({ user: createdUser });
   } catch (error) {
     console.error('Create user error:', error);
     res.status(500).json({ error: 'Failed to create user.' });
@@ -148,7 +158,7 @@ router.put('/profile', authenticate, upload.single('avatar'), async (req, res) =
 // PUT /api/users/:id
 router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
-    const { full_name, role, is_active, email } = req.body;
+    const { full_name, role, is_active, email, hotel_ids } = req.body;
     const updates = { updated_at: new Date() };
 
     if (full_name) updates.full_name = sanitize(full_name);
@@ -167,12 +177,35 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
       updates.email = cleanEmail.toLowerCase();
     }
 
-    await db('users').where({ id: req.params.id }).update(updates);
+    await db.transaction(async trx => {
+      // If hotel_ids is provided, update hotels
+      if (hotel_ids !== undefined) {
+        updates.primary_hotel_id = (hotel_ids && hotel_ids.length > 0) ? hotel_ids[0] : null;
+        
+        await trx('user_hotels').where('user_id', req.params.id).del();
+        
+        if (hotel_ids && hotel_ids.length > 0) {
+          const hotelInserts = hotel_ids.map(hotelId => ({
+            user_id: req.params.id,
+            hotel_id: hotelId
+          }));
+          await trx('user_hotels').insert(hotelInserts);
+        }
+      }
+
+      await trx('users').where({ id: req.params.id }).update(updates);
+    });
+
     await createAuditEntry(req.user.id, 'user_updated', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], { fields: Object.keys(updates) });
 
     const user = await db('users')
-      .select('id', 'username', 'email', 'full_name', 'role', 'is_active')
+      .select('id', 'username', 'email', 'full_name', 'role', 'is_active', 'primary_hotel_id')
       .where({ id: req.params.id }).first();
+      
+    // Fetch updated hotels
+    const userHotels = await db('user_hotels').where('user_id', req.params.id);
+    user.hotel_ids = userHotels.map(uh => uh.hotel_id);
+      
     res.json({ user });
   } catch (error) {
     console.error('Update user error:', error);

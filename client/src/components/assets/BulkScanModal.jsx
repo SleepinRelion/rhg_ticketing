@@ -44,14 +44,12 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         const cameraId = backCamera ? backCamera.id : devices[0].id;
         
         html5QrCode = new Html5Qrcode('reader', {
-          formatsToSupport: BARCODE_FORMATS,
           verbose: false,
         });
         await html5QrCode.start(
           cameraId,
           {
             fps: 15,
-            qrbox: { width: 300, height: 150 },
             disableFlip: false, // Try both normal and mirrored frames (critical for laptop webcams)
           },
           (decodedText) => {
