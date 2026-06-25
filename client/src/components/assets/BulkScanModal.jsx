@@ -1,23 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { BrowserMultiFormatReader } from '@zxing/library';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import SearchableSelect from '../ui/SearchableSelect.jsx';
-
-const BARCODE_FORMATS = [
-  Html5QrcodeSupportedFormats.QR_CODE,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.CODE_93,
-  Html5QrcodeSupportedFormats.EAN_13,
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.ITF,
-  Html5QrcodeSupportedFormats.CODABAR,
-  Html5QrcodeSupportedFormats.DATA_MATRIX,
-];
 
 export default function BulkScanModal({ onClose, onComplete, categories, rooms }) {
   const [template, setTemplate] = useState({ name: '', category_id: '', room_id: '' });
@@ -29,52 +15,46 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
   useEffect(() => {
     if (!isScanning) return;
     
-    let html5QrCode;
+    const codeReader = new BrowserMultiFormatReader();
+    let isComponentMounted = true;
+    
     const startScanner = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 100)); // allow video element to mount
         
-        const devices = await Html5Qrcode.getCameras();
-        if (!devices || devices.length === 0) {
+        const videoInputDevices = await codeReader.listVideoInputDevices();
+        if (!videoInputDevices || videoInputDevices.length === 0) {
           throw new Error("No cameras found.");
         }
         
         // Try to find a back camera, otherwise use the first available (usually webcam)
-        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-        const cameraId = backCamera ? backCamera.id : devices[0].id;
+        const backCamera = videoInputDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
+        const cameraId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
         
-        html5QrCode = new Html5Qrcode('reader', {
-          verbose: false,
-        });
-        await html5QrCode.start(
-          cameraId,
-          {
-            fps: 15,
-            disableFlip: false, // Try both normal and mirrored frames (critical for laptop webcams)
-          },
-          (decodedText) => {
-            setScannedAssets(prev => {
-              if (prev.find(a => a.serial_number === decodedText)) {
-                return prev;
-              }
+        if (isComponentMounted) {
+          codeReader.decodeFromVideoDevice(cameraId, 'reader', (result, err) => {
+            if (result) {
+              const decodedText = result.getText();
+              setScannedAssets(prev => {
+                if (prev.find(a => a.serial_number === decodedText)) {
+                  return prev;
+                }
+                
+                const newAsset = {
+                  id: Date.now().toString(),
+                  name: template.name || `Scanned Asset ${prev.length + 1}`,
+                  asset_tag: `AST-${Math.floor(Math.random() * 10000)}-${decodedText.slice(-4) || 'XXXX'}`,
+                  category_id: template.category_id,
+                  room_id: template.room_id,
+                  serial_number: decodedText
+                };
+                return [...prev, newAsset];
+              });
               
-              const newAsset = {
-                id: Date.now().toString(),
-                name: template.name || `Scanned Asset ${prev.length + 1}`,
-                asset_tag: `AST-${Math.floor(Math.random() * 10000)}-${decodedText.slice(-4) || 'XXXX'}`,
-                category_id: template.category_id,
-                room_id: template.room_id,
-                serial_number: decodedText
-              };
-              return [...prev, newAsset];
-            });
-            
-            success(`Scanned: ${decodedText}`);
-          },
-          (err) => {
-            // ignore scan errors
-          }
-        );
+              success(`Scanned: ${decodedText}`);
+            }
+          });
+        }
       } catch (err) {
         console.error("Failed to start scanner:", err);
         if (window.isSecureContext === false) {
@@ -89,11 +69,8 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
     startScanner();
 
     return () => {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          html5QrCode.clear();
-        }).catch(console.error);
-      }
+      isComponentMounted = false;
+      codeReader.reset();
     };
   }, [isScanning, template]);
 
@@ -178,7 +155,7 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
                 </div>
               ) : (
                 <>
-                  <div id="reader" style={{ width: '100%' }}></div>
+                  <video id="reader" style={{ width: '100%', borderRadius: '8px', background: '#000' }}></video>
                   <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', alignSelf: 'center' }} onClick={() => setIsScanning(false)}>
                     Stop Camera
                   </button>
