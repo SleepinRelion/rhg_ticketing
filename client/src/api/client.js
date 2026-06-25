@@ -76,10 +76,12 @@ export async function api(url, options = {}) {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
         res = await fetch(`${API_BASE}${url}`, config);
       }
-    } else {
+    } else if (!url.includes('/auth/login')) {
       clearTokens();
       if (onLogout) onLogout();
       throw new Error(data.error || 'Session expired');
+    } else {
+      throw new Error(data.error || 'Authentication failed');
     }
   }
 
