@@ -25,10 +25,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    const loginStr = email.toLowerCase().trim();
+    const loginStr = email.trim();
     const user = await db('users')
       .where(function() {
-        this.where('email', loginStr).orWhere('username', loginStr);
+        this.whereRaw('LOWER(email) = LOWER(?)', [loginStr])
+            .orWhereRaw('LOWER(username) = LOWER(?)', [loginStr]);
       })
       .whereNull('deleted_at')
       .first();
