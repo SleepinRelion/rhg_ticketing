@@ -18,6 +18,7 @@ export const loginLimiter = rateLimit({
   message: { error: 'Too many login attempts for this account. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   keyGenerator: (req) => {
     // On an intranet, many users share the same IP. 
     // Rate limit based on the targeted account instead of the shared IP.
