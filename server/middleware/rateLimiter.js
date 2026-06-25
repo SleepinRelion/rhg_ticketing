@@ -1,33 +1,16 @@
 import rateLimit from 'express-rate-limit';
 
 /**
- * Global API rate limiter to prevent general DDoS/scraping.
- * 300 requests per 15 minutes per IP.
+ * Global API rate limiter — disabled for intranet deployments.
+ * On an intranet, all users share one IP behind the gateway, so
+ * IP-based rate limiting blocks everyone when one person is active.
+ * Brute-force protection is handled at the database level (account lockout
+ * after 5 failed attempts).
  */
-export const globalApiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5000, // Very high limit for internal shared-IP networks
-  message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-export const loginLimiter = rateLimit({
-  windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5'),
-  message: { error: 'Too many login attempts for this account. Please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  keyGenerator: (req) => {
-    // On an intranet, many users share the same IP. 
-    // Rate limit based on the targeted account instead of the shared IP.
-    return req.body.email ? req.body.email.trim().toLowerCase() : req.ip;
-  }
-});
+export const globalApiLimiter = (req, res, next) => next(); // pass-through
 
 /**
- * Strict rate limiter for guest/staff ticket creation to prevent spam.
+ * Rate limiter for guest/staff ticket creation to prevent spam.
  * 50 requests per hour per IP (allows staff to submit multiple legitimate issues).
  */
 export const guestTicketLimiter = rateLimit({
@@ -49,5 +32,3 @@ export const publicEndpointLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-

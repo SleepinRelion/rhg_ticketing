@@ -6,7 +6,6 @@ import { authorize } from '../middleware/authorize.js';
 import { sanitize } from '../utils/sanitize.js';
 import { createAuditEntry } from '../middleware/auditLog.js';
 import { upload } from '../middleware/upload.js';
-import { loginLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
@@ -235,9 +234,6 @@ router.post('/:id/unlock', authenticate, authorize('admin'), async (req, res) =>
       failed_login_attempts: 0,
       updated_at: new Date(),
     });
-
-    // Clear the in-memory rate limit counter for this user's email
-    loginLimiter.resetKey(user.email.toLowerCase().trim());
 
     await createAuditEntry(req.user.id, 'account_unlocked', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], {});
     res.json({ message: 'User account has been unlocked.' });

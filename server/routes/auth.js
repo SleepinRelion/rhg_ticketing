@@ -8,12 +8,11 @@ import authConfig from '../config/auth.js';
 import { authenticate } from '../middleware/auth.js';
 import { createAuditEntry } from '../middleware/auditLog.js';
 import { sendMFACodeEmail } from '../services/emailService.js';
-import { loginLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
 // POST /api/auth/login
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password, mfaCode, _email_confirm } = req.body;
 
