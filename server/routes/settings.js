@@ -148,7 +148,7 @@ router.put('/env', authenticate, authorize('admin'), (req, res) => {
     }
 
     if (!fs.existsSync(envPath)) {
-      return res.status(404).json({ error: '.env file not found.' });
+      fs.writeFileSync(envPath, '');
     }
 
     let envContent = fs.readFileSync(envPath, 'utf8');

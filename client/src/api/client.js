@@ -1,22 +1,22 @@
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
-let accessToken = sessionStorage.getItem('accessToken');
-let refreshToken = sessionStorage.getItem('refreshToken');
+let accessToken = localStorage.getItem('accessToken');
+let refreshToken = localStorage.getItem('refreshToken');
 let onLogout = null;
 
 export function setTokens(access, refresh) {
   accessToken = access;
   refreshToken = refresh;
-  sessionStorage.setItem('accessToken', access);
-  if (refresh) sessionStorage.setItem('refreshToken', refresh);
+  localStorage.setItem('accessToken', access);
+  if (refresh) localStorage.setItem('refreshToken', refresh);
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshToken = null;
-  sessionStorage.removeItem('accessToken');
-  sessionStorage.removeItem('refreshToken');
-  sessionStorage.removeItem('user');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
 }
 
 export function setLogoutHandler(fn) {
@@ -33,7 +33,7 @@ async function refreshAccessToken() {
     if (!res.ok) throw new Error('Refresh failed');
     const data = await res.json();
     accessToken = data.accessToken;
-    sessionStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('accessToken', data.accessToken);
     return true;
   } catch {
     clearTokens();

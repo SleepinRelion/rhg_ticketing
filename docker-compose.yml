@@ -30,6 +30,7 @@ services:
       - ./backups:/app/backups
       - ./server/scripts:/app/server/scripts
       - ./migrations:/app/migrations
+      - ./.env:/app/.env
 
   db:
     image: postgres:15-alpine
