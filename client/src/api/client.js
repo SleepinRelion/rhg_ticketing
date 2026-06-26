@@ -66,7 +66,13 @@ export async function api(url, options = {}) {
     config.headers['x-hotel-id'] = activeHotelId;
   }
 
-  let res = await fetch(`${API_BASE}${url}`, config);
+  let fetchUrl = `${API_BASE}${url}`;
+  if (!config.method || config.method.toUpperCase() === 'GET') {
+    const delimiter = fetchUrl.includes('?') ? '&' : '?';
+    fetchUrl += `${delimiter}_t=${Date.now()}`;
+  }
+
+  let res = await fetch(fetchUrl, config);
 
   // If 401 with expired token, try refresh
   if (res.status === 401) {
@@ -75,7 +81,7 @@ export async function api(url, options = {}) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
-        res = await fetch(`${API_BASE}${url}`, config);
+        res = await fetch(fetchUrl, config);
       }
     } else if (!url.includes('/auth/login')) {
       clearTokens();

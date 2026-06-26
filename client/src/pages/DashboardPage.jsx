@@ -140,13 +140,13 @@ export default function DashboardPage() {
 
       <div className="charts-grid">
         <div className="chart-card">
-          <h3 className="chart-card-title">Tickets by Department</h3>
+          <h3 className="chart-card-title">Tickets by Category</h3>
           <div style={{ height: 300 }}>
-            {charts.byDepartment && charts.byDepartment.length > 0 ? (
+            {charts.byCategory && charts.byCategory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.byDepartment}>
+                <BarChart data={charts.byCategory}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                  <XAxis dataKey="department" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="category" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
                   <Bar 
@@ -154,8 +154,8 @@ export default function DashboardPage() {
                     fill="var(--primary-500)" 
                     radius={[4, 4, 0, 0]} 
                     onClick={(data) => {
-                      if (data && data.department) {
-                        navigate(`/tickets?search=${encodeURIComponent(data.department)}`);
+                      if (data && data.category) {
+                        navigate(`/tickets?search=${encodeURIComponent(data.category)}`);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
