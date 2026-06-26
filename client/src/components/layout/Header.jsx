@@ -47,14 +47,14 @@ export default function Header({ onMenuToggle }) {
       const data = await api('/hotels');
       setHotels(data.hotels);
       setActiveHotelId(data.activeHotelId);
-      sessionStorage.setItem('activeHotelId', data.activeHotelId);
+      localStorage.setItem('activeHotelId', data.activeHotelId);
     } catch {}
   }
 
   function handleHotelChange(e) {
     const newId = e.target.value;
     setActiveHotelId(newId);
-    sessionStorage.setItem('activeHotelId', newId);
+    localStorage.setItem('activeHotelId', newId);
     window.location.reload(); // Reload to refresh all data context
   }
 

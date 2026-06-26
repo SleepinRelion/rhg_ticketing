@@ -78,8 +78,8 @@ export default function ProfilePage() {
         avatar_url: res.user.avatar_url,
       };
       
-      sessionStorage.setItem('user', JSON.stringify(updatedUser));
-      success(res.message);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      success('Notification preferences updated');
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       error(err.message || 'Failed to update profile.');
@@ -134,7 +134,7 @@ export default function ProfilePage() {
       
       // Update local user state
       const updatedUser = { ...user, mfaEnabled: true, mfa_enabled: true };
-      sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (err) {
       error(err.message || 'Invalid verification code.');
     }
@@ -154,7 +154,7 @@ export default function ProfilePage() {
       success('Two-factor authentication has been disabled.');
       
       const updatedUser = { ...user, mfaEnabled: false, mfa_enabled: false };
-      sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (err) {
       error(err.message || 'Failed to disable MFA. Check your password.');
     }

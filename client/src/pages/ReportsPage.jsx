@@ -38,8 +38,8 @@ export default function ReportsPage() {
   }
 
   function handleExport() {
-    const token = sessionStorage.getItem('accessToken');
-    const hotelId = sessionStorage.getItem('activeHotelId');
+    const token = localStorage.getItem('accessToken');
+    const hotelId = localStorage.getItem('activeHotelId');
     const url = `/api/reports/${activeReport}/export`;
     
     // Create a temporary link to download the file directly through the browser
