@@ -45,9 +45,18 @@ export default function Header({ onMenuToggle }) {
   async function fetchHotels() {
     try {
       const data = await api('/hotels');
-      setHotels(data.hotels);
-      setActiveHotelId(data.activeHotelId);
-      localStorage.setItem('activeHotelId', data.activeHotelId);
+      setHotels(data.hotels || []);
+      // Respect the user's local selection — only use server's activeHotelId as a fallback
+      const localHotelId = localStorage.getItem('activeHotelId');
+      const hotelIds = (data.hotels || []).map(h => String(h.id));
+      if (localHotelId && hotelIds.includes(String(localHotelId))) {
+        // User's local selection is valid — keep it
+        setActiveHotelId(localHotelId);
+      } else if (data.activeHotelId) {
+        // No valid local selection — use server default
+        setActiveHotelId(data.activeHotelId);
+        localStorage.setItem('activeHotelId', data.activeHotelId);
+      }
     } catch {}
   }
 

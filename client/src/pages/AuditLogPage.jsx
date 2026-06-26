@@ -89,21 +89,30 @@ export default function AuditLogPage() {
             />
           </div>
           <div style={{ paddingBottom: '2px' }}>
-            <button className="btn btn-secondary" onClick={() => {
-              const params = new URLSearchParams({ ...filters, export: 'true' });
-              api(`/audit-logs?${params.toString()}`)
-                .then(blob => {
-                  if (!(blob instanceof Blob)) throw new Error('Failed to download log');
-                  const downloadUrl = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = downloadUrl;
-                  a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  window.URL.revokeObjectURL(downloadUrl);
-                })
-                .catch(err => error('Failed to export CSV'));
+            <button className="btn btn-secondary" onClick={async () => {
+              try {
+                const params = new URLSearchParams({ ...filters, export: 'true' });
+                const token = localStorage.getItem('accessToken');
+                const baseUrl = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+                const res = await fetch(`${baseUrl}/audit-logs?${params.toString()}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'x-hotel-id': localStorage.getItem('activeHotelId') || '',
+                  },
+                });
+                if (!res.ok) throw new Error('Export failed');
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+              } catch (err) {
+                error('Failed to export CSV');
+              }
             }}>
               Export CSV
             </button>
