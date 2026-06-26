@@ -19,6 +19,7 @@ export default function RoomsPage() {
   // Filter States
   const [filterBlock, setFilterBlock] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('block-asc');
 
   const { error, success } = useToast();
   const { user } = useAuth();

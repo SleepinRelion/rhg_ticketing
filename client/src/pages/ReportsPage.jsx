@@ -104,11 +104,19 @@ export default function ReportsPage() {
     }
 
     if (activeReport === 'sla') {
-      const formattedData = data.map(item => ({
-        ...item,
-        breached: parseInt(item.breached, 10),
-        met: parseInt(item.total, 10) - parseInt(item.breached, 10)
-      }));
+      const grouped = data.reduce((acc, curr) => {
+        if (!acc[curr.priority]) {
+          acc[curr.priority] = { priority: curr.priority, met: 0, breached: 0 };
+        }
+        if (curr.sla_status === 'breached') {
+          acc[curr.priority].breached += parseInt(curr.count, 10);
+        } else {
+          acc[curr.priority].met += parseInt(curr.count, 10);
+        }
+        return acc;
+      }, {});
+
+      const formattedData = Object.values(grouped);
 
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
