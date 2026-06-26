@@ -61,6 +61,9 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     }
   };
 
+  const isTaskType = formData.ticket_type === 'task';
+  const isIssueType = formData.ticket_type === 'issue';
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: '800px', width: '90%' }} onClick={e => e.stopPropagation()}>
@@ -122,75 +125,81 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
-              <label className="form-label">Room</label>
-              <SearchableSelect
-                className="form-select"
-                value={formData.room_id || ''}
-                onChange={e => setFormData({ ...formData, room_id: e.target.value })}
-              >
-                <option value="">None</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
-              </SearchableSelect>
-            </div>
-            
-            {isIT && (
-              <div className="form-group">
-                <label className="form-label">Asset</label>
+          {!isTaskType && (
+            <div className="form-row">
+              <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
+                <label className="form-label">Room</label>
                 <SearchableSelect
                   className="form-select"
-                  value={formData.asset_id || ''}
-                  onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
+                  value={formData.room_id || ''}
+                  onChange={e => setFormData({ ...formData, room_id: e.target.value })}
                 >
                   <option value="">None</option>
-                  {assets.filter(a => !formData.room_id || a.room_id == formData.room_id).map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
-                  ))}
+                  {rooms.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
                 </SearchableSelect>
               </div>
-            )}
-          </div>
-
-          <div className="form-row">
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Guest Impact</label>
-              <SearchableSelect
-                className="form-select"
-                value={formData.guest_impact}
-                onChange={e => setFormData({ ...formData, guest_impact: e.target.value })}
-              >
-                <option value="none">None</option>
-                <option value="low">Low</option>
-                <option value="high">High</option>
-              </SearchableSelect>
+              
+              {isIT && (
+                <div className="form-group">
+                  <label className="form-label">Asset</label>
+                  <SearchableSelect
+                    className="form-select"
+                    value={formData.asset_id || ''}
+                    onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
+                  >
+                    <option value="">None</option>
+                    {assets.filter(a => !formData.room_id || a.room_id == formData.room_id).map(a => (
+                      <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
+                    ))}
+                  </SearchableSelect>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          {formData.guest_impact === 'high' && (
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Guest Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.guest_name}
-                  onChange={e => setFormData({ ...formData, guest_name: e.target.value })}
-                />
+          {isIssueType && (
+            <>
+              <div className="form-row">
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Guest Impact</label>
+                  <SearchableSelect
+                    className="form-select"
+                    value={formData.guest_impact}
+                    onChange={e => setFormData({ ...formData, guest_impact: e.target.value })}
+                  >
+                    <option value="none">None</option>
+                    <option value="low">Low</option>
+                    <option value="high">High</option>
+                  </SearchableSelect>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Room Occupied?</label>
-                <SearchableSelect
-                  className="form-select"
-                  value={formData.guest_room_occupied}
-                  onChange={e => setFormData({ ...formData, guest_room_occupied: e.target.value })}
-                >
-                  <option value="unknown">Unknown</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </SearchableSelect>
-              </div>
-            </div>
+
+              {formData.guest_impact === 'high' && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Guest Name</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formData.guest_name || ''}
+                      onChange={e => setFormData({ ...formData, guest_name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Room Occupied?</label>
+                    <SearchableSelect
+                      className="form-select"
+                      value={formData.guest_room_occupied}
+                      onChange={e => setFormData({ ...formData, guest_room_occupied: e.target.value })}
+                    >
+                      <option value="unknown">Unknown</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </SearchableSelect>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           <div className="form-group">
