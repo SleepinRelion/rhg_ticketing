@@ -91,7 +91,19 @@ export default function AuditLogPage() {
           <div style={{ paddingBottom: '2px' }}>
             <button className="btn btn-secondary" onClick={() => {
               const params = new URLSearchParams({ ...filters, export: 'true' });
-              window.open(`/api/audit-logs?${params.toString()}`, '_blank');
+              api(`/audit-logs?${params.toString()}`)
+                .then(blob => {
+                  if (!(blob instanceof Blob)) throw new Error('Failed to download log');
+                  const downloadUrl = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = downloadUrl;
+                  a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(downloadUrl);
+                })
+                .catch(err => error('Failed to export CSV'));
             }}>
               Export CSV
             </button>
@@ -107,12 +119,24 @@ export default function AuditLogPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th onClick={() => requestSort('created_at')} style={{ cursor: 'pointer' }}>Timestamp {sortConfig?.key === 'created_at' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                  <th onClick={() => requestSort('actor_name')} style={{ cursor: 'pointer' }}>Actor {sortConfig?.key === 'actor_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                  <th onClick={() => requestSort('action')} style={{ cursor: 'pointer' }}>Action {sortConfig?.key === 'action' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                  <th onClick={() => requestSort('entity_type')} style={{ cursor: 'pointer' }}>Entity Type {sortConfig?.key === 'entity_type' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                  <th onClick={() => requestSort('entity_id')} style={{ cursor: 'pointer' }}>Entity ID {sortConfig?.key === 'entity_id' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                  <th onClick={() => requestSort('ip_address')} style={{ cursor: 'pointer' }}>IP Address {sortConfig?.key === 'ip_address' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('created_at')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Timestamp {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th onClick={() => requestSort('actor_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Actor {sortConfig?.key === 'actor_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th onClick={() => requestSort('action')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Action {sortConfig?.key === 'action' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th onClick={() => requestSort('entity_type')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Entity Type {sortConfig?.key === 'entity_type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th onClick={() => requestSort('entity_id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Entity ID {sortConfig?.key === 'entity_id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th onClick={() => requestSort('ip_address')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    IP Address {sortConfig?.key === 'ip_address' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th>Details</th>
                 </tr>
               </thead>

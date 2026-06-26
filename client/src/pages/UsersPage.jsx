@@ -177,10 +177,18 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th onClick={() => requestSort('full_name')} style={{ cursor: 'pointer' }}>Name / Username {sortConfig?.key === 'full_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('email')} style={{ cursor: 'pointer' }}>Email {sortConfig?.key === 'email' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('role')} style={{ cursor: 'pointer' }}>Role {sortConfig?.key === 'role' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('is_active')} style={{ cursor: 'pointer' }}>Status {sortConfig?.key === 'is_active' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('full_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Name / Username {sortConfig?.key === 'full_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('email')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Email {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('role')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Role {sortConfig?.key === 'role' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('is_active')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Status {sortConfig?.key === 'is_active' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th style={{ width: 120 }}>Actions</th>
               </tr>
             </thead>

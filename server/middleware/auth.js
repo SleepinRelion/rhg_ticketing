@@ -39,11 +39,11 @@ export async function authenticate(req, res, next) {
     let activeHotelId = null;
     try {
       const userHotels = await db('user_hotels').where('user_id', user.id);
-      hotelIds = userHotels.map(uh => uh.hotel_id);
+      hotelIds = userHotels.map(uh => parseInt(uh.hotel_id, 10));
 
       // Determine active hotel context
       const requestedHotelId = req.headers['x-hotel-id'] ? parseInt(req.headers['x-hotel-id']) : null;
-      activeHotelId = user.primary_hotel_id || null;
+      activeHotelId = user.primary_hotel_id ? parseInt(user.primary_hotel_id, 10) : null;
 
       if (requestedHotelId && hotelIds.includes(requestedHotelId)) {
         activeHotelId = requestedHotelId;

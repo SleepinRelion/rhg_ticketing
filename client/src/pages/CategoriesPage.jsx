@@ -163,11 +163,17 @@ export default function CategoriesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th onClick={() => requestCatSort('name')} style={{ cursor: 'pointer' }}>Category Name {catSortConfig?.key === 'name' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestCatSort('ticket_type')} style={{ cursor: 'pointer' }}>Ticket Type {catSortConfig?.key === 'ticket_type' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestCatSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Category Name {catSortConfig?.key === 'name' && (catSortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestCatSort('ticket_type')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Ticket Type {catSortConfig?.key === 'ticket_type' && (catSortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Description</th>
                 <th>Parent Category</th>
-                <th onClick={() => requestCatSort('is_active')} style={{ cursor: 'pointer' }}>Status {catSortConfig?.key === 'is_active' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestCatSort('is_active')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Status {catSortConfig?.key === 'is_active' && (catSortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th style={{ width: 100 }}>Actions</th>
               </tr>
             </thead>

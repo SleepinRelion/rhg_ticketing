@@ -126,11 +126,21 @@ export default function PreventiveMaintenancePage() {
             <thead>
               <tr>
                 <th>Status</th>
-                <th onClick={() => requestSort('title')} style={{ cursor: 'pointer' }}>Task Title {sortConfig?.key === 'title' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('asset_name')} style={{ cursor: 'pointer' }}>Asset {sortConfig?.key === 'asset_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('frequency')} style={{ cursor: 'pointer' }}>Frequency {sortConfig?.key === 'frequency' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('next_due_date')} style={{ cursor: 'pointer' }}>Next Due Date {sortConfig?.key === 'next_due_date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
-                <th onClick={() => requestSort('last_completed_at')} style={{ cursor: 'pointer' }}>Last Completed {sortConfig?.key === 'last_completed_at' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('title')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Task {sortConfig?.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('asset_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Asset {sortConfig?.key === 'asset_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('frequency')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Frequency {sortConfig?.key === 'frequency' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('next_due_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Next Due Date {sortConfig?.key === 'next_due_date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => requestSort('last_completed_at')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Last Completed {sortConfig?.key === 'last_completed_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>
