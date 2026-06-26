@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/library';
+import { BrowserMultiFormatReader, DecodeHintType, BarcodeFormat } from '@zxing/library';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -15,7 +15,19 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
   useEffect(() => {
     if (!isScanning) return;
     
-    const codeReader = new BrowserMultiFormatReader();
+    const hints = new Map();
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.QR_CODE,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.DATA_MATRIX
+    ]);
+    const codeReader = new BrowserMultiFormatReader(hints);
     let isComponentMounted = true;
     
     const startScanner = async () => {
