@@ -4,11 +4,15 @@ import { useToast } from '../context/ToastContext.jsx';
 import { Calendar, Plus, CheckCircle, Edit, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import useSortableTable from '../hooks/useSortableTable.js';
 
 export default function PreventiveMaintenancePage() {
   const [schedules, setSchedules] = useState([]);
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const { sortedItems, requestSort, sortConfig } = useSortableTable(schedules);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [formData, setFormData] = useState({
@@ -122,16 +126,16 @@ export default function PreventiveMaintenancePage() {
             <thead>
               <tr>
                 <th>Status</th>
-                <th>Task Title</th>
-                <th>Asset</th>
-                <th>Frequency</th>
-                <th>Next Due Date</th>
-                <th>Last Completed</th>
+                <th onClick={() => requestSort('title')} style={{ cursor: 'pointer' }}>Task Title {sortConfig?.key === 'title' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('asset_name')} style={{ cursor: 'pointer' }}>Asset {sortConfig?.key === 'asset_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('frequency')} style={{ cursor: 'pointer' }}>Frequency {sortConfig?.key === 'frequency' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('next_due_date')} style={{ cursor: 'pointer' }}>Next Due Date {sortConfig?.key === 'next_due_date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('last_completed_at')} style={{ cursor: 'pointer' }}>Last Completed {sortConfig?.key === 'last_completed_at' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {schedules.map(schedule => {
+              {sortedItems.map(schedule => {
                 const dueDate = new Date(schedule.next_due_date);
                 const isOverdue = dueDate < new Date() && dueDate.toDateString() !== new Date().toDateString();
                 const isDueToday = dueDate.toDateString() === new Date().toDateString();

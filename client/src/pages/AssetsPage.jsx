@@ -5,6 +5,7 @@ import { HardDrive, Plus, Edit2, Trash2, X, Save, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import BulkScanModal from '../components/assets/BulkScanModal.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import useSortableTable from '../hooks/useSortableTable.js';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState([]);
@@ -21,6 +22,8 @@ export default function AssetsPage() {
   const { error, success } = useToast();
   const { user } = useAuth();
   const isManager = ['admin', 'manager'].includes(user?.role);
+  
+  const { sortedItems, requestSort, sortConfig } = useSortableTable(assets);
 
   useEffect(() => {
     fetchData();
@@ -132,16 +135,26 @@ export default function AssetsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name / Tag</th>
-                <th>Category</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Next Maintenance</th>
+                <th onClick={() => requestSort('name')} style={{ cursor: 'pointer' }}>
+                  Name / Tag {sortConfig?.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('category_name')} style={{ cursor: 'pointer' }}>
+                  Category {sortConfig?.key === 'category_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('room_number')} style={{ cursor: 'pointer' }}>
+                  Location {sortConfig?.key === 'room_number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('status')} style={{ cursor: 'pointer' }}>
+                  Status {sortConfig?.key === 'status' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('next_maintenance_date')} style={{ cursor: 'pointer' }}>
+                  Next Maintenance {sortConfig?.key === 'next_maintenance_date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
                 {isManager && <th style={{ width: 100 }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {assets.map(asset => (
+              {sortedItems.map(asset => (
                 <tr key={asset.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{asset.name}</div>

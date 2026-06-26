@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { BookOpen, Plus, Edit, X } from 'lucide-react';
+import { BookOpen, Plus, Edit, X, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import FormatCategory from '../components/ui/FormatCategory.jsx';
 
 export default function KnowledgeBasePage() {
   const [articles, setArticles] = useState([]);
@@ -12,6 +13,9 @@ export default function KnowledgeBasePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
@@ -99,6 +103,32 @@ export default function KnowledgeBasePage() {
           </button>
         )}
       </div>
+
+      <div className="card" style={{ marginBottom: '24px', padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ flex: 2, minWidth: '300px', margin: 0 }}>
+          <div className="input-group">
+            <span className="input-icon"><Search size={18} /></span>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search knowledge base articles..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ fontSize: '15px' }}
+            />
+          </div>
+        </div>
+        <div className="form-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
+          <SearchableSelect 
+            className="form-select" 
+            value={categoryFilter} 
+            onChange={e => setCategoryFilter(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </SearchableSelect>
+        </div>
+      </div>
       
       {loading ? <div className="loading-spinner"><div className="spinner"></div></div> : (
         <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
@@ -106,7 +136,7 @@ export default function KnowledgeBasePage() {
             <div key={article.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1 }}>
                 <h3 style={{ marginBottom: '8px' }}>{article.title}</h3>
-                <div style={{ fontSize: '12px', color: 'var(--primary-400)', marginBottom: '16px' }}>{article.category_name || 'General'}</div>
+                <div style={{ fontSize: '12px', color: 'var(--primary-400)', marginBottom: '16px' }}><FormatCategory name={article.category_name || 'General'} /></div>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}><strong>Symptoms:</strong> {article.symptoms.substring(0, 100)}{article.symptoms.length > 100 ? '...' : ''}</p>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong>Resolution:</strong> {article.resolution_steps.substring(0, 100)}{article.resolution_steps.length > 100 ? '...' : ''}</p>
               </div>

@@ -35,6 +35,8 @@ import hotelRoutes from './routes/hotels.js';
 import backupRoutes from './routes/backups.js';
 import { initializeCronJobs } from './services/backupService.js';
 
+import { rateLimit } from 'express-rate-limit';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -55,6 +57,9 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './uploads')));
 
 // Security headers
 app.use(helmet({

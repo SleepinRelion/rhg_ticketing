@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Select from 'react-select';
+import FormatCategory from './FormatCategory.jsx';
 
 // Recursive helper to extract options from React children
 const extractOptions = (children) => {
@@ -59,44 +60,36 @@ export default function SearchableSelect({ value, onChange, children, className,
       paddingLeft: paddingLeft || padding || 0,
       border: border || base.border,
       '&:hover': {
-        borderColor: 'var(--primary-400)'
+        borderColor: 'var(--primary-300)'
       }
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'var(--text-primary)',
-      fontSize: '14px'
+      color: 'var(--text-primary)'
     }),
     input: (base) => ({
       ...base,
-      color: 'var(--text-primary)',
-      fontSize: '14px',
-      margin: 0,
-      padding: 0
+      color: 'var(--text-primary)'
     }),
     menu: (base) => ({
       ...base,
       backgroundColor: 'var(--bg-elevated)',
       border: '1px solid var(--border-color)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      borderRadius: 'var(--radius-md)',
+      boxShadow: 'var(--glass-shadow)',
       zIndex: 9999
     }),
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isSelected 
-        ? 'var(--primary-600)' 
+        ? 'var(--primary-500)' 
         : state.isFocused 
-          ? 'var(--primary-50)' 
+          ? 'var(--bg-hover)' 
           : 'transparent',
-      color: state.isSelected 
-        ? '#fff' 
-        : state.isFocused 
-          ? 'var(--primary-700)' 
-          : 'var(--text-primary)',
+      color: state.isSelected ? '#ffffff' : 'var(--text-primary)',
       cursor: 'pointer',
-      fontSize: '14px',
       '&:active': {
-        backgroundColor: state.isSelected ? 'var(--primary-700)' : 'var(--primary-100)'
+        backgroundColor: 'var(--primary-600)'
       }
     }),
     valueContainer: (base) => ({
@@ -116,9 +109,17 @@ export default function SearchableSelect({ value, onChange, children, className,
     })
   };
 
+  const formatOptionLabel = ({ label }) => {
+    return <FormatCategory name={label} />;
+  };
+
   return (
-    <div style={{ width: width || '100%', flex, flexGrow, flexShrink, margin, marginTop, marginBottom, marginLeft, marginRight, ...wrapperStyle }} className={wrapperClass} id={id}>
+    <div className={wrapperClass} style={{ 
+      width: width || '100%', 
+      flex, flexGrow, flexShrink, margin, marginTop, marginBottom, marginLeft, marginRight, ...wrapperStyle
+    }} id={id}>
       <Select
+        name={name}
         value={selectedOption}
         onChange={handleChange}
         options={options}
@@ -126,6 +127,8 @@ export default function SearchableSelect({ value, onChange, children, className,
         isDisabled={disabled}
         isClearable={false}
         isSearchable={true}
+        menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
+        formatOptionLabel={formatOptionLabel}
         classNamePrefix="react-select"
         {...props}
       />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserMultiFormatReader, DecodeHintType, BarcodeFormat } from '@zxing/library';
+import { Html5Qrcode } from 'html5-qrcode';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -15,38 +15,23 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
   useEffect(() => {
     if (!isScanning) return;
     
-    const hints = new Map();
-    hints.set(DecodeHintType.TRY_HARDER, true);
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.QR_CODE,
-      BarcodeFormat.CODE_128,
-      BarcodeFormat.CODE_39,
-      BarcodeFormat.EAN_13,
-      BarcodeFormat.EAN_8,
-      BarcodeFormat.UPC_A,
-      BarcodeFormat.UPC_E,
-      BarcodeFormat.DATA_MATRIX
-    ]);
-    const codeReader = new BrowserMultiFormatReader(hints);
+    let html5QrCode;
     let isComponentMounted = true;
     
     const startScanner = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 100)); // allow video element to mount
+        await new Promise(resolve => setTimeout(resolve, 100)); // allow element to mount
         
-        const videoInputDevices = await codeReader.listVideoInputDevices();
-        if (!videoInputDevices || videoInputDevices.length === 0) {
-          throw new Error("No cameras found.");
-        }
+        html5QrCode = new Html5Qrcode("reader");
         
-        // Try to find a back camera, otherwise use the first available (usually webcam)
-        const backCamera = videoInputDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-        const cameraId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
-        
-        if (isComponentMounted) {
-          codeReader.decodeFromVideoDevice(cameraId, 'reader', (result, err) => {
-            if (result) {
-              const decodedText = result.getText();
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 100 } // wider box for barcodes
+          },
+          (decodedText) => {
+            if (isComponentMounted) {
               setScannedAssets(prev => {
                 if (prev.find(a => a.serial_number === decodedText)) {
                   return prev;
@@ -65,12 +50,15 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
               
               success(`Scanned: ${decodedText}`);
             }
-          });
-        }
+          },
+          (errorMessage) => {
+            // ignore constant parse errors during scanning
+          }
+        );
       } catch (err) {
         console.error("Failed to start scanner:", err);
         if (window.isSecureContext === false) {
-          error("Camera access blocked: Insecure connection (HTTP). Please connect via HTTPS or use localhost.");
+          error("Camera access blocked: Insecure connection (HTTP).");
         } else {
           error("Camera failed to start. Please ensure you have granted camera permissions.");
         }
@@ -82,7 +70,9 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
 
     return () => {
       isComponentMounted = false;
-      codeReader.reset();
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(console.error);
+      }
     };
   }, [isScanning, template]);
 

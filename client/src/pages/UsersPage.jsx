@@ -4,11 +4,15 @@ import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Edit2, Trash2, Plus, Key, X, Save, Shield, ShieldOff, Unlock } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import useSortableTable from '../hooks/useSortableTable.js';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const { sortedItems, requestSort, sortConfig } = useSortableTable(users);
+  
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [] });
@@ -173,15 +177,15 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name / Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
+                <th onClick={() => requestSort('full_name')} style={{ cursor: 'pointer' }}>Name / Username {sortConfig?.key === 'full_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('email')} style={{ cursor: 'pointer' }}>Email {sortConfig?.key === 'email' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('role')} style={{ cursor: 'pointer' }}>Role {sortConfig?.key === 'role' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestSort('is_active')} style={{ cursor: 'pointer' }}>Status {sortConfig?.key === 'is_active' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
                 <th style={{ width: 120 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {sortedItems.map(u => (
                 <tr key={u.id} style={{ opacity: u.is_active ? 1 : 0.5 }}>
                   <td>
                     <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>

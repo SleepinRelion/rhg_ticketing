@@ -5,6 +5,8 @@ import { DoorOpen, Plus, Edit2, Trash2, X, Save, Search, Filter as FilterIcon } 
 import { useAuth } from '../context/AuthContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
+import useSortableTable from '../hooks/useSortableTable.js';
+
 export default function RoomsPage() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,9 +16,8 @@ export default function RoomsPage() {
   const [formData, setFormData] = useState({ room_number: '', floor: '', room_type: 'guest' });
   const [saving, setSaving] = useState(false);
 
-  // Filter & Sort States
+  // Filter States
   const [filterBlock, setFilterBlock] = useState('all');
-  const [sortOption, setSortOption] = useState('block-asc');
   const [searchQuery, setSearchQuery] = useState('');
 
   const { error, success } = useToast();
@@ -27,26 +28,27 @@ export default function RoomsPage() {
     fetchRooms();
   }, []);
 
-  async function fetchRooms() {
-    setLoading(true);
+  const fetchRooms = async () => {
     try {
-      const data = await api('/rooms');
-      setRooms(data.rooms);
+      const res = await api('/rooms');
+      setRooms(res.rooms);
     } catch (err) {
-      error('Failed to load rooms');
+      error('Failed to fetch rooms.');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  function parseRoom(roomNumber, hotelId) {
-    const numStr = String(roomNumber || '').trim();
+  // Advanced Block Parsing
+  // Handles generic hotel rooms (101, 102) and complex resort blocks (1102, 1202, 10001)
+  function parseRoom(roomNumStr, hotelId) {
     let blockNum = 999999;
     let roomVal = 999999;
-    let isNumeric = false;
+    const numStr = String(roomNumStr).trim();
     
-    if (/^\d+$/.test(numStr)) {
-      isNumeric = true;
+    const isNumeric = /^\d+$/.test(numStr);
+    
+    if (isNumeric && numStr.length >= 3) {
       roomVal = parseInt(numStr, 10);
       
       // Azuri uses hotel_id === 3. We group by hundreds (1100, 1200...)
@@ -78,7 +80,7 @@ export default function RoomsPage() {
     )
   ).sort((a, b) => a - b);
 
-  // Filtered & Sorted Rooms list
+  // Filtered Rooms list
   const processedRooms = rooms
     .filter(room => {
       // 1. Search Query Filter
@@ -253,15 +255,23 @@ export default function RoomsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Room Number</th>
-                <th>Floor</th>
-                <th>Type</th>
-                <th>Open Tickets</th>
+                <th onClick={() => requestSort('room_number')} style={{ cursor: 'pointer' }}>
+                  Room Number {sortConfig?.key === 'room_number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('floor')} style={{ cursor: 'pointer' }}>
+                  Floor {sortConfig?.key === 'floor' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('room_type')} style={{ cursor: 'pointer' }}>
+                  Type {sortConfig?.key === 'room_type' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
+                <th onClick={() => requestSort('open_ticket_count')} style={{ cursor: 'pointer' }}>
+                  Open Tickets {sortConfig?.key === 'open_ticket_count' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                </th>
                 {isManager && <th style={{ width: 100 }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {processedRooms.map(room => (
+              {sortedItems.map(room => (
                 <tr key={room.id}>
                   <td style={{ fontWeight: 600 }}>Room {room.room_number}</td>
                   <td>{room.floor || '-'}</td>

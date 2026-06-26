@@ -22,6 +22,30 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
     if (date_to) query = query.where('audit_logs.created_at', '<=', date_to);
 
     const [{ count }] = await query.clone().clearSelect().clearOrder().count('audit_logs.id as count');
+
+    if (req.query.export === 'true') {
+      const allLogs = await query.orderBy('audit_logs.created_at', 'desc').limit(5000); // hard limit to prevent OOM
+      const csvLines = [
+        ['Timestamp', 'Actor', 'Action', 'Entity Type', 'Entity ID', 'IP Address', 'Details'].join(',')
+      ];
+      
+      allLogs.forEach(log => {
+        const date = new Date(log.created_at).toISOString();
+        const actor = log.actor_name ? `"${log.actor_name} (${log.actor_username})"` : 'System';
+        const action = `"${log.action}"`;
+        const entityType = `"${log.entity_type}"`;
+        const entityId = `"${log.entity_id || ''}"`;
+        const ip = `"${log.ip_address || ''}"`;
+        const details = `"${JSON.stringify(log.details || {}).replace(/"/g, '""')}"`;
+        
+        csvLines.push([date, actor, action, entityType, entityId, ip, details].join(','));
+      });
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"');
+      return res.send(csvLines.join('\n'));
+    }
+
     const logs = await query.orderBy('audit_logs.created_at', 'desc').limit(parseInt(limit)).offset(offset);
 
     res.json({

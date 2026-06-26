@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
 
     setTokens(data.accessToken, data.refreshToken);
     setUser(data.user);
-    sessionStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('user', JSON.stringify(data.user));
     return { success: true, user: data.user };
   };
 

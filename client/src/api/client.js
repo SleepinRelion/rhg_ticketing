@@ -60,7 +60,7 @@ export async function api(url, options = {}) {
     config.headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const activeHotelId = sessionStorage.getItem('activeHotelId');
+  const activeHotelId = localStorage.getItem('activeHotelId');
   if (activeHotelId) {
     config.headers['x-hotel-id'] = activeHotelId;
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import api from '../api/client.js';
@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import FormatCategory from '../components/ui/FormatCategory.jsx';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
@@ -464,7 +465,7 @@ export default function TicketsPage() {
                   </td>
                   <td className="ticket-title">
                     <div style={{ fontWeight: 600 }}>{ticket.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{ticket.category_name || 'Uncategorized'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}><FormatCategory name={ticket.category_name || 'Uncategorized'} /></div>
                   </td>
                   <td><span className={`badge badge-status-${ticket.status}`}>{ticket.status.replace(/_/g, ' ')}</span></td>
                   <td><span className={`badge badge-priority-${ticket.priority}`}>{ticket.priority}</span></td>

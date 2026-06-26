@@ -3,12 +3,17 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import FormatCategory from '../components/ui/FormatCategory.jsx';
+import useSortableTable from '../hooks/useSortableTable.js';
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories');
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const { sortedItems: sortedCategories, requestSort: requestCatSort, sortConfig: catSortConfig } = useSortableTable(categories);
+  const { sortedItems: sortedTags, requestSort: requestTagSort, sortConfig: tagSortConfig } = useSortableTable(tags);
   
   const [showCatModal, setShowCatModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
@@ -158,18 +163,18 @@ export default function CategoriesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Category Name</th>
-                <th>Ticket Type</th>
+                <th onClick={() => requestCatSort('name')} style={{ cursor: 'pointer' }}>Category Name {catSortConfig?.key === 'name' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                <th onClick={() => requestCatSort('ticket_type')} style={{ cursor: 'pointer' }}>Ticket Type {catSortConfig?.key === 'ticket_type' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
                 <th>Description</th>
                 <th>Parent Category</th>
-                <th>Status</th>
+                <th onClick={() => requestCatSort('is_active')} style={{ cursor: 'pointer' }}>Status {catSortConfig?.key === 'is_active' ? (catSortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
                 <th style={{ width: 100 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {categories.map(c => (
+              {sortedCategories.map(c => (
                 <tr key={c.id}>
-                  <td style={{ fontWeight: 600 }}>{c.name}</td>
+                  <td style={{ fontWeight: 600 }}><FormatCategory name={c.name} /></td>
                   <td>
                     {c.ticket_type && (
                       <span className="badge" style={{

@@ -3,12 +3,16 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { format } from 'date-fns';
 import { Shield, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import useSortableTable from '../hooks/useSortableTable.js';
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  const { sortedItems, requestSort, sortConfig } = useSortableTable(logs);
+  
   const [filters, setFilters] = useState({ action: '', entity_type: '' });
   const { error } = useToast();
 
@@ -22,6 +26,8 @@ export default function AuditLogPage() {
       const params = new URLSearchParams({ page, limit: 20 });
       if (filters.action) params.append('action', filters.action);
       if (filters.entity_type) params.append('entity_type', filters.entity_type);
+      if (filters.date_from) params.append('date_from', filters.date_from);
+      if (filters.date_to) params.append('date_to', filters.date_to);
 
       const res = await api(`/audit-logs?${params.toString()}`);
       setLogs(res.logs || []);
@@ -43,26 +49,52 @@ export default function AuditLogPage() {
       </div>
 
       <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
-          <div className="form-group" style={{ flex: 1, margin: 0 }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="form-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
             <label className="form-label">Action Filter</label>
             <input 
               type="text" 
               className="form-input" 
               placeholder="e.g., ticket_created, user_login..."
-              value={filters.action}
+              value={filters.action || ''}
               onChange={e => { setFilters({...filters, action: e.target.value}); setPage(1); }}
             />
           </div>
-          <div className="form-group" style={{ flex: 1, margin: 0 }}>
+          <div className="form-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
             <label className="form-label">Entity Type Filter</label>
             <input 
               type="text" 
               className="form-input" 
               placeholder="e.g., ticket, user, settings..."
-              value={filters.entity_type}
+              value={filters.entity_type || ''}
               onChange={e => { setFilters({...filters, entity_type: e.target.value}); setPage(1); }}
             />
+          </div>
+          <div className="form-group" style={{ minWidth: '150px', margin: 0 }}>
+            <label className="form-label">Date From</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={filters.date_from || ''}
+              onChange={e => { setFilters({...filters, date_from: e.target.value}); setPage(1); }}
+            />
+          </div>
+          <div className="form-group" style={{ minWidth: '150px', margin: 0 }}>
+            <label className="form-label">Date To</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={filters.date_to || ''}
+              onChange={e => { setFilters({...filters, date_to: e.target.value}); setPage(1); }}
+            />
+          </div>
+          <div style={{ paddingBottom: '2px' }}>
+            <button className="btn btn-secondary" onClick={() => {
+              const params = new URLSearchParams({ ...filters, export: 'true' });
+              window.open(`/api/audit-logs?${params.toString()}`, '_blank');
+            }}>
+              Export CSV
+            </button>
           </div>
         </div>
       </div>
@@ -75,17 +107,17 @@ export default function AuditLogPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>Actor</th>
-                  <th>Action</th>
-                  <th>Entity Type</th>
-                  <th>Entity ID</th>
-                  <th>IP Address</th>
+                  <th onClick={() => requestSort('created_at')} style={{ cursor: 'pointer' }}>Timestamp {sortConfig?.key === 'created_at' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('actor_name')} style={{ cursor: 'pointer' }}>Actor {sortConfig?.key === 'actor_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('action')} style={{ cursor: 'pointer' }}>Action {sortConfig?.key === 'action' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('entity_type')} style={{ cursor: 'pointer' }}>Entity Type {sortConfig?.key === 'entity_type' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('entity_id')} style={{ cursor: 'pointer' }}>Entity ID {sortConfig?.key === 'entity_id' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
+                  <th onClick={() => requestSort('ip_address')} style={{ cursor: 'pointer' }}>IP Address {sortConfig?.key === 'ip_address' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}</th>
                   <th>Details</th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map(log => (
+                {sortedItems.map(log => (
                   <tr key={log.id}>
                     <td style={{ whiteSpace: 'nowrap' }}>{format(new Date(log.created_at), 'MMM d, yyyy HH:mm:ss')}</td>
                     <td>

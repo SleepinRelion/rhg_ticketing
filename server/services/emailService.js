@@ -1,16 +1,21 @@
 import nodemailer from 'nodemailer';
 
-// Configure standard nodemailer transport
-// For local testing, we'll log out to console if no SMTP credentials are provided
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'localhost',
-  port: process.env.SMTP_PORT || 25,
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: process.env.SMTP_USER ? {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  } : undefined,
-});
+let transporter = null;
+
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'localhost',
+      port: process.env.SMTP_PORT || 25,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      } : undefined,
+    });
+  }
+  return transporter;
+}
 
 export async function sendEmail({ to, subject, text, html }) {
   try {
@@ -24,7 +29,8 @@ export async function sendEmail({ to, subject, text, html }) {
       return true;
     }
 
-    const info = await transporter.sendMail({
+    const t = getTransporter();
+    const info = await t.sendMail({
       from: process.env.SMTP_FROM || '"HotelOps System" <noreply@hotel.local>',
       to,
       subject,
