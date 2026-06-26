@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import { Save, X } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import FormatCategory from '../components/ui/FormatCategory.jsx';
 
 export default function CreateTicketPage() {
   const [formData, setFormData] = useState({
@@ -149,6 +150,7 @@ export default function CreateTicketPage() {
       <div className="ticket-detail-grid">
         <div className="ticket-detail-main">
           <form className="card" onSubmit={handleSubmit}>
+            <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: '16px' }}>Basic Information</h3>
             {/* Ticket Type Selector */}
             <div className="form-group">
               <label className="form-label">Ticket Type <span style={{ color: 'var(--error)' }}>*</span></label>
@@ -183,7 +185,11 @@ export default function CreateTicketPage() {
               <KBSuggestions query={formData.title} categoryId={formData.category_id} discrete={true} />
             </div>
 
-            <div className="form-row">
+            <div className="form-row" style={{ marginTop: '32px' }}>
+              <div style={{ width: '100%', marginBottom: '8px' }}>
+                <hr style={{ margin: '0 0 24px 0', borderColor: 'var(--border-color)', opacity: 0.5 }} />
+                <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: 0 }}>Categorization</h3>
+              </div>
               <div className="form-group">
                 <label className="form-label">Priority</label>
                 <SearchableSelect
@@ -203,6 +209,7 @@ export default function CreateTicketPage() {
                   className="form-select"
                   value={formData.category_id}
                   onChange={e => handleCategoryChange(e.target.value)}
+                  formatOptionLabel={({ label }) => <FormatCategory name={label} />}
                 >
                   <option value="">Select Category...</option>
                   {parentCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -218,6 +225,7 @@ export default function CreateTicketPage() {
                   className="form-select"
                   value={formData.subcategory_id}
                   onChange={e => setFormData({ ...formData, subcategory_id: e.target.value })}
+                  formatOptionLabel={({ label }) => <FormatCategory name={label} />}
                 >
                   <option value="">Select Subcategory...</option>
                   {subcategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -302,6 +310,11 @@ export default function CreateTicketPage() {
               </>
             )}
 
+            <div style={{ width: '100%', marginBottom: '16px', marginTop: '32px' }}>
+              <hr style={{ margin: '0 0 24px 0', borderColor: 'var(--border-color)', opacity: 0.5 }} />
+              <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: 0 }}>Details & Attachments</h3>
+            </div>
+            
             <div className="form-group">
               <label className="form-label">Detailed Description</label>
               <textarea

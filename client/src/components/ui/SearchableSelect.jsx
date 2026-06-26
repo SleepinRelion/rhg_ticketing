@@ -109,9 +109,7 @@ export default function SearchableSelect({ value, onChange, children, className,
     })
   };
 
-  const formatOptionLabel = ({ label }) => {
-    return <FormatCategory name={label} />;
-  };
+  // formatOptionLabel removed
 
   return (
     <div className={wrapperClass} style={{ 
@@ -128,7 +126,6 @@ export default function SearchableSelect({ value, onChange, children, className,
         isClearable={false}
         isSearchable={true}
         menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
-        formatOptionLabel={formatOptionLabel}
         classNamePrefix="react-select"
         {...props}
       />
