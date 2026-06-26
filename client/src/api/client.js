@@ -48,6 +48,7 @@ export async function api(url, options = {}) {
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    cache: 'no-cache', // Prevent browser from caching GET requests (fixes hotel switching bug)
     ...options,
   };
 
