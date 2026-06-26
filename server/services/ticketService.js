@@ -55,6 +55,7 @@ export async function createTicket(data, userId, activeHotelId = null) {
     description: data.description ? sanitize(data.description) : null,
     status: 'open',
     priority: data.priority,
+    ticket_type: data.ticket_type || 'issue',
     category_id: data.category_id || null,
     room_id: data.room_id || null,
     asset_id: data.asset_id || null,

@@ -16,7 +16,7 @@ const router = Router();
 
 function applyTicketFilters(query, filters, db) {
   const {
-    search, status, priority, sla_status,
+    search, status, priority, sla_status, ticket_type,
     department, category_id, room_id, asset_id, assignee_id,
     created_by, date_from, date_to, month, year, tag_id
   } = filters;
@@ -41,6 +41,7 @@ function applyTicketFilters(query, filters, db) {
     query = query.whereIn('tickets.priority', priorities);
   }
   if (sla_status) query = query.where('tickets.sla_status', sla_status);
+  if (ticket_type) query = query.where('tickets.ticket_type', ticket_type);
   if (department) query = query.where('tickets.department', department);
   if (category_id) query = query.where('tickets.category_id', category_id);
   if (room_id) query = query.where('tickets.room_id', room_id);
@@ -105,7 +106,7 @@ router.get('/years', authenticate, async (req, res) => {
 router.get('/', authenticate, async (req, res) => {
   try {
     const {
-      page = 1, limit = 20, search, status, priority, sla_status,
+      page = 1, limit = 20, search, status, priority, sla_status, ticket_type,
       department, category_id, room_id, asset_id, assignee_id,
       created_by, sort_by = 'created_at', sort_order = 'desc',
       date_from, date_to, month, year, tag_id,
@@ -138,7 +139,7 @@ router.get('/', authenticate, async (req, res) => {
     const [{ count }] = await countQuery.clearSelect().clearOrder().count('tickets.id as count');
 
     // Sort and paginate
-    const allowedSorts = ['created_at', 'updated_at', 'priority', 'status', 'ticket_number', 'title', 'sla_status'];
+    const allowedSorts = ['created_at', 'updated_at', 'priority', 'status', 'ticket_number', 'title', 'sla_status', 'ticket_type', 'department'];
     const sortField = allowedSorts.includes(sort_by) ? `tickets.${sort_by}` : 'tickets.created_at';
     const tickets = await query.orderBy(sortField, sort_order === 'asc' ? 'asc' : 'desc')
       .limit(parseInt(limit))
@@ -375,7 +376,7 @@ router.put('/:id', authenticate, async (req, res) => {
     }
 
     const allowedFields = [
-      'title', 'description', 'priority', 'category_id', 'room_id', 'asset_id',
+      'title', 'description', 'priority', 'ticket_type', 'category_id', 'room_id', 'asset_id',
       'guest_impact', 'guest_room_occupied', 'guest_name', 'booking_reference',
       'department', 'out_of_order_room', 'requires_vendor', 'vendor_name',
       'cost_estimate', 'actual_cost',

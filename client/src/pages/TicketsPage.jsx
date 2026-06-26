@@ -12,7 +12,7 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', sort_by: 'created_at', sort_order: 'desc' });
+  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc' });
   const [selectedTickets, setSelectedTickets] = useState(new Set());
   const [availableYears, setAvailableYears] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -217,6 +217,18 @@ export default function TicketsPage() {
 
         <SearchableSelect
           className="form-select"
+          value={filters.ticket_type || ''}
+          onChange={e => setFilters({ ...filters, ticket_type: e.target.value })}
+          style={{ width: 130 }}
+        >
+          <option value="">All Types</option>
+          <option value="task">Task</option>
+          <option value="request">Request</option>
+          <option value="issue">Issue</option>
+        </SearchableSelect>
+
+        <SearchableSelect
+          className="form-select"
           value={filters.month || ''}
           onChange={e => setFilters({ ...filters, month: e.target.value })}
           style={{ width: 130 }}
@@ -269,8 +281,8 @@ export default function TicketsPage() {
 
         {Object.values(filters).some(v => v) && (
           <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => setFilters({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '' })}
+            className={`btn btn-ghost btn-sm`}
+            onClick={() => setFilters({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '' })}
             style={{ color: 'var(--error)', fontSize: 12 }}
           >
             <X size={14} /> Clear All
@@ -407,6 +419,9 @@ export default function TicketsPage() {
                 <th onClick={() => handleSort('ticket_number')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   ID {filters.sort_by === 'ticket_number' && (filters.sort_order === 'asc' ? '↑' : '↓')}
                 </th>
+                <th onClick={() => handleSort('ticket_type')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Type {filters.sort_by === 'ticket_type' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
                 <th onClick={() => handleSort('title')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Title {filters.sort_by === 'title' && (filters.sort_order === 'asc' ? '↑' : '↓')}
                 </th>
@@ -440,6 +455,13 @@ export default function TicketsPage() {
                     </td>
                   )}
                   <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{ticket.ticket_number}</td>
+                  <td>
+                    <span className="badge" style={{
+                      background: ticket.ticket_type === 'task' ? 'rgba(6, 182, 212, 0.15)' : ticket.ticket_type === 'request' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: ticket.ticket_type === 'task' ? '#22d3ee' : ticket.ticket_type === 'request' ? '#a78bfa' : '#f87171',
+                      textTransform: 'capitalize', fontSize: 11
+                    }}>{ticket.ticket_type || 'issue'}</span>
+                  </td>
                   <td className="ticket-title">
                     <div style={{ fontWeight: 600 }}>{ticket.title}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{ticket.category_name || 'Uncategorized'}</div>

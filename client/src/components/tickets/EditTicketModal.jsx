@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -10,6 +10,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     title: ticket.title || '',
     description: ticket.description || '',
     priority: ticket.priority || 'medium',
+    ticket_type: ticket.ticket_type || 'issue',
     category_id: ticket.category_id || '',
     room_id: ticket.room_id || '',
     asset_id: ticket.asset_id || '',
@@ -94,6 +95,21 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
               </SearchableSelect>
             </div>
             <div className="form-group">
+              <label className="form-label">Ticket Type</label>
+              <SearchableSelect
+                className="form-select"
+                value={formData.ticket_type}
+                onChange={e => setFormData({ ...formData, ticket_type: e.target.value, category_id: '' })}
+              >
+                <option value="task">Task</option>
+                <option value="request">Request</option>
+                <option value="issue">Issue</option>
+              </SearchableSelect>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
               <label className="form-label">Category</label>
               <SearchableSelect
                 className="form-select"
@@ -101,7 +117,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                 onChange={e => setFormData({ ...formData, category_id: e.target.value })}
               >
                 <option value="">Select Category...</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {categories.filter(c => c.ticket_type === formData.ticket_type).map(c => <option key={c.id} value={c.id}>{c.parent_id ? `  └ ${c.name}` : c.name}</option>)}
               </SearchableSelect>
             </div>
           </div>

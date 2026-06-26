@@ -164,6 +164,13 @@ export default function TicketDetailPage() {
               <h1 className="page-title">{ticketData.ticket_number}</h1>
               <span className={`badge badge-status-${ticketData.status}`}>{ticketData.status.replace(/_/g, ' ')}</span>
               <span className={`badge badge-priority-${ticketData.priority}`}>{ticketData.priority}</span>
+              {ticketData.ticket_type && (
+                <span className="badge" style={{
+                  background: ticketData.ticket_type === 'task' ? 'rgba(6, 182, 212, 0.15)' : ticketData.ticket_type === 'request' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: ticketData.ticket_type === 'task' ? '#22d3ee' : ticketData.ticket_type === 'request' ? '#a78bfa' : '#f87171',
+                  textTransform: 'capitalize'
+                }}>{ticketData.ticket_type}</span>
+              )}
               {ticketData.sla_status === 'breached' && <span className="badge badge-sla-breached">SLA Breached</span>}
             </div>
             <p className="page-subtitle">{ticketData.title}</p>
@@ -310,6 +317,10 @@ export default function TicketDetailPage() {
             <div className="detail-row">
               <span className="detail-row-label">Created At</span>
               <span className="detail-row-value">{format(new Date(ticketData.created_at), 'MMM d, yyyy HH:mm')}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-row-label">Type</span>
+              <span className="detail-row-value" style={{ textTransform: 'capitalize' }}>{ticketData.ticket_type || 'issue'}</span>
             </div>
             <div className="detail-row">
               <span className="detail-row-label">Department</span>

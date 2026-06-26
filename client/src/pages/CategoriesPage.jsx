@@ -12,7 +12,7 @@ export default function CategoriesPage() {
   
   const [showCatModal, setShowCatModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
-  const [catForm, setCatForm] = useState({ name: '', description: '', parent_id: '', is_active: true });
+  const [catForm, setCatForm] = useState({ name: '', description: '', parent_id: '', ticket_type: 'issue', is_active: true });
 
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagForm, setTagForm] = useState({ name: '', color: '#6B7280' });
@@ -44,10 +44,10 @@ export default function CategoriesPage() {
   function openCatModal(cat = null) {
     if (cat) {
       setEditingCat(cat);
-      setCatForm({ name: cat.name, description: cat.description || '', parent_id: cat.parent_id || '', is_active: cat.is_active });
+      setCatForm({ name: cat.name, description: cat.description || '', parent_id: cat.parent_id || '', ticket_type: cat.ticket_type || 'issue', is_active: cat.is_active });
     } else {
       setEditingCat(null);
-      setCatForm({ name: '', description: '', parent_id: '', is_active: true });
+      setCatForm({ name: '', description: '', parent_id: '', ticket_type: 'issue', is_active: true });
     }
     setShowCatModal(true);
   }
@@ -159,6 +159,7 @@ export default function CategoriesPage() {
             <thead>
               <tr>
                 <th>Category Name</th>
+                <th>Ticket Type</th>
                 <th>Description</th>
                 <th>Parent Category</th>
                 <th>Status</th>
@@ -169,6 +170,15 @@ export default function CategoriesPage() {
               {categories.map(c => (
                 <tr key={c.id}>
                   <td style={{ fontWeight: 600 }}>{c.name}</td>
+                  <td>
+                    {c.ticket_type && (
+                      <span className="badge" style={{
+                        background: c.ticket_type === 'task' ? 'rgba(6, 182, 212, 0.15)' : c.ticket_type === 'request' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        color: c.ticket_type === 'task' ? '#22d3ee' : c.ticket_type === 'request' ? '#a78bfa' : '#f87171',
+                        textTransform: 'capitalize', fontSize: 11
+                      }}>{c.ticket_type}</span>
+                    )}
+                  </td>
                   <td style={{ color: 'var(--text-muted)' }}>{c.description || '-'}</td>
                   <td>{categories.find(parent => parent.id === c.parent_id)?.name || '-'}</td>
                   <td>
@@ -218,10 +228,18 @@ export default function CategoriesPage() {
                 <textarea className="form-textarea" value={catForm.description} onChange={e => setCatForm({...catForm, description: e.target.value})} rows={3} />
               </div>
               <div className="form-group">
+                <label className="form-label">Ticket Type *</label>
+                <SearchableSelect className="form-select" value={catForm.ticket_type} onChange={e => setCatForm({...catForm, ticket_type: e.target.value})}>
+                  <option value="task">Task</option>
+                  <option value="request">Request</option>
+                  <option value="issue">Issue</option>
+                </SearchableSelect>
+              </div>
+              <div className="form-group">
                 <label className="form-label">Parent Category</label>
                 <SearchableSelect className="form-select" value={catForm.parent_id} onChange={e => setCatForm({...catForm, parent_id: e.target.value})}>
                   <option value="">None (Top Level)</option>
-                  {categories.filter(c => c.id !== editingCat?.id && !c.parent_id).map(c => (
+                  {categories.filter(c => c.id !== editingCat?.id && !c.parent_id && c.ticket_type === catForm.ticket_type).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </SearchableSelect>

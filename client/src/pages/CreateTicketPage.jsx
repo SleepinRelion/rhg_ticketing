@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
@@ -12,7 +12,9 @@ export default function CreateTicketPage() {
     title: '',
     description: '',
     priority: 'medium',
+    ticket_type: 'issue',
     category_id: '',
+    subcategory_id: '',
     room_id: '',
     asset_id: '',
     department: 'IT',
@@ -21,7 +23,7 @@ export default function CreateTicketPage() {
     guest_name: '',
   });
 
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [assets, setAssets] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -39,11 +41,25 @@ export default function CreateTicketPage() {
       api('/rooms'),
       api('/assets')
     ]).then(([catRes, roomRes, assetRes]) => {
-      setCategories(catRes.categories || []);
+      setAllCategories(catRes.categories || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
     }).catch(() => error('Failed to load form data'));
   }, []);
+
+  // Derived: parent categories for the selected ticket type
+  const parentCategories = useMemo(() => {
+    return allCategories.filter(c => c.ticket_type === formData.ticket_type && !c.parent_id);
+  }, [allCategories, formData.ticket_type]);
+
+  // Derived: subcategories for the selected parent category
+  const subcategories = useMemo(() => {
+    if (!formData.category_id) return [];
+    return allCategories.filter(c => c.parent_id === parseInt(formData.category_id));
+  }, [allCategories, formData.category_id]);
+
+  // For tasks, categories are leaf-level (no parent), so no subcategory needed
+  const isTaskType = formData.ticket_type === 'task';
 
   // Debounced duplicate check
   useEffect(() => {
@@ -63,20 +79,41 @@ export default function CreateTicketPage() {
       if (formData.title) q.append('title', formData.title);
       if (formData.room_id) q.append('room_id', formData.room_id);
       if (formData.asset_id) q.append('asset_id', formData.asset_id);
-      if (formData.category_id) q.append('category_id', formData.category_id);
+      const catId = formData.subcategory_id || formData.category_id;
+      if (catId) q.append('category_id', catId);
 
       const res = await api(`/tickets/duplicates?${q.toString()}`);
       setDuplicates(res.duplicates || []);
     } catch {}
   };
 
+  const handleTypeChange = (newType) => {
+    setFormData(prev => ({
+      ...prev,
+      ticket_type: newType,
+      category_id: '',
+      subcategory_id: '',
+    }));
+  };
 
+  const handleCategoryChange = (catId) => {
+    setFormData(prev => ({
+      ...prev,
+      category_id: catId,
+      subcategory_id: '',
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       const payload = { ...formData };
+      // Use subcategory as the actual category_id if selected
+      if (payload.subcategory_id) {
+        payload.category_id = payload.subcategory_id;
+      }
+      delete payload.subcategory_id;
       if (!payload.category_id) delete payload.category_id;
       if (!payload.room_id) delete payload.room_id;
       if (!payload.asset_id) delete payload.asset_id;
@@ -93,18 +130,45 @@ export default function CreateTicketPage() {
     }
   };
 
+  const typeLabels = {
+    task: { label: 'Task', desc: 'Routine IT operations (backups, scans, checks)' },
+    request: { label: 'Request', desc: 'Account or hardware requests' },
+    issue: { label: 'Issue', desc: 'Report a problem or incident' },
+  };
+
   return (
     <div>
       <div className="page-header">
         <div>
           <h1 className="page-title">Create Ticket</h1>
-          <p className="page-subtitle">Report a new issue or request</p>
+          <p className="page-subtitle">Report a new issue, request, or task</p>
         </div>
       </div>
 
       <div className="ticket-detail-grid">
         <div className="ticket-detail-main">
           <form className="card" onSubmit={handleSubmit}>
+            {/* Ticket Type Selector */}
+            <div className="form-group">
+              <label className="form-label">Ticket Type <span style={{ color: 'var(--error)' }}>*</span></label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {Object.entries(typeLabels).map(([value, { label }]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`btn ${formData.ticket_type === value ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => handleTypeChange(value)}
+                    style={{ flex: 1, padding: '10px 16px', fontSize: '14px' }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                {typeLabels[formData.ticket_type]?.desc}
+              </p>
+            </div>
+
             <div className="form-group">
               <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
               <input
@@ -133,17 +197,32 @@ export default function CreateTicketPage() {
                 </SearchableSelect>
               </div>
               <div className="form-group">
-                <label className="form-label">Category</label>
+                <label className="form-label">{isTaskType ? 'Category' : 'Category'}</label>
                 <SearchableSelect
                   className="form-select"
                   value={formData.category_id}
-                  onChange={e => setFormData({ ...formData, category_id: e.target.value })}
+                  onChange={e => handleCategoryChange(e.target.value)}
                 >
                   <option value="">Select Category...</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {parentCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </SearchableSelect>
               </div>
             </div>
+
+            {/* Subcategory — only show if parent has children and not task type */}
+            {!isTaskType && subcategories.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">Subcategory</label>
+                <SearchableSelect
+                  className="form-select"
+                  value={formData.subcategory_id}
+                  onChange={e => setFormData({ ...formData, subcategory_id: e.target.value })}
+                >
+                  <option value="">Select Subcategory...</option>
+                  {subcategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </SearchableSelect>
+              </div>
+            )}
 
             <div className="form-row">
               <div className="form-group" style={{ flex: isIT ? 1 : 'none', width: isIT ? 'auto' : '50%' }}>
@@ -258,15 +337,15 @@ export default function CreateTicketPage() {
             </div>
           )}
 
-
-
           <div className="card">
             <h3 className="detail-section-title" style={{ fontSize: '14px' }}>Creation Guidelines</h3>
             <ul style={{ fontSize: '13px', color: 'var(--text-secondary)', paddingLeft: '16px', lineHeight: '1.8' }}>
-              <li>Be as descriptive as possible in the title.</li>
+              <li>Choose the correct <strong>Ticket Type</strong> first.</li>
+              <li><strong>Task</strong> = Routine operations (backups, scans).</li>
+              <li><strong>Request</strong> = Account or device requests.</li>
+              <li><strong>Issue</strong> = Report a problem or incident.</li>
               <li>Always select a room if the issue is physically located in one.</li>
               <li>If this affects a guest, mark Guest Impact as High.</li>
-              <li>Search before creating to avoid duplicates.</li>
             </ul>
           </div>
         </div>

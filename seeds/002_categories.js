@@ -2,29 +2,57 @@ export async function seed(knex) {
   // Clear existing
   await knex('categories').del();
 
+  // === TASKS (ticket_type = 'task') — No parent categories, direct subcategories ===
   await knex('categories').insert([
-    { id: 1, name: 'Hardware', description: 'Desktops, laptops, tablets, printers', parent_id: null },
-    { id: 2, name: 'Software', description: 'PMS, POS software, Office, OS', parent_id: null },
-    { id: 3, name: 'Network & Wi-Fi', description: 'Internet, Wi-Fi, switches, routers', parent_id: null },
-    { id: 4, name: 'Telephony (PBX)', description: 'Desk phones, PBX server, VoIP', parent_id: null },
-    { id: 5, name: 'Point of Sale (POS)', description: 'POS terminals, receipt printers', parent_id: null },
-    { id: 6, name: 'Servers & Infrastructure', description: 'Server hardware, virtualization, UPS', parent_id: null },
-    { id: 7, name: 'AV & Conferencing', description: 'Projectors, TVs, audio systems', parent_id: null },
-    
-    // Sub-categories
-    { id: 8, name: 'Printer Issue', description: 'Paper jams, toner, offline', parent_id: 1 },
-    { id: 9, name: 'Workstation Issue', description: 'PC won\'t boot, slow', parent_id: 1 },
-    { id: 10, name: 'PMS Software', description: 'Property Management System', parent_id: 2 },
-    { id: 11, name: 'Guest Wi-Fi', description: 'Guest cannot connect to Wi-Fi', parent_id: 3 },
-    { id: 12, name: 'Staff Network', description: 'Staff network or VPN down', parent_id: 3 },
-    { id: 13, name: 'POS Terminal Down', description: 'Terminal offline or unresponsive', parent_id: 5 },
-    { id: 14, name: 'In-Room TV / Casting', description: 'TV casting issues', parent_id: 7 },
+    { id: 1, name: 'Daily Task', description: 'Routine daily IT tasks', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 2, name: 'Server Check', description: 'Uptime, storage, performance monitoring', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 3, name: 'Network Scan', description: 'Network security and vulnerability scans', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 4, name: 'Backup', description: 'Data backup procedures', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 5, name: 'Restoration Test', description: 'Backup restoration testing', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 6, name: 'Asset Acquisition', description: 'Quote/PR/PO for new assets', ticket_type: 'task', parent_id: null, is_active: true },
   ]);
 
-  // Reset sequence (PostgreSQL only, no-op on SQLite)
+  // === REQUESTS (ticket_type = 'request') ===
+  // Parent categories
+  await knex('categories').insert([
+    { id: 10, name: 'Account', description: 'User account management requests', ticket_type: 'request', parent_id: null, is_active: true },
+    { id: 11, name: 'Asset', description: 'Hardware/device requests', ticket_type: 'request', parent_id: null, is_active: true },
+  ]);
+  // Subcategories
+  await knex('categories').insert([
+    { id: 12, name: 'User Creation', description: 'New user account setup', ticket_type: 'request', parent_id: 10, is_active: true },
+    { id: 13, name: 'User Right Update', description: 'Permission/access changes', ticket_type: 'request', parent_id: 10, is_active: true },
+    { id: 14, name: 'User Termination', description: 'Account deactivation/removal', ticket_type: 'request', parent_id: 10, is_active: true },
+    { id: 15, name: 'Laptop Request', description: 'Request for a laptop', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 16, name: 'PC Request', description: 'Request for a desktop PC', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 17, name: 'Phone Request', description: 'Request for a phone device', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 18, name: 'Monitor Request', description: 'Request for a monitor', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 19, name: 'Other Tech Devices', description: 'Other hardware requests', ticket_type: 'request', parent_id: 11, is_active: true },
+  ]);
+
+  // === ISSUES (ticket_type = 'issue') ===
+  // Parent categories
+  await knex('categories').insert([
+    { id: 20, name: 'Room', description: 'Room-level IT issues', ticket_type: 'issue', parent_id: null, is_active: true },
+    { id: 21, name: 'Office/Dept', description: 'Office and department issues', ticket_type: 'issue', parent_id: null, is_active: true },
+    { id: 22, name: 'Infra', description: 'Infrastructure-level issues', ticket_type: 'issue', parent_id: null, is_active: true },
+  ]);
+  // Subcategories
+  await knex('categories').insert([
+    { id: 23, name: 'TV Room Intervention', description: 'In-room TV issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 24, name: 'Phone Intervention', description: 'In-room phone issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 25, name: 'Network/Cabling Intervention', description: 'Room network/cabling issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 26, name: 'PC/Laptop/Printer Intervention', description: 'Office device issues', ticket_type: 'issue', parent_id: 21, is_active: true },
+    { id: 27, name: 'IPTV Issue', description: 'Backend/channels IPTV problems', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 28, name: 'PABX Issue', description: 'PBX/telephony system issues', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 29, name: 'Network/Switch Issue', description: 'Room block network/switch failure', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 30, name: 'Server Issue', description: 'Server hardware or software failures', ticket_type: 'issue', parent_id: 22, is_active: true },
+  ]);
+
+  // Reset sequence (PostgreSQL only)
   try { await knex.raw("SELECT setval('categories_id_seq', (SELECT MAX(id) FROM categories))"); } catch {}
 
-  // Tags
+  // Tags — keep existing
   await knex('tags').del();
   await knex('tags').insert([
     { id: 1, name: 'Urgent', color: '#EF4444' },

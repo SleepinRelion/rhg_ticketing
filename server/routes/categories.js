@@ -10,7 +10,11 @@ const router = Router();
 // GET /api/categories
 router.get('/', authenticate, async (req, res) => {
   try {
-    const categories = await db('categories').where({ is_active: true }).orderBy('name');
+    let query = db('categories').where({ is_active: true });
+    if (req.query.ticket_type) {
+      query = query.where({ ticket_type: req.query.ticket_type });
+    }
+    const categories = await query.orderBy('name');
     res.json({ categories });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch categories.' });
@@ -27,6 +31,7 @@ router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) =
       name: sanitize(name),
       description: description ? sanitize(description) : null,
       parent_id: parent_id || null,
+      ticket_type: req.body.ticket_type || null,
       created_at: new Date(),
     }).returning('*');
 
@@ -44,6 +49,7 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     if (req.body.name) updates.name = sanitize(req.body.name);
     if (req.body.description !== undefined) updates.description = sanitize(req.body.description);
     if (req.body.parent_id !== undefined) updates.parent_id = req.body.parent_id;
+    if (req.body.ticket_type !== undefined) updates.ticket_type = req.body.ticket_type;
     if (req.body.is_active !== undefined) updates.is_active = req.body.is_active;
 
     await db('categories').where({ id: req.params.id }).update(updates);
@@ -107,7 +113,11 @@ router.delete('/tags/:id', authenticate, authorize('admin', 'manager'), async (r
 // GET /api/categories/public - Get all active categories for guest portal
 router.get('/public', publicEndpointLimiter, async (req, res) => {
   try {
-    const categories = await db('categories').where({ is_active: true }).select('id', 'name', 'parent_id').orderBy('name');
+    let query = db('categories').where({ is_active: true }).select('id', 'name', 'parent_id', 'ticket_type');
+    if (req.query.ticket_type) {
+      query = query.where({ ticket_type: req.query.ticket_type });
+    }
+    const categories = await query.orderBy('name');
     res.json({ categories });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch categories.' });
