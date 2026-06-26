@@ -132,7 +132,12 @@ html {
 
 body {
   font-family: var(--font-family);
-  background: var(--bg-base);
+  background-color: var(--app-bg-color, var(--bg-base));
+  background-image: var(--app-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;

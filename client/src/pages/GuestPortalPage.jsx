@@ -119,7 +119,7 @@ export default function GuestPortalPage() {
       <div className="login-card" style={{ maxWidth: '600px', width: '100%' }}>
         <div className="login-header">
           <div className="login-logo">
-            <Ticket size={32} />
+            <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '60px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           </div>
           <h1 className="login-title">Staff Support Portal</h1>
           <p className="login-subtitle">Submit an issue directly to our team</p>

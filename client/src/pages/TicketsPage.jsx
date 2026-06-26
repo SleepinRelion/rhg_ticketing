@@ -12,7 +12,7 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '' });
+  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', sort_by: 'created_at', sort_order: 'desc' });
   const [selectedTickets, setSelectedTickets] = useState(new Set());
   const [availableYears, setAvailableYears] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -144,6 +144,14 @@ export default function TicketsPage() {
     } catch (err) {
       error('Action failed');
     }
+  };
+
+  const handleSort = (field) => {
+    setFilters(prev => ({
+      ...prev,
+      sort_by: field,
+      sort_order: prev.sort_by === field && prev.sort_order === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
   const toggleSelect = (id) => {
@@ -396,13 +404,25 @@ export default function TicketsPage() {
                     </div>
                   </th>
                 )}
-                <th>ID</th>
-                <th>Title</th>
-                <th>Status</th>
-                <th>Priority</th>
+                <th onClick={() => handleSort('ticket_number')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  ID {filters.sort_by === 'ticket_number' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('title')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Title {filters.sort_by === 'title' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Status {filters.sort_by === 'status' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('priority')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Priority {filters.sort_by === 'priority' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Room/Asset</th>
-                <th>Created</th>
-                <th>SLA</th>
+                <th onClick={() => handleSort('created_at')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Created {filters.sort_by === 'created_at' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('sla_status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  SLA {filters.sort_by === 'sla_status' && (filters.sort_order === 'asc' ? '↑' : '↓')}
+                </th>
                 {isManager() && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>

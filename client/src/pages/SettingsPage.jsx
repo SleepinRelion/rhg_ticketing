@@ -172,6 +172,9 @@ export default function SettingsPage() {
       { key: 'APP_TIMEZONE', label: 'Timezone', type: 'select', options: ['Indian/Mauritius', 'UTC', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney'] },
       { key: 'PORT', label: 'Server Port', type: 'number', placeholder: '3001' },
       { key: 'NODE_ENV', label: 'Environment', type: 'select', options: ['development', 'production'] },
+      { key: 'APP_LOGO_URL', label: 'Logo URL', type: 'text', placeholder: '/logo.png' },
+      { key: 'APP_BG_COLOR', label: 'Background Color', type: 'text', placeholder: '#0f172a' },
+      { key: 'APP_BG_IMAGE_URL', label: 'Background Image URL', type: 'text', placeholder: 'https://example.com/bg.jpg' },
     ],
     email: [
       { key: 'SMTP_ENABLED', label: 'Enable Email Notifications', type: 'select', options: ['true', 'false'] },

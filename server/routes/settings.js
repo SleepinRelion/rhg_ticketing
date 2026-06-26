@@ -83,14 +83,56 @@ router.put('/sla', authenticate, authorize('admin'), async (req, res) => {
   }
 });
 
+// GET /api/settings/public (Unauthenticated)
+router.get('/public', (req, res) => {
+  try {
+    const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {};
+    res.json({
+      APP_NAME: envConfig.APP_NAME || process.env.APP_NAME || 'IT Ticketing System',
+      APP_LOGO_URL: envConfig.APP_LOGO_URL || process.env.APP_LOGO_URL || '/logo.png',
+      APP_BG_COLOR: envConfig.APP_BG_COLOR || process.env.APP_BG_COLOR || '#0f172a',
+      APP_BG_IMAGE_URL: envConfig.APP_BG_IMAGE_URL || process.env.APP_BG_IMAGE_URL || '',
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load public settings.' });
+  }
+});
+
 // GET /api/settings/env (Admin only)
 router.get('/env', authenticate, authorize('admin'), (req, res) => {
   try {
-    if (!fs.existsSync(envPath)) {
-      return res.status(404).json({ error: '.env file not found.' });
-    }
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-    res.json({ env: envConfig });
+    const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {};
+    
+    // Merge with process.env and provide fallback defaults for UI
+    const responseEnv = {
+      ...envConfig,
+      APP_NAME: envConfig.APP_NAME || process.env.APP_NAME || 'IT Ticketing System',
+      APP_URL: envConfig.APP_URL || process.env.APP_URL || 'http://localhost:5173',
+      APP_TIMEZONE: envConfig.APP_TIMEZONE || process.env.APP_TIMEZONE || 'Indian/Mauritius',
+      PORT: envConfig.PORT || process.env.PORT || '3001',
+      NODE_ENV: envConfig.NODE_ENV || process.env.NODE_ENV || 'development',
+      APP_LOGO_URL: envConfig.APP_LOGO_URL || process.env.APP_LOGO_URL || '/logo.png',
+      APP_BG_COLOR: envConfig.APP_BG_COLOR || process.env.APP_BG_COLOR || '#0f172a',
+      APP_BG_IMAGE_URL: envConfig.APP_BG_IMAGE_URL || process.env.APP_BG_IMAGE_URL || '',
+      SMTP_ENABLED: envConfig.SMTP_ENABLED || process.env.SMTP_ENABLED || 'false',
+      SMTP_HOST: envConfig.SMTP_HOST || process.env.SMTP_HOST || '',
+      SMTP_PORT: envConfig.SMTP_PORT || process.env.SMTP_PORT || '587',
+      SMTP_SECURE: envConfig.SMTP_SECURE || process.env.SMTP_SECURE || 'false',
+      SMTP_USER: envConfig.SMTP_USER || process.env.SMTP_USER || '',
+      SMTP_PASS: envConfig.SMTP_PASS || process.env.SMTP_PASS || '',
+      SMTP_FROM: envConfig.SMTP_FROM || process.env.SMTP_FROM || '',
+      DB_HOST: envConfig.DB_HOST || process.env.DB_HOST || 'localhost',
+      DB_PORT: envConfig.DB_PORT || process.env.DB_PORT || '5432',
+      DB_NAME: envConfig.DB_NAME || process.env.DB_NAME || 'hotel_tickets',
+      DB_USER: envConfig.DB_USER || process.env.DB_USER || 'postgres',
+      DB_PASSWORD: envConfig.DB_PASSWORD || process.env.DB_PASSWORD || '',
+      JWT_SECRET: envConfig.JWT_SECRET || process.env.JWT_SECRET || '',
+      JWT_EXPIRES_IN: envConfig.JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '15m',
+      LOGIN_RATE_LIMIT_MAX: envConfig.LOGIN_RATE_LIMIT_MAX || process.env.LOGIN_RATE_LIMIT_MAX || '5',
+      LOGIN_RATE_LIMIT_WINDOW_MS: envConfig.LOGIN_RATE_LIMIT_WINDOW_MS || process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000',
+    };
+
+    res.json({ env: responseEnv });
   } catch (error) {
     console.error('Failed to read .env:', error);
     res.status(500).json({ error: 'Failed to read environment configurations.' });

@@ -61,7 +61,7 @@ export default function GuestTicketStatusPage() {
       <div className="login-card" style={{ maxWidth: '600px', width: '100%' }}>
         <div className="login-header" style={{ marginBottom: '1.5rem' }}>
           <div className="login-logo">
-            <Search size={32} />
+            <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '60px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           </div>
           <h1 className="login-title">Track Your Request</h1>
           <p className="login-subtitle">Enter your Ticket Number to view its status</p>
