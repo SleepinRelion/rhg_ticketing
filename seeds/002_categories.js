@@ -5,11 +5,11 @@ export async function seed(knex) {
   // === TASKS (ticket_type = 'task') — No parent categories, direct subcategories ===
   await knex('categories').insert([
     { id: 1, name: 'Daily Task', description: 'Routine daily IT tasks', ticket_type: 'task', parent_id: null, is_active: true },
-    { id: 2, name: 'Server Check', description: 'Uptime, storage, performance monitoring', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 2, name: 'Server check (uptime,storage...)', description: 'Uptime, storage, performance monitoring', ticket_type: 'task', parent_id: null, is_active: true },
     { id: 3, name: 'Network Scan', description: 'Network security and vulnerability scans', ticket_type: 'task', parent_id: null, is_active: true },
     { id: 4, name: 'Backup', description: 'Data backup procedures', ticket_type: 'task', parent_id: null, is_active: true },
     { id: 5, name: 'Restoration Test', description: 'Backup restoration testing', ticket_type: 'task', parent_id: null, is_active: true },
-    { id: 6, name: 'Asset Acquisition', description: 'Quote/PR/PO for new assets', ticket_type: 'task', parent_id: null, is_active: true },
+    { id: 6, name: 'Asset aquisition (Quote/PR/PO)', description: 'Quote/PR/PO for new assets', ticket_type: 'task', parent_id: null, is_active: true },
   ]);
 
   // === REQUESTS (ticket_type = 'request') ===
@@ -23,11 +23,11 @@ export async function seed(knex) {
     { id: 12, name: 'User Creation', description: 'New user account setup', ticket_type: 'request', parent_id: 10, is_active: true },
     { id: 13, name: 'User Right Update', description: 'Permission/access changes', ticket_type: 'request', parent_id: 10, is_active: true },
     { id: 14, name: 'User Termination', description: 'Account deactivation/removal', ticket_type: 'request', parent_id: 10, is_active: true },
-    { id: 15, name: 'Laptop Request', description: 'Request for a laptop', ticket_type: 'request', parent_id: 11, is_active: true },
-    { id: 16, name: 'PC Request', description: 'Request for a desktop PC', ticket_type: 'request', parent_id: 11, is_active: true },
-    { id: 17, name: 'Phone Request', description: 'Request for a phone device', ticket_type: 'request', parent_id: 11, is_active: true },
-    { id: 18, name: 'Monitor Request', description: 'Request for a monitor', ticket_type: 'request', parent_id: 11, is_active: true },
-    { id: 19, name: 'Other Tech Devices', description: 'Other hardware requests', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 15, name: 'Laptop request', description: 'Request for a laptop', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 16, name: 'PC request', description: 'Request for a desktop PC', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 17, name: 'Phone request', description: 'Request for a phone device', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 18, name: 'Monitor request', description: 'Request for a monitor', ticket_type: 'request', parent_id: 11, is_active: true },
+    { id: 19, name: 'Other tech devices...', description: 'Other hardware requests', ticket_type: 'request', parent_id: 11, is_active: true },
   ]);
 
   // === ISSUES (ticket_type = 'issue') ===
@@ -39,14 +39,14 @@ export async function seed(knex) {
   ]);
   // Subcategories
   await knex('categories').insert([
-    { id: 23, name: 'TV Room Intervention', description: 'In-room TV issues', ticket_type: 'issue', parent_id: 20, is_active: true },
-    { id: 24, name: 'Phone Intervention', description: 'In-room phone issues', ticket_type: 'issue', parent_id: 20, is_active: true },
-    { id: 25, name: 'Network/Cabling Intervention', description: 'Room network/cabling issues', ticket_type: 'issue', parent_id: 20, is_active: true },
-    { id: 26, name: 'PC/Laptop/Printer Intervention', description: 'Office device issues', ticket_type: 'issue', parent_id: 21, is_active: true },
-    { id: 27, name: 'IPTV Issue', description: 'Backend/channels IPTV problems', ticket_type: 'issue', parent_id: 22, is_active: true },
-    { id: 28, name: 'PABX Issue', description: 'PBX/telephony system issues', ticket_type: 'issue', parent_id: 22, is_active: true },
-    { id: 29, name: 'Network/Switch Issue', description: 'Room block network/switch failure', ticket_type: 'issue', parent_id: 22, is_active: true },
-    { id: 30, name: 'Server Issue', description: 'Server hardware or software failures', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 23, name: 'TV room intervention', description: 'In-room TV issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 24, name: 'Phone intervention', description: 'In-room phone issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 25, name: 'Network/cabling intervention', description: 'Room network/cabling issues', ticket_type: 'issue', parent_id: 20, is_active: true },
+    { id: 26, name: 'PC/Laptop/Printer intervention', description: 'Office device issues', ticket_type: 'issue', parent_id: 21, is_active: true },
+    { id: 27, name: 'IPTV issue (backend/channels)', description: 'Backend/channels IPTV problems', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 28, name: 'PABX issue', description: 'PBX/telephony system issues', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 29, name: 'Network/Switch issue (room block)', description: 'Room block network/switch failure', ticket_type: 'issue', parent_id: 22, is_active: true },
+    { id: 30, name: 'Server issue', description: 'Server hardware or software failures', ticket_type: 'issue', parent_id: 22, is_active: true },
   ]);
 
   // Reset sequence (PostgreSQL only)
