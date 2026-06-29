@@ -42,6 +42,8 @@ export function validateStatusTransition(currentStatus, newStatus, userRole) {
   return { valid: true };
 }
 
+import { randomUUID } from 'crypto';
+
 /**
  * Create a new ticket with SLA dates.
  */
@@ -51,6 +53,7 @@ export async function createTicket(data, userId, activeHotelId = null) {
 
   const ticket = {
     ticket_number: ticketNumber,
+    guest_tracking_token: randomUUID(),
     title: sanitize(data.title),
     description: data.description ? sanitize(data.description) : null,
     status: 'open',

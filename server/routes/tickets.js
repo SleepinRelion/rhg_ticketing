@@ -721,28 +721,27 @@ router.post('/guest', guestTicketLimiter, async (req, res) => {
 
     const ticket = await createTicket(ticketData, null, hotel_id);
     
-    res.status(201).json({ success: true, ticket_number: ticket.ticket_number });
+    res.status(201).json({ success: true, ticket_number: ticket.ticket_number, tracking_token: ticket.guest_tracking_token });
   } catch (error) {
     console.error('Guest ticket error:', error);
     res.status(500).json({ error: 'Failed to submit guest ticket.' });
   }
 });
 
-// GET /api/tickets/guest/:ticketNumber — Public endpoint to track ticket status
-router.get('/guest/:ticketNumber', publicEndpointLimiter, async (req, res) => {
+// GET /api/tickets/guest/track/:trackingToken — Public endpoint to track ticket status using secure token
+router.get('/guest/track/:trackingToken', publicEndpointLimiter, async (req, res) => {
   try {
-    const { ticketNumber } = req.params;
+    const { trackingToken } = req.params;
     
-    // Use like instead of ilike since sqlite doesn't support ilike natively
     const ticket = await db('tickets')
       .select(
         'tickets.id', 'tickets.ticket_number', 'tickets.title', 'tickets.status',
-        'tickets.created_at', 'tickets.priority',
+        'tickets.created_at', 'tickets.priority', 'tickets.guest_tracking_token',
         'rooms.room_number', 'hotels.name as hotel_name'
       )
       .leftJoin('rooms', 'tickets.room_id', 'rooms.id')
       .leftJoin('hotels', 'rooms.hotel_id', 'hotels.id')
-      .where('tickets.ticket_number', 'like', ticketNumber)
+      .where('tickets.guest_tracking_token', trackingToken)
       .whereNull('tickets.deleted_at')
       .first();
 

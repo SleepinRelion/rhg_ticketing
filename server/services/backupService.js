@@ -1,13 +1,10 @@
 import cron from 'node-cron';
 import db from '../config/database.js';
 import { getMailTransporter, SMTP_FROM } from '../config/email.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import logger from '../config/logger.js';
-
-const execAsync = promisify(exec);
 
 export async function runBackup(recipients, label = 'Manual') {
   const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
@@ -24,7 +21,37 @@ export async function runBackup(recipients, label = 'Manual') {
       logger.info(`[BackupService] Starting pg_dump for ${label}...`);
       const dbUrl = process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
       
-      await execAsync(`pg_dump "${dbUrl}" | gzip > "${backupFilePath}"`);
+      await new Promise((resolve, reject) => {
+        const pgDump = spawn('pg_dump', [dbUrl]);
+        const gzip = spawn('gzip');
+        const writeStream = fs.createWriteStream(backupFilePath);
+
+        pgDump.stdout.pipe(gzip.stdin);
+        gzip.stdout.pipe(writeStream);
+
+        let errorLogged = false;
+        const handleError = (err) => {
+          if (!errorLogged) {
+            errorLogged = true;
+            reject(err);
+          }
+        };
+
+        pgDump.stderr.on('data', (data) => {
+          logger.warn(`[pg_dump] ${data.toString().trim()}`);
+        });
+
+        pgDump.on('error', handleError);
+        gzip.on('error', handleError);
+        writeStream.on('error', handleError);
+
+        writeStream.on('finish', resolve);
+        
+        pgDump.on('close', (code) => {
+          if (code !== 0) handleError(new Error(`pg_dump exited with code ${code}`));
+          gzip.stdin.end();
+        });
+      });
       logger.info(`[BackupService] pg_dump completed: ${backupFileName}`);
       
       const transporter = getMailTransporter();

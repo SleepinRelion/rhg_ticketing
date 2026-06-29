@@ -1,24 +1,32 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Ticket, ArrowLeft, Clock, AlertTriangle, CheckCircle2, User, Building, MapPin, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Search, Ticket, ArrowLeft, Clock, AlertTriangle, CheckCircle2, User, Building, MapPin, Loader2, Key } from 'lucide-react';
 import api from '../api/client.js';
 
 export default function GuestTicketStatusPage() {
-  const [ticketNumber, setTicketNumber] = useState('');
+  const [searchParams] = useSearchParams();
+  const [trackingToken, setTrackingToken] = useState(searchParams.get('token') || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [ticketData, setTicketData] = useState(null);
 
+  // Auto-search if token is in URL
+  useEffect(() => {
+    if (searchParams.get('token')) {
+      handleSearch(new Event('submit'));
+    }
+  }, []);
+
   const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!ticketNumber.trim()) return;
+    if (e?.preventDefault) e.preventDefault();
+    if (!trackingToken.trim()) return;
 
     setLoading(true);
     setError(null);
     setTicketData(null);
 
     try {
-      const res = await api(`/tickets/guest/${ticketNumber}`);
+      const res = await api(`/tickets/guest/track/${trackingToken.trim()}`);
       setTicketData(res.ticket);
     } catch (err) {
       if (err.status === 404) {
@@ -64,21 +72,20 @@ export default function GuestTicketStatusPage() {
             <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '60px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           </div>
           <h1 className="login-title">Track Your Request</h1>
-          <p className="login-subtitle">Enter your Ticket Number to view its status</p>
+          <p className="login-subtitle">Enter your Secure Tracking Token to view the status</p>
         </div>
 
         <form onSubmit={handleSearch} style={{ marginBottom: '2rem' }}>
           <div className="form-group" style={{ marginBottom: '1rem' }}>
             <div className="input-group">
-              <span className="input-icon"><Ticket size={18} /></span>
+              <span className="input-icon"><Key size={18} /></span>
               <input 
                 type="text" 
                 className="form-input" 
-                value={ticketNumber} 
-                onChange={e => setTicketNumber(e.target.value)}
-                placeholder="e.g. TKT-2026-0001"
+                value={trackingToken} 
+                onChange={e => setTrackingToken(e.target.value)}
+                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
                 required 
-                style={{ textTransform: 'uppercase' }}
               />
             </div>
           </div>

@@ -61,19 +61,27 @@ const PORT = process.env.PORT || 3001;
 // Serve uploaded files
 app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './uploads')));
 
+// Security checks
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret') {
+    logger.error('FATAL: Refusing to start in production with default or missing JWT_SECRET. This is a severe cryptographic vulnerability (A04:2025). Please set a secure JWT_SECRET in .env.');
+    process.exit(1);
+  }
+}
+
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  hsts: false, // Disable Strict-Transport-Security for local/internal HTTP
+  hsts: process.env.NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      imgSrc: ["'self'", "data:", "blob:"],
+      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com"],
       connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
-      upgradeInsecureRequests: null, // Disable automatic HTTPS upgrades
+      upgradeInsecureRequests: [], // Enable automatic HTTPS upgrades in production
     },
   } : false,
 }));
