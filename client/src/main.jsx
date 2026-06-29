@@ -23,6 +23,7 @@ async function bootstrap() {
     
     window.APP_LOGO_URL = config.APP_LOGO_URL || '/logo.png';
     window.APP_NAME = config.APP_NAME || 'IT Ticketing System';
+    window.APP_BG_IMAGE_URL = config.APP_BG_IMAGE_URL || '';
     document.title = window.APP_NAME;
   } catch (err) {
     console.error('Failed to load public config', err);

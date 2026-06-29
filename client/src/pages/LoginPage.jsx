@@ -18,9 +18,12 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const imageUrl = window.APP_BG_IMAGE_URL || '/login-bg.jpg';
+    if (!imageUrl) return;
+
     const img = new Image();
-    img.src = '/login-bg.jpg';
-    img.onload = () => setBgImage('/login-bg.jpg');
+    img.src = imageUrl;
+    img.onload = () => setBgImage(imageUrl);
     // If it fails to load (e.g., deleted), bgImage remains null and fallback CSS applies
   }, []);
 
