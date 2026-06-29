@@ -1235,7 +1235,7 @@ body {
   align-items: center;
   justify-content: center;
   background: var(--bg-base);
-  background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+  background-image: var(--login-bg-image, url('/login-bg.jpg'));
   background-size: cover;
   background-position: center;
   position: relative;
