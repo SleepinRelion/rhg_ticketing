@@ -139,6 +139,8 @@ export default function RoomsPage() {
       return 0;
     });
 
+  const { sortedItems, requestSort, sortConfig } = useSortableTable(processedRooms);
+
   function openModal(room = null) {
     if (room) {
       setEditingRoom(room);

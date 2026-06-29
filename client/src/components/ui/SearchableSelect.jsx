@@ -79,6 +79,10 @@ export default function SearchableSelect({ value, onChange, children, className,
       boxShadow: 'var(--glass-shadow)',
       zIndex: 9999
     }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999 // Ensure it's higher than the modal overlay (200)
+    }),
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isSelected 
@@ -109,8 +113,6 @@ export default function SearchableSelect({ value, onChange, children, className,
     })
   };
 
-  // formatOptionLabel removed
-
   return (
     <div className={wrapperClass} style={{ 
       width: width || '100%', 
@@ -125,6 +127,7 @@ export default function SearchableSelect({ value, onChange, children, className,
         isDisabled={disabled}
         isClearable={false}
         isSearchable={true}
+        menuPosition="fixed"
         menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
         classNamePrefix="react-select"
         {...props}
