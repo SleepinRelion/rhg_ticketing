@@ -214,7 +214,7 @@ export default function Header({ onMenuToggle }) {
                   <User size={14} /> My Profile
                 </div>
               </div>
-              {user?.role === 'admin' && (
+              {['admin', 'manager'].includes(user?.role) && (
                 <div className="notification-item" onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
                   <div className="notification-item-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <User size={14} /> System Settings

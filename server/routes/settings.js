@@ -11,7 +11,7 @@ import { sendEmail } from '../services/emailService.js';
 const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const envPath = path.resolve(__dirname, '../../.env');
-router.get('/system', authenticate, authorize('admin'), async (req, res) => {
+router.get('/system', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const [dbResult] = await db.raw('SELECT version() as version');
     const ticketCount = await db('tickets').count('* as count').first();
@@ -57,7 +57,7 @@ router.get('/sla', authenticate, async (req, res) => {
 });
 
 // PUT /api/settings/sla
-router.put('/sla', authenticate, authorize('admin'), async (req, res) => {
+router.put('/sla', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const hotelId = req.headers['x-hotel-id'];
     if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
@@ -99,7 +99,7 @@ router.get('/public', (req, res) => {
 });
 
 // GET /api/settings/env (Admin only)
-router.get('/env', authenticate, authorize('admin'), (req, res) => {
+router.get('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
   try {
     const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {};
     
@@ -140,7 +140,7 @@ router.get('/env', authenticate, authorize('admin'), (req, res) => {
 });
 
 // PUT /api/settings/env (Admin only)
-router.put('/env', authenticate, authorize('admin'), (req, res) => {
+router.put('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
   try {
     const { updates } = req.body;
     if (!updates || typeof updates !== 'object') {
@@ -228,7 +228,7 @@ router.put('/hotel', authenticate, authorize('admin', 'manager'), async (req, re
 });
 
 // POST /api/settings/test-email (Admin only)
-router.post('/test-email', authenticate, authorize('admin'), async (req, res) => {
+router.post('/test-email', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { to } = req.body;
     if (!to) return res.status(400).json({ error: 'Recipient email is required.' });

@@ -298,7 +298,7 @@ export default function TicketsPage() {
             <div style={{ width: 1, height: 16, background: 'var(--border-color)', margin: '0 4px' }} />
             <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('change_status', 'in_progress')} title="Mark In Progress"><Play size={14} /></button>
             <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('change_status', 'resolved')} title="Mark Resolved"><CheckCircle2 size={14} /></button>
-            {user.role === 'admin' && (
+            {['admin', 'manager'].includes(user.role) && (
               <button className="btn btn-ghost btn-sm" style={{ color: 'var(--error)' }} onClick={() => handleBulkAction('soft_delete')} title="Delete"><Trash2 size={14} /></button>
             )}
           </div>
@@ -492,7 +492,7 @@ export default function TicketsPage() {
                             <CheckCircle2 size={16} />
                           </button>
                         )}
-                        {user.role === 'admin' && (
+                        {['admin', 'manager'].includes(user.role) && (
                           <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--error)' }} onClick={() => handleSingleAction(ticket.id, 'soft_delete')} title="Delete">
                             <Trash2 size={16} />
                           </button>

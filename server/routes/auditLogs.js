@@ -6,7 +6,7 @@ import { authorize } from '../middleware/authorize.js';
 const router = Router();
 
 // GET /api/audit-logs (Admin only)
-router.get('/', authenticate, authorize('admin'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { page = 1, limit = 50, action, entity_type, actor_user_id, date_from, date_to } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);

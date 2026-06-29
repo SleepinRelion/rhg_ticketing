@@ -8,7 +8,7 @@ import { createAuditEntry } from '../middleware/auditLog.js';
 const router = Router();
 
 // GET /api/backups/schedules
-router.get('/schedules', authenticate, authorize('admin'), async (req, res) => {
+router.get('/schedules', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const hotelId = req.headers['x-hotel-id'];
     if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
@@ -29,7 +29,7 @@ router.get('/schedules', authenticate, authorize('admin'), async (req, res) => {
 });
 
 // POST /api/backups/schedules
-router.post('/schedules', authenticate, authorize('admin'), async (req, res) => {
+router.post('/schedules', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { frequency, recipients, is_active } = req.body;
     
@@ -64,7 +64,7 @@ router.post('/schedules', authenticate, authorize('admin'), async (req, res) => 
 });
 
 // DELETE /api/backups/schedules/:id
-router.delete('/schedules/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/schedules/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     await db('backup_schedules').where('id', req.params.id).del();
     await initializeCronJobs(); // Reload cron jobs
@@ -77,7 +77,7 @@ router.delete('/schedules/:id', authenticate, authorize('admin'), async (req, re
 });
 
 // POST /api/backups/export
-router.post('/export', authenticate, authorize('admin'), async (req, res) => {
+router.post('/export', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { recipients } = req.body;
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {

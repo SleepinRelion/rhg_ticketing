@@ -546,7 +546,7 @@ router.delete('/:id/assign/:userId', authenticate, authorize('admin', 'manager')
 });
 
 // DELETE /api/tickets/:id — Soft delete (Admin only)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const ticket = await db('tickets').where({ id: req.params.id }).whereNull('deleted_at').first();
     if (!ticket) return res.status(404).json({ error: 'Ticket not found.' });

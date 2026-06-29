@@ -29,10 +29,10 @@ export default function Sidebar({ isOpen, onClose }) {
 
     { section: 'System' },
     { path: '/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/users', icon: Users, label: 'Users', roles: ['admin'] },
-    { path: '/audit-logs', icon: Shield, label: 'Audit Logs', roles: ['admin'] },
-    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
-    { path: '/import', icon: FileUp, label: 'Import Legacy Data', roles: ['admin'] },
+    { path: '/users', icon: Users, label: 'Users', roles: ['admin', 'manager'] },
+    { path: '/audit-logs', icon: Shield, label: 'Audit Logs', roles: ['admin', 'manager'] },
+    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin', 'manager'] },
+    { path: '/import', icon: FileUp, label: 'Import Legacy Data', roles: ['admin', 'manager'] },
   ];
 
   return (

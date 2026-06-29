@@ -68,7 +68,7 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 });
 
 // POST /api/users — Create user (Admin only)
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { username, email, password, full_name, role, hotel_ids } = req.body;
     
@@ -156,7 +156,7 @@ router.put('/profile', authenticate, upload.single('avatar'), async (req, res) =
 });
 
 // PUT /api/users/:id
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { full_name, role, is_active, email, hotel_ids } = req.body;
     const updates = { updated_at: new Date() };
@@ -238,7 +238,7 @@ router.put('/:id/reset-password', authenticate, authorize('admin', 'manager'), a
 });
 
 // POST /api/users/:id/reset-mfa (Admin only)
-router.post('/:id/reset-mfa', authenticate, authorize('admin'), async (req, res) => {
+router.post('/:id/reset-mfa', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     await db('users').where({ id: req.params.id }).update({
       mfa_enabled: false,
@@ -257,7 +257,7 @@ router.post('/:id/reset-mfa', authenticate, authorize('admin'), async (req, res)
 });
 
 // POST /api/users/:id/unlock (Admin only)
-router.post('/:id/unlock', authenticate, authorize('admin'), async (req, res) => {
+router.post('/:id/unlock', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const user = await db('users').where({ id: req.params.id }).first();
     if (!user) return res.status(404).json({ error: 'User not found.' });
@@ -277,7 +277,7 @@ router.post('/:id/unlock', authenticate, authorize('admin'), async (req, res) =>
 });
 
 // DELETE /api/users/:id — Soft delete (Admin only)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     if (parseInt(req.params.id) === req.user.id) {
       return res.status(400).json({ error: 'You cannot delete your own account.' });

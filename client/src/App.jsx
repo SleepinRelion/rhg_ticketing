@@ -60,12 +60,12 @@ export default function App() {
         <Route path="preventive-maintenance" element={<PreventiveMaintenancePage />} />
         <Route path="reports" element={<ProtectedRoute roles={['admin', 'manager']}><ReportsPage /></ProtectedRoute>} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="users" element={<ProtectedRoute roles={['admin']}><UsersPage /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute roles={['admin', 'manager']}><UsersPage /></ProtectedRoute>} />
         <Route path="categories" element={<ProtectedRoute roles={['admin', 'manager']}><CategoriesPage /></ProtectedRoute>} />
-        <Route path="audit-logs" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
-        <Route path="import" element={<ProtectedRoute roles={['admin']}><ImportDataPage /></ProtectedRoute>} />
+        <Route path="audit-logs" element={<ProtectedRoute roles={['admin', 'manager']}><AuditLogPage /></ProtectedRoute>} />
+        <Route path="import" element={<ProtectedRoute roles={['admin', 'manager']}><ImportDataPage /></ProtectedRoute>} />
         <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="settings" element={<ProtectedRoute roles={['admin']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="settings" element={<ProtectedRoute roles={['admin', 'manager']}><SettingsPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
