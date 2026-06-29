@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate, Link } from 'react-router-dom';
 import { Shield, ExternalLink } from 'lucide-react';
@@ -12,8 +12,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
 
+  const [bgImage, setBgImage] = useState(null);
+
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/login-bg.jpg';
+    img.onload = () => setBgImage('/login-bg.jpg');
+    // If it fails to load (e.g., deleted), bgImage remains null and fallback CSS applies
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +44,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
+    <div 
+      className={`login-page ${bgImage ? 'has-bg-image' : ''}`}
+      style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+    >
       <div className="login-card">
         <div className="login-header" style={{ textAlign: 'center' }}>
           <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
