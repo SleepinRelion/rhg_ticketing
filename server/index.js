@@ -80,6 +80,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com"],
       connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
+      upgradeInsecureRequests: null, // explicitly remove the default helmet directive
     },
   } : false,
 }));
