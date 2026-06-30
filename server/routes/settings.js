@@ -157,7 +157,7 @@ router.put('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
     for (const [key, value] of Object.entries(updates)) {
       const regex = new RegExp(`^${key}=.*$`, 'm');
       if (regex.test(envContent)) {
-        envContent = envContent.replace(regex, `${key}=${value}`);
+        envContent = envContent.replace(regex, () => `${key}=${value}`);
       } else {
         envContent += `\n${key}=${value}`;
       }
