@@ -8,10 +8,14 @@ const router = Router();
 // GET /api/hotels - Get hotels user has access to
 router.get('/', authenticate, async (req, res) => {
   try {
-    const hotels = await db('hotels')
-      .whereIn('id', req.user.hotelIds)
-      .where('is_active', true)
-      .orderBy('name');
+    let query = db('hotels').where('is_active', true).orderBy('name');
+    
+    // Admins and Managers have access to all hotels
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') {
+      query = query.whereIn('id', req.user.hotelIds);
+    }
+    
+    const hotels = await query;
       
     res.json({ hotels, activeHotelId: req.user.activeHotelId });
   } catch (error) {

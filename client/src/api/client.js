@@ -1,22 +1,33 @@
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
-let accessToken = localStorage.getItem('accessToken');
-let refreshToken = localStorage.getItem('refreshToken');
+let accessToken = null;
+let refreshToken = null;
+try {
+  accessToken = localStorage.getItem('accessToken');
+  refreshToken = localStorage.getItem('refreshToken');
+} catch (e) {
+  console.warn('localStorage is disabled or unavailable.');
+}
+
 let onLogout = null;
 
 export function setTokens(access, refresh) {
   accessToken = access;
   refreshToken = refresh;
-  localStorage.setItem('accessToken', access);
-  if (refresh) localStorage.setItem('refreshToken', refresh);
+  try {
+    localStorage.setItem('accessToken', access);
+    if (refresh) localStorage.setItem('refreshToken', refresh);
+  } catch (e) {}
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshToken = null;
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  try {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  } catch (e) {}
 }
 
 export function setLogoutHandler(fn) {
@@ -61,7 +72,11 @@ export async function api(url, options = {}) {
     config.headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const activeHotelId = localStorage.getItem('activeHotelId');
+  let activeHotelId = null;
+  try {
+    activeHotelId = localStorage.getItem('activeHotelId');
+  } catch (e) {}
+
   if (activeHotelId) {
     config.headers['x-hotel-id'] = activeHotelId;
   }

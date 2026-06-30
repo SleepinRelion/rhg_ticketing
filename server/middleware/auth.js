@@ -41,6 +41,12 @@ export async function authenticate(req, res, next) {
       const userHotels = await db('user_hotels').where('user_id', user.id);
       hotelIds = userHotels.map(uh => parseInt(uh.hotel_id, 10));
 
+      // Admin and Manager have access to all hotels implicitly
+      if (user.role === 'admin' || user.role === 'manager') {
+        const allHotels = await db('hotels').where('is_active', true);
+        hotelIds = allHotels.map(h => parseInt(h.id, 10));
+      }
+
       // Determine active hotel context
       const requestedHotelId = req.headers['x-hotel-id'] ? parseInt(req.headers['x-hotel-id']) : null;
       activeHotelId = user.primary_hotel_id ? parseInt(user.primary_hotel_id, 10) : null;
