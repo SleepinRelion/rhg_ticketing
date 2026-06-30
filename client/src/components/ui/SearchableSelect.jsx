@@ -50,13 +50,14 @@ export default function SearchableSelect({ value, onChange, children, className,
   const customStyles = {
     control: (base, state) => ({
       ...base,
-      backgroundColor: backgroundColor || 'var(--bg-secondary)',
+      backgroundColor: state.isDisabled ? 'rgba(255, 255, 255, 0.05)' : (backgroundColor || 'var(--bg-secondary)'),
       borderColor: state.isFocused ? 'var(--primary-400)' : (borderColor || 'var(--border-color)'),
       borderRadius: borderRadius || 'var(--radius-md)',
       minHeight: height || '36px',
       height: height || 'auto',
       boxShadow: state.isFocused ? '0 0 0 1px var(--primary-400)' : 'none',
-      cursor: 'pointer',
+      cursor: state.isDisabled ? 'not-allowed' : 'pointer',
+      opacity: state.isDisabled ? 0.6 : 1,
       paddingLeft: paddingLeft || padding || 0,
       border: border || base.border,
       '&:hover': {
