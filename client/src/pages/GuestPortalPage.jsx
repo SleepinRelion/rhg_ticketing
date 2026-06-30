@@ -45,7 +45,7 @@ export default function GuestPortalPage() {
     try {
       const [hRes, cRes] = await Promise.all([
         api('/hotels/public'),
-        api('/categories/public')
+        api('/categories/public?ticket_type=issue')
       ]);
       setHotels(hRes.hotels || []);
       setCategories(cRes.categories || []);
