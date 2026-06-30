@@ -246,16 +246,14 @@ router.post('/test-email', authenticate, authorize('admin', 'manager'), async (r
           <p style="color: #6b7280; font-size: 12px;">This is an automated test email sent from your system settings.</p>
         </div>
       `
-    });
+    }, true); // pass true to throw error
 
-    if (success) {
-      res.json({ message: 'Test email sent successfully.' });
-    } else {
-      res.status(500).json({ error: 'Failed to send test email. Check server logs for details.' });
-    }
+    res.json({ message: 'Test email sent successfully.' });
   } catch (error) {
     console.error('Test email error:', error);
-    res.status(500).json({ error: 'Failed to send test email due to a server error.' });
+    // Extract the precise SMTP rejection reason from Nodemailer
+    const errorMessage = error.response ? `SMTP Error: ${error.response}` : (error.message || 'Failed to send test email due to a server error.');
+    res.status(500).json({ error: errorMessage });
   }
 });
 

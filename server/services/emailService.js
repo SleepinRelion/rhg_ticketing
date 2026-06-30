@@ -17,7 +17,7 @@ function getTransporter() {
   return transporter;
 }
 
-export async function sendEmail({ to, subject, text, html }) {
+export async function sendEmail({ to, subject, text, html }, throwError = false) {
   try {
     // If we're missing real SMTP credentials, just mock it out so the system doesn't crash
     if (!process.env.SMTP_USER) {
@@ -42,7 +42,7 @@ export async function sendEmail({ to, subject, text, html }) {
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);
-    // Don't throw for now, to not break critical flows if email is misconfigured
+    if (throwError) throw error;
     return false;
   }
 }
