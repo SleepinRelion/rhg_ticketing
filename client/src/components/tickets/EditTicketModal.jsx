@@ -71,12 +71,12 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" style={{ maxWidth: '800px', width: '90%' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+      <div className="modal-content" style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header" style={{ flexShrink: 0 }}>
           <h2>Edit Ticket {ticket.ticket_number}</h2>
-          <button className="btn-icon" onClick={onClose}><X /></button>
+          <button type="button" className="btn-icon" onClick={onClose}><X /></button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
           <div className="form-group">
             <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
             <input
