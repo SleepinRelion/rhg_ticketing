@@ -38,7 +38,7 @@ import { initializeCronJobs } from './services/backupService.js';
 import { rateLimit } from 'express-rate-limit';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (e.g. Nginx) to get correct req.ip
