@@ -78,7 +78,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
       upgradeInsecureRequests: null, // explicitly remove the default helmet directive
     },
