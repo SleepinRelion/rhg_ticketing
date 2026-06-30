@@ -72,7 +72,6 @@ if (process.env.NODE_ENV === 'production') {
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  hsts: process.env.NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
@@ -81,7 +80,6 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com"],
       connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
-      upgradeInsecureRequests: [], // Enable automatic HTTPS upgrades in production
     },
   } : false,
 }));
