@@ -379,7 +379,7 @@ router.put('/:id', authenticate, async (req, res) => {
       'title', 'description', 'priority', 'ticket_type', 'category_id', 'room_id', 'asset_id',
       'guest_impact', 'guest_room_occupied', 'guest_name', 'booking_reference',
       'department', 'out_of_order_room', 'requires_vendor', 'vendor_name',
-      'cost_estimate', 'actual_cost',
+      'cost_estimate', 'actual_cost', 'hotel_id'
     ];
 
     const updates = {};

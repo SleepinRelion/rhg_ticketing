@@ -17,11 +17,13 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     guest_impact: ticket.guest_impact || 'none',
     guest_room_occupied: ticket.guest_room_occupied || 'unknown',
     guest_name: ticket.guest_name || '',
+    hotel_id: ticket.hotel_id || '',
   });
 
   const [categories, setCategories] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [hotels, setHotels] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const { error, success } = useToast();
@@ -32,11 +34,13 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     Promise.all([
       api('/categories'),
       api('/rooms'),
-      api('/assets')
-    ]).then(([catRes, roomRes, assetRes]) => {
+      api('/assets'),
+      api('/hotels/public')
+    ]).then(([catRes, roomRes, assetRes, hotelRes]) => {
       setCategories(catRes.categories || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
+      setHotels(hotelRes.hotels || []);
     }).catch(() => error('Failed to load form data'));
   }, [error]);
 
@@ -48,6 +52,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
       if (!payload.category_id) payload.category_id = null;
       if (!payload.room_id) payload.room_id = null;
       if (!payload.asset_id) payload.asset_id = null;
+      if (!payload.hotel_id) payload.hotel_id = null;
 
       const updatedTicket = await api(`/tickets/${ticket.id}`, {
         method: 'PUT',
@@ -107,6 +112,20 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
                 <option value="task">Task</option>
                 <option value="request">Request</option>
                 <option value="issue">Issue</option>
+              </SearchableSelect>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Hotel</label>
+              <SearchableSelect
+                className="form-select"
+                value={formData.hotel_id || ''}
+                onChange={e => setFormData({ ...formData, hotel_id: e.target.value })}
+              >
+                <option value="">No Hotel (Unassigned)</option>
+                {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
               </SearchableSelect>
             </div>
           </div>
