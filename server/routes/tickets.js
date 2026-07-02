@@ -14,11 +14,11 @@ import { guestTicketLimiter, publicEndpointLimiter } from '../middleware/rateLim
 
 const router = Router();
 
-function applyTicketFilters(query, filters, db) {
+function applyTicketFilters(query, filters, db, userId = null) {
   const {
     search, status, priority, sla_status, ticket_type,
     department, category_id, room_id, asset_id, assignee_id,
-    created_by, date_from, date_to, month, year, tag_id
+    created_by, date_from, date_to, month, year, tag_id, my_tickets
   } = filters;
 
   const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
@@ -77,6 +77,13 @@ function applyTicketFilters(query, filters, db) {
     );
   }
 
+  if (my_tickets && userId) {
+    query = query.where(function () {
+      this.where('tickets.created_by', userId)
+        .orWhereIn('tickets.id', db('ticket_assignees').select('ticket_id').where('user_id', userId));
+    });
+  }
+
   return query;
 }
 
@@ -132,7 +139,7 @@ router.get('/', authenticate, async (req, res) => {
     query = buildTicketVisibilityQuery(query, req.user);
 
     // Filters
-    query = applyTicketFilters(query, req.query, db);
+    query = applyTicketFilters(query, req.query, db, req.user.id);
 
     // Count total
     const countQuery = query.clone();
@@ -208,7 +215,7 @@ router.get('/export', authenticate, async (req, res) => {
       .whereNull('tickets.deleted_at');
 
     query = buildTicketVisibilityQuery(query, req.user);
-    query = applyTicketFilters(query, req.query, db);
+    query = applyTicketFilters(query, req.query, db, req.user.id);
     const tickets = await query.orderBy('tickets.created_at', 'desc');
 
     const csv = toCSV(tickets);
@@ -275,7 +282,7 @@ router.get('/:id', authenticate, async (req, res) => {
     // Get related data
     const [assignees, tags, activityLogs, comments, checklists, attachments, linkedArticles] = await Promise.all([
       db('ticket_assignees')
-        .select('ticket_assignees.*', 'users.full_name', 'users.username', 'assigner.full_name as assigned_by_name')
+        .select('ticket_assignees.*', 'users.full_name', 'users.username', 'users.avatar_url', 'assigner.full_name as assigned_by_name')
         .join('users', 'ticket_assignees.user_id', 'users.id')
         .leftJoin('users as assigner', 'ticket_assignees.assigned_by', 'assigner.id')
         .where('ticket_id', ticket.id),

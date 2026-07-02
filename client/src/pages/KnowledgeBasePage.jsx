@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, Plus, Edit, X, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
@@ -13,7 +14,10 @@ export default function KnowledgeBasePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
   
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [categoryFilter, setCategoryFilter] = useState('');
 
   const [formData, setFormData] = useState({
@@ -106,15 +110,22 @@ export default function KnowledgeBasePage() {
 
       <div className="card" style={{ marginBottom: '24px', padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
         <div className="form-group" style={{ flex: 2, minWidth: '300px', margin: 0 }}>
-          <div className="input-group">
-            <span className="input-icon"><Search size={18} /></span>
+          <div style={{ position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
               className="form-input" 
               placeholder="Search knowledge base articles..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ fontSize: '15px' }}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                if (e.target.value) {
+                  setSearchParams({ search: e.target.value });
+                } else {
+                  setSearchParams({});
+                }
+              }}
+              style={{ fontSize: '15px', paddingLeft: '38px' }}
             />
           </div>
         </div>
@@ -132,7 +143,14 @@ export default function KnowledgeBasePage() {
       
       {loading ? <div className="loading-spinner"><div className="spinner"></div></div> : (
         <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
-          {articles.map(article => (
+          {articles.filter(a => {
+            const matchesSearch = !searchQuery || 
+              a.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (a.symptoms && a.symptoms.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (a.resolution_steps && a.resolution_steps.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesCat = !categoryFilter || String(a.category_id) === String(categoryFilter);
+            return matchesSearch && matchesCat;
+          }).map(article => (
             <div key={article.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1 }}>
                 <h3 style={{ marginBottom: '8px' }}>{article.title}</h3>

@@ -38,7 +38,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 router.get('/technicians', authenticate, async (req, res) => {
   try {
     const technicians = await db('users')
-      .select('id', 'full_name', 'username', 'email')
+      .select('id', 'full_name', 'username', 'email', 'avatar_url')
       .whereIn('role', ['technician', 'manager', 'admin'])
       .where({ is_active: true })
       .whereNull('deleted_at')

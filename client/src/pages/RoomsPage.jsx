@@ -279,9 +279,9 @@ export default function RoomsPage() {
               {sortedItems.map(room => (
                 <tr key={room.id}>
                   <td 
-                    style={{ fontWeight: 600, cursor: room.active_ticket ? 'pointer' : 'default', textDecoration: room.active_ticket ? 'underline' : 'none' }}
+                    style={{ fontWeight: 600, cursor: room.active_ticket ? 'pointer' : 'default' }}
                     title={room.active_ticket ? `Active Ticket: ${room.active_ticket.title}` : ''}
-                    onClick={() => room.active_ticket && navigate(`/tickets?search=${encodeURIComponent(room.room_number)}`)}
+                    onClick={() => room.active_ticket && navigate(`/tickets?room_id=${room.id}`)}
                   >
                     Room {room.room_number}
                   </td>
@@ -289,7 +289,10 @@ export default function RoomsPage() {
                   <td style={{ textTransform: 'capitalize' }}>{room.room_type || '-'}</td>
                   <td>
                     {room.open_ticket_count > 0 
-                      ? <span style={{ color: 'var(--error)', fontWeight: 600 }}>{room.open_ticket_count} Issues</span>
+                      ? <span 
+                          style={{ color: 'var(--error)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                          onClick={() => navigate(`/tickets?room_id=${room.id}`)}
+                        >{room.open_ticket_count} Issues</span>
                       : <span style={{ color: 'var(--success)' }}>Clear</span>}
                   </td>
                   {isManager && (

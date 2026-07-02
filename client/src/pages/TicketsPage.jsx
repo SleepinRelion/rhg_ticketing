@@ -1,27 +1,42 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X, User } from 'lucide-react';
 import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import FormatCategory from '../components/ui/FormatCategory.jsx';
 
+const FILTER_KEYS = ['status', 'priority', 'search', 'month', 'year', 'category_id', 'department', 'sla_status', 'assignee_id', 'ticket_type', 'sort_by', 'sort_order', 'room_id', 'my_tickets', 'date_from', 'date_to'];
+const DEFAULT_FILTERS = { status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc', room_id: '', my_tickets: '', date_from: '', date_to: '' };
+
 export default function TicketsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize filters from URL search params
+  const getFiltersFromURL = useCallback(() => {
+    const f = { ...DEFAULT_FILTERS };
+    for (const key of FILTER_KEYS) {
+      const val = searchParams.get(key);
+      if (val) f[key] = val;
+    }
+    return f;
+  }, [searchParams]);
+
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc' });
+  const [filters, setFilters] = useState(getFiltersFromURL);
   const [selectedTickets, setSelectedTickets] = useState(new Set());
   const [availableYears, setAvailableYears] = useState([]);
   const [categories, setCategories] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const isInitialMount = useRef(true);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isManager } = useAuth();
   const { socket } = useSocket();
   const { error, success } = useToast();
@@ -35,8 +50,8 @@ export default function TicketsPage() {
       if (data.categories) setCategories(data.categories);
     }).catch(console.error);
 
-    api('/users').then(data => {
-      if (data.users) setTechnicians(data.users.filter(u => ['technician', 'admin', 'manager'].includes(u.role)));
+    api('/users/technicians').then(data => {
+      if (data.technicians) setTechnicians(data.technicians);
     }).catch(console.error);
   }, []);
 
@@ -44,7 +59,6 @@ export default function TicketsPage() {
     if (!socket) return;
     
     const handleTicketUpdate = () => {
-      // Refresh the current page of tickets
       fetchTickets(pagination.page, filters);
     };
 
@@ -57,18 +71,33 @@ export default function TicketsPage() {
     };
   }, [socket, pagination.page, filters]);
 
+  // Sync filters to URL when they change (but not on initial mount)
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const search = params.get('search') || '';
-    const date_from = params.get('date_from') || '';
-    const date_to = params.get('date_to') || '';
-    setFilters(f => ({ ...f, search, date_from, date_to }));
-    fetchTickets(1, { ...filters, search, date_from, date_to });
-  }, [location.search]);
-
-  useEffect(() => {
-    fetchTickets(pagination.page, filters);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchTickets(1, filters);
+      return;
+    }
+    // Update URL params
+    const params = new URLSearchParams();
+    for (const [key, val] of Object.entries(filters)) {
+      if (val && val !== DEFAULT_FILTERS[key]) {
+        params.set(key, val);
+      }
+    }
+    setSearchParams(params, { replace: true });
+    fetchTickets(1, filters);
   }, [filters]);
+
+  // When URL changes (e.g., browser back), sync filters from URL
+  useEffect(() => {
+    const urlFilters = getFiltersFromURL();
+    const filtersChanged = FILTER_KEYS.some(k => (urlFilters[k] || '') !== (filters[k] || ''));
+    if (filtersChanged) {
+      setFilters(urlFilters);
+    }
+  }, [searchParams]);
+
 
   async function fetchTickets(page = 1, currentFilters = filters) {
     try {
@@ -274,6 +303,15 @@ export default function TicketsPage() {
         </SearchableSelect>
 
         <button
+          className={`btn btn-sm ${filters.my_tickets ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setFilters({ ...filters, my_tickets: filters.my_tickets ? '' : 'true' })}
+          title="Show only tickets created by or assigned to me"
+        >
+          <User size={14} />
+          My Tickets
+        </button>
+
+        <button
           className={`btn btn-sm ${showMoreFilters ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setShowMoreFilters(!showMoreFilters)}
           style={{ position: 'relative' }}
@@ -281,7 +319,7 @@ export default function TicketsPage() {
           {showMoreFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           More Filters
           {(() => {
-            const count = [filters.category_id, filters.department, filters.sla_status, filters.assignee_id, filters.date_from, filters.date_to].filter(Boolean).length;
+            const count = [filters.category_id, filters.department, filters.sla_status, filters.assignee_id, filters.date_from, filters.date_to, filters.room_id].filter(Boolean).length;
             return count > 0 ? (
               <span style={{
                 position: 'absolute', top: -6, right: -6, background: 'var(--error)', color: '#fff',
@@ -292,10 +330,10 @@ export default function TicketsPage() {
           })()}
         </button>
 
-        {Object.values(filters).some(v => v) && (
+        {Object.entries(filters).some(([k, v]) => v && v !== DEFAULT_FILTERS[k]) && (
           <button
             className={`btn btn-ghost btn-sm`}
-            onClick={() => setFilters({ status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '' })}
+            onClick={() => setFilters({ ...DEFAULT_FILTERS })}
             style={{ color: 'var(--error)', fontSize: 12 }}
           >
             <X size={14} /> Clear All

@@ -55,7 +55,47 @@ router.get('/suggestions', authenticate, async (req, res) => {
     }
 
     const suggestions = await query.limit(5);
-    res.json({ suggestions });
+
+    // Also search past resolved/closed tickets for "Intelligent Knowledge Base"
+    let ticketSuggestions = [];
+    if (title) {
+      let tQuery = db('tickets')
+        .select('tickets.id', 'tickets.title', 'activity_logs.note as resolution')
+        .join('activity_logs', function() {
+          this.on('tickets.id', '=', 'activity_logs.ticket_id')
+              .andOnIn('activity_logs.new_value', ['resolved', 'closed'])
+              .andOn('activity_logs.action', '=', db.raw("'status_changed'"))
+        })
+        .whereIn('tickets.status', ['resolved', 'closed'])
+        .whereNotNull('activity_logs.note')
+        .where('activity_logs.note', '!=', '');
+
+      if (category_id) tQuery = tQuery.where('tickets.category_id', category_id);
+
+      const words = title.toLowerCase().split(/\s+/).filter((w) => w.length > 1).slice(0, 5);
+      if (words.length > 0) {
+        tQuery = tQuery.where(function () {
+          const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
+          for (const word of words) {
+            this.orWhere('tickets.title', operator, `%${word}%`)
+                .orWhere('activity_logs.note', operator, `%${word}%`);
+          }
+        });
+      }
+      
+      // Deduplicate by ticket.id
+      const rawTickets = await tQuery.orderBy('activity_logs.created_at', 'desc').limit(10);
+      const seen = new Set();
+      for (const t of rawTickets) {
+        if (!seen.has(t.id)) {
+          seen.add(t.id);
+          ticketSuggestions.push(t);
+        }
+      }
+      ticketSuggestions = ticketSuggestions.slice(0, 5); // Keep top 5 unique
+    }
+
+    res.json({ suggestions, ticketSuggestions });
   } catch (error) {
     console.error('Suggestions error:', error);
     res.status(500).json({ error: 'Failed to get suggestions.' });
@@ -137,7 +177,7 @@ router.post('/from-ticket/:ticketId', authenticate, async (req, res) => {
       symptoms: sanitizeRich(ticket.description || 'No description provided.'),
       resolution_steps: sanitizeRich(resolutionText),
       created_by: req.user.id,
-      is_published: false, // Create as draft so staff can review
+      is_published: true, // Create as published so it's immediately available
       created_at: new Date(),
       updated_at: new Date(),
     }).returning('*');

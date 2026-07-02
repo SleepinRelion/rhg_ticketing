@@ -140,7 +140,7 @@ export default function TicketDetailPage() {
   const handleConvertToKB = async () => {
     try {
       await api(`/knowledge-base/from-ticket/${id}`, { method: 'POST' });
-      success('Ticket converted to KB article successfully. Please review and publish it.');
+      success('Ticket converted to KB article successfully. You can review and edit it below.');
       navigate(`/knowledge-base?search=${encodeURIComponent(ticketData.title)}`);
     } catch (err) {
       error(err.message || 'Failed to convert to KB article.');
@@ -389,7 +389,16 @@ export default function TicketDetailPage() {
                 {assignees.map(a => (
                   <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="user-avatar" style={{ width: 24, height: 24, fontSize: 10 }}>{a.full_name.charAt(0)}</div>
+                      {a.avatar_url ? (
+                        <img 
+                          src={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${a.avatar_url}` : a.avatar_url} 
+                          alt={a.full_name}
+                          className="user-avatar" 
+                          style={{ width: 24, height: 24, objectFit: 'cover' }} 
+                        />
+                      ) : (
+                        <div className="user-avatar" style={{ width: 24, height: 24, fontSize: 10 }}>{a.full_name.charAt(0)}</div>
+                      )}
                       <span style={{ fontSize: 'var(--font-sm)', fontWeight: 500 }}>{a.full_name}</span>
                     </div>
                     {isManager() && (

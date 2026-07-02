@@ -334,7 +334,7 @@ export default function CreateTicketPage() {
                   'e.g., TV not working in Room 204'
                 }
               />
-              <KBSuggestions query={formData.title} categoryId={formData.category_id} discrete={true} />
+              <KBSuggestions query={formData.title} categoryId={formData.category_id} discrete={false} />
             </div>
 
             {/* ===== CATEGORY SECTION ===== */}

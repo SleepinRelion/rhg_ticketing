@@ -74,13 +74,14 @@ router.get('/charts', authenticate, async (req, res) => {
       db('tickets').select('department').count('* as count').whereNotNull('department').groupBy('department')
     );
 
-    // Tickets by category
+    // Tickets by category (Grouped by parent category if it's a subcategory)
     const byCategory = await baseFilter(
       db('tickets')
-        .select('categories.name as category', db.raw('count(*) as count'))
+        .select(db.raw('COALESCE(parent.name, categories.name) as category'), db.raw('count(*) as count'))
         .leftJoin('categories', 'tickets.category_id', 'categories.id')
+        .leftJoin('categories as parent', 'categories.parent_id', 'parent.id')
         .whereNotNull('tickets.category_id')
-        .groupBy('categories.name')
+        .groupBy(db.raw('COALESCE(parent.name, categories.name)'))
     ).orderBy('count', 'desc');
 
     // Top 10 problem rooms

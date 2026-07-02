@@ -109,4 +109,15 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
   }
 });
 
+// DELETE /api/preventive-maintenance/:id
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const deleted = await db('preventive_maintenance').where({ id: req.params.id }).del();
+    if (!deleted) return res.status(404).json({ error: 'Schedule not found.' });
+    res.json({ message: 'Schedule deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete schedule.' });
+  }
+});
+
 export default router;

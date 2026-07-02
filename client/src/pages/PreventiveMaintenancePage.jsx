@@ -106,6 +106,17 @@ export default function PreventiveMaintenancePage() {
     }
   }
 
+  async function handleDelete(id) {
+    if (!window.confirm('Are you sure you want to delete this schedule?')) return;
+    try {
+      await api(`/preventive-maintenance/${id}`, { method: 'DELETE' });
+      success('Schedule deleted successfully');
+      fetchSchedules();
+    } catch (err) {
+      error(err.message || 'Failed to delete schedule');
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -118,88 +129,72 @@ export default function PreventiveMaintenancePage() {
         </button>
       </div>
 
-      <div className="card table-container">
-        {loading ? (
-          <div className="loading-spinner"><div className="spinner"></div></div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th onClick={() => requestSort('title')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Task {sortConfig?.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th onClick={() => requestSort('asset_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Asset {sortConfig?.key === 'asset_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th onClick={() => requestSort('frequency')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Frequency {sortConfig?.key === 'frequency' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th onClick={() => requestSort('next_due_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Next Due Date {sortConfig?.key === 'next_due_date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th onClick={() => requestSort('last_completed_at')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Last Completed {sortConfig?.key === 'last_completed_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedItems.map(schedule => {
-                const dueDate = new Date(schedule.next_due_date);
-                const isOverdue = dueDate < new Date() && dueDate.toDateString() !== new Date().toDateString();
-                const isDueToday = dueDate.toDateString() === new Date().toDateString();
+      {loading ? (
+        <div className="loading-spinner"><div className="spinner"></div></div>
+      ) : schedules.length === 0 ? (
+        <div className="empty-state card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+          <div style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+            <Calendar size={48} style={{ margin: '0 auto', opacity: 0.5 }} />
+          </div>
+          <h3>No Maintenance Schedules</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Keep your assets in top condition by setting up recurring maintenance tasks.</p>
+          <button className="btn btn-primary" onClick={() => openModal()}>Create First Schedule</button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          {sortedItems.map(schedule => {
+            const dueDate = new Date(schedule.next_due_date);
+            const isOverdue = dueDate < new Date() && dueDate.toDateString() !== new Date().toDateString();
+            const isDueToday = dueDate.toDateString() === new Date().toDateString();
 
-                return (
-                  <tr key={schedule.id}>
-                    <td>
-                      {isOverdue ? (
-                        <span className="badge badge-danger">Overdue</span>
-                      ) : isDueToday ? (
-                        <span className="badge badge-warning">Due Today</span>
-                      ) : (
-                        <span className="badge badge-success">Upcoming</span>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 500 }}>{schedule.title}</td>
-                    <td>{schedule.asset_name} ({schedule.asset_tag})</td>
-                    <td style={{ textTransform: 'capitalize' }}>{schedule.frequency}</td>
-                    <td>{format(new Date(schedule.next_due_date), 'MMM d, yyyy')}</td>
-                    <td>{schedule.last_completed_at ? format(new Date(schedule.last_completed_at), 'MMM d, yyyy') : 'Never'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button 
-                          className="btn btn-ghost" 
-                          style={{ color: 'var(--success-color)' }}
-                          title="Mark Completed"
-                          onClick={() => handleComplete(schedule.id)}
-                        >
-                          <CheckCircle size={18} />
-                        </button>
-                        <button 
-                          className="btn btn-ghost" 
-                          style={{ color: 'var(--primary-500)' }}
-                          title="Edit Schedule"
-                          onClick={() => openModal(schedule)}
-                        >
-                          <Edit size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {schedules.length === 0 && (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                    No preventive maintenance schedules configured.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
+            return (
+              <div key={schedule.id} className="card hover-bg-muted" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  {isOverdue ? (
+                    <span className="badge badge-danger">Overdue</span>
+                  ) : isDueToday ? (
+                    <span className="badge badge-warning">Due Today</span>
+                  ) : (
+                    <span className="badge badge-success">Upcoming</span>
+                  )}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button className="btn-icon" style={{ color: 'var(--primary-500)', width: 28, height: 28 }} title="Edit Schedule" onClick={() => openModal(schedule)}><Edit size={16} /></button>
+                    <button className="btn-icon" style={{ color: 'var(--error)', width: 28, height: 28 }} title="Delete Schedule" onClick={() => handleDelete(schedule.id)}><Trash2 size={16} /></button>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--text-primary)' }}>{schedule.title}</h3>
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    {schedule.asset_name} ({schedule.asset_tag})
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', background: 'var(--bg-color)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', marginBottom: '2px', fontSize: '12px' }}>Frequency</div>
+                    <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{schedule.frequency}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', marginBottom: '2px', fontSize: '12px' }}>Due Date</div>
+                    <div style={{ fontWeight: 500, color: isOverdue ? 'var(--error)' : isDueToday ? 'var(--warning-dark)' : 'inherit' }}>
+                      {format(new Date(schedule.next_due_date), 'MMM d, yyyy')}
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', color: 'var(--success-color)', border: '1px solid var(--success-color)' }}
+                  onClick={() => handleComplete(schedule.id)}
+                >
+                  <CheckCircle size={16} /> Mark Completed
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="modal-overlay">
