@@ -20,6 +20,7 @@ import PreventiveMaintenancePage from './pages/PreventiveMaintenancePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ImportDataPage from './pages/ImportDataPage.jsx';
+import CalendarPage from './pages/CalendarPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 function ProtectedRoute({ children, roles }) {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="tickets/:id" element={<TicketDetailPage />} />
         <Route path="rooms" element={<RoomsPage />} />
         <Route path="assets" element={<ProtectedRoute roles={['admin', 'manager', 'technician']}><AssetsPage /></ProtectedRoute>} />
+        <Route path="calendar" element={<CalendarPage />} />
         <Route path="knowledge-base" element={<KnowledgeBasePage />} />
         <Route path="preventive-maintenance" element={<PreventiveMaintenancePage />} />
         <Route path="reports" element={<ProtectedRoute roles={['admin', 'manager']}><ReportsPage /></ProtectedRoute>} />

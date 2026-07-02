@@ -1,0 +1,155 @@
+import { useState, useEffect } from 'react';
+import api from '../api/client.js';
+import { useToast } from '../context/ToastContext.jsx';
+import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+export default function CalendarPage() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { error } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchData();
+  }, [currentDate]);
+
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [ticketRes, pmRes] = await Promise.all([
+        api(`/tickets?limit=500&status=open,in_progress,assigned,waiting_for_parts,waiting_for_vendor,waiting_for_guest`),
+        api('/preventive-maintenance')
+      ]);
+      
+      const calendarItems = [
+        ...(ticketRes.tickets || []).filter(t => t.resolution_due_at).map(t => ({
+          ...t,
+          type: 'ticket',
+          date: parseISO(t.resolution_due_at),
+          titleDisplay: `${t.ticket_number} - ${t.title}`
+        })),
+        ...(pmRes.schedules || []).filter(p => p.next_due_date).map(p => ({
+          ...p,
+          type: 'pm',
+          date: parseISO(p.next_due_date),
+          titleDisplay: `PM: ${p.title} (${p.asset_name || 'N/A'})`
+        }))
+      ];
+      
+      setItems(calendarItems);
+    } catch (err) {
+      error('Failed to load calendar data');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const startDate = startOfWeek(monthStart);
+  const endDate = startOfWeek(addDays(monthEnd, 6)); // ensure grid fills out
+  const dateFormat = "d";
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  const nextMonth = () => setCurrentDate(addDays(monthEnd, 1));
+  const prevMonth = () => setCurrentDate(addDays(monthStart, -1));
+  const today = () => setCurrentDate(new Date());
+
+  const getDayItems = (day) => {
+    return items.filter(item => isSameDay(item.date, day));
+  };
+
+  return (
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+      <div className="page-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="page-title"><CalendarIcon size={24} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }}/> Calendar & Reminders</h1>
+            <p className="page-subtitle">Track upcoming ticket deadlines</p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className="btn btn-secondary" onClick={today}>Today</button>
+            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '4px' }}>
+              <button className="btn-icon" onClick={prevMonth}>&lt;</button>
+              <span style={{ fontWeight: 600, minWidth: '120px', textAlign: 'center', alignSelf: 'center' }}>{format(currentDate, "MMMM yyyy")}</span>
+              <button className="btn-icon" onClick={nextMonth}>&gt;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
+        {loading && <div className="loading-spinner"><div className="spinner"></div></div>}
+        {!loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            {/* Weekdays Header */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px' }}>
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--text-muted)', fontSize: '13px', textTransform: 'uppercase' }}>
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', flex: 1 }}>
+              {days.map((day, i) => {
+                const dayItems = getDayItems(day);
+                return (
+                  <div key={i} style={{ 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: 'var(--radius-md)', 
+                    padding: '8px', 
+                    background: isToday(day) ? 'rgba(59, 130, 246, 0.05)' : (isSameMonth(day, monthStart) ? 'var(--bg-primary)' : 'var(--bg-secondary)'),
+                    opacity: isSameMonth(day, monthStart) ? 1 : 0.5,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ 
+                      fontWeight: isToday(day) ? 700 : 500, 
+                      color: isToday(day) ? 'var(--primary-600)' : 'var(--text-primary)',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span>{format(day, dateFormat)}</span>
+                      {dayItems.length > 0 && <span className="badge" style={{ fontSize: '10px', padding: '2px 6px' }}>{dayItems.length} due</span>}
+                    </div>
+                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {dayItems.map((item, idx) => (
+                        <div 
+                          key={`${item.type}-${item.id}-${idx}`} 
+                          onClick={() => item.type === 'ticket' ? navigate(`/tickets/${item.id}`) : navigate('/preventive-maintenance')}
+                          style={{ 
+                            fontSize: '11px', 
+                            padding: '4px 6px', 
+                            background: item.type === 'pm' ? 'rgba(16, 185, 129, 0.1)' : (item.priority === 'critical' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'), 
+                            color: item.type === 'pm' ? 'var(--success)' : (item.priority === 'critical' ? 'var(--error)' : 'var(--primary-600)'),
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            border: item.type === 'pm' ? '1px solid rgba(16, 185, 129, 0.2)' : 'none'
+                          }}
+                          title={item.titleDisplay}
+                        >
+                          {item.titleDisplay}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

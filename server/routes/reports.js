@@ -54,6 +54,7 @@ router.get('/:type', authenticate, async (req, res) => {
               .andOn('interventions.technician_id', '=', 'ticket_assignees.user_id');
           })
           .whereNull('tickets.deleted_at')
+          .where('users.is_active', true)
           .modify((q) => {
             if (date_from) q.where('ticket_assignees.assigned_at', '>=', date_from);
             if (date_to) q.where('ticket_assignees.assigned_at', '<=', date_to);

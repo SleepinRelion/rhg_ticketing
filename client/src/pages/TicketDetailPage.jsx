@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Clock, User, DoorOpen, HardDrive, Tag, 
   MessageSquare, FileText, CheckSquare, Wrench, Edit,
-  Paperclip, Plus, Send, X, AlertCircle
+  Paperclip, Plus, Send, X, AlertCircle, BookOpen
 } from 'lucide-react';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import EditTicketModal from '../components/tickets/EditTicketModal.jsx';
@@ -137,6 +137,16 @@ export default function TicketDetailPage() {
     return false;
   };
 
+  const handleConvertToKB = async () => {
+    try {
+      await api(`/knowledge-base/from-ticket/${id}`, { method: 'POST' });
+      success('Ticket converted to KB article successfully. Please review and publish it.');
+      navigate(`/knowledge-base?search=${encodeURIComponent(ticketData.title)}`);
+    } catch (err) {
+      error(err.message || 'Failed to convert to KB article.');
+    }
+  };
+
   if (loading || !ticketData) {
     return <div className="loading-spinner"><div className="spinner"></div></div>;
   }
@@ -194,6 +204,11 @@ export default function TicketDetailPage() {
                 <button className="btn btn-primary" onClick={() => handleStatusChange('closed')}>Close Ticket</button>
               )}
             </>
+          )}
+          {ticketData.status === 'closed' && isManager() && (
+            <button className="btn btn-secondary" onClick={handleConvertToKB} title="Convert to Knowledge Base Article">
+              <BookOpen size={16} /> Convert to KB
+            </button>
           )}
         </div>
       </div>

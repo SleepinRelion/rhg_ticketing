@@ -114,7 +114,8 @@ router.get('/charts', authenticate, async (req, res) => {
       .join('users', 'ticket_assignees.user_id', 'users.id')
       .join('tickets', 'ticket_assignees.ticket_id', 'tickets.id')
       .whereNotIn('tickets.status', ['closed', 'cancelled'])
-      .whereNull('tickets.deleted_at');
+      .whereNull('tickets.deleted_at')
+      .where('users.is_active', true);
       
     techWorkloadQuery = buildTicketVisibilityQuery(techWorkloadQuery, req.user);
     
@@ -130,10 +131,14 @@ router.get('/charts', authenticate, async (req, res) => {
     const isPg = db.client.config.client === 'pg' || db.client.config.client === 'postgresql';
     const monthFormat = isPg ? "to_char(created_at, 'YYYY-MM')" : "strftime('%Y-%m', created_at)";
     
-    const monthlyTrend = await db('tickets')
+    let monthlyTrendQuery = db('tickets')
       .select(db.raw(`${monthFormat} as month`), db.raw('count(*) as count'))
       .whereNull('deleted_at')
-      .where('created_at', '>=', sixMonthsAgo)
+      .where('created_at', '>=', sixMonthsAgo);
+      
+    monthlyTrendQuery = buildTicketVisibilityQuery(monthlyTrendQuery, req.user);
+    
+    const monthlyTrend = await monthlyTrendQuery
       .groupByRaw(monthFormat)
       .orderBy('month');
 

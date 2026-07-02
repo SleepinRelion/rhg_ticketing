@@ -58,8 +58,6 @@ app.use((req, res, next) => {
 
 const PORT = process.env.PORT || 3001;
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './uploads')));
 
 // Security checks
 if (process.env.NODE_ENV === 'production') {

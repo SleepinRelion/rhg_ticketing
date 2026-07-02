@@ -10,6 +10,8 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+import mime from 'mime-types';
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dateDir = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -20,8 +22,13 @@ const storage = multer.diskStorage({
     cb(null, fullDir);
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueName = `${uuidv4()}${ext}`;
+    // Generate extension from the verified mimetype instead of using originalname
+    let ext = mime.extension(file.mimetype);
+    // If mime.extension returns false, fallback to checking originalname or default
+    if (!ext) {
+      ext = path.extname(file.originalname).replace('.', '') || 'bin';
+    }
+    const uniqueName = `${uuidv4()}.${ext}`;
     cb(null, uniqueName);
   },
 });

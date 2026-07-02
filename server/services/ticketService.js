@@ -188,7 +188,7 @@ export async function updateTicketStatus(ticketId, newStatus, userId, userRole, 
  */
 export function buildTicketVisibilityQuery(query, user) {
   // Filter by active hotel
-  if (user.activeHotelId) {
+  if (user.activeHotelId && user.activeHotelId !== 'all') {
     query = query.where('tickets.hotel_id', user.activeHotelId);
   }
 

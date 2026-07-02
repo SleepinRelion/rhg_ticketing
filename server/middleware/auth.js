@@ -48,13 +48,19 @@ export async function authenticate(req, res, next) {
       }
 
       // Determine active hotel context
-      const requestedHotelId = req.headers['x-hotel-id'] ? parseInt(req.headers['x-hotel-id']) : null;
-      activeHotelId = user.primary_hotel_id ? parseInt(user.primary_hotel_id, 10) : null;
+      const requestedHotelIdStr = req.headers['x-hotel-id'];
+      
+      if (requestedHotelIdStr === 'all' && (user.role === 'admin' || user.role === 'manager')) {
+        activeHotelId = 'all';
+      } else {
+        const requestedHotelId = requestedHotelIdStr ? parseInt(requestedHotelIdStr, 10) : null;
+        activeHotelId = user.primary_hotel_id ? parseInt(user.primary_hotel_id, 10) : null;
 
-      if (requestedHotelId && hotelIds.includes(requestedHotelId)) {
-        activeHotelId = requestedHotelId;
-      } else if (hotelIds.length > 0 && !hotelIds.includes(activeHotelId)) {
-        activeHotelId = hotelIds[0];
+        if (requestedHotelId && hotelIds.includes(requestedHotelId)) {
+          activeHotelId = requestedHotelId;
+        } else if (hotelIds.length > 0 && !hotelIds.includes(activeHotelId)) {
+          activeHotelId = hotelIds[0];
+        }
       }
     } catch (hotelErr) {
       // If user_hotels table doesn't exist or query fails, proceed without hotel context
@@ -69,6 +75,7 @@ export async function authenticate(req, res, next) {
       fullName: user.full_name,
       role: user.role,
       mfaEnabled: user.mfa_enabled,
+      avatar_url: user.avatar_url,
       hotelIds,
       activeHotelId,
     };

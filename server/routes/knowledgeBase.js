@@ -107,6 +107,48 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/knowledge-base/from-ticket/:ticketId
+router.post('/from-ticket/:ticketId', authenticate, async (req, res) => {
+  try {
+    const ticketId = req.params.ticketId;
+    const ticket = await db('tickets').where({ id: ticketId }).first();
+    
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found.' });
+    }
+
+    // Get the closing resolution note from activity logs
+    const resolutionLog = await db('activity_logs')
+      .where({ ticket_id: ticketId, action: 'status_changed', new_value: 'closed' })
+      .orderBy('created_at', 'desc')
+      .first();
+      
+    const resolutionLog2 = await db('activity_logs')
+      .where({ ticket_id: ticketId, action: 'status_changed', new_value: 'resolved' })
+      .orderBy('created_at', 'desc')
+      .first();
+
+    const resolutionText = resolutionLog?.note || resolutionLog2?.note || 'No specific resolution steps provided in the ticket closure log. Please update this section.';
+
+    const [article] = await db('knowledge_base_articles').insert({
+      title: sanitize(`Resolution for: ${ticket.title}`),
+      category_id: ticket.category_id || null,
+      asset_type: null,
+      symptoms: sanitizeRich(ticket.description || 'No description provided.'),
+      resolution_steps: sanitizeRich(resolutionText),
+      created_by: req.user.id,
+      is_published: false, // Create as draft so staff can review
+      created_at: new Date(),
+      updated_at: new Date(),
+    }).returning('*');
+
+    res.status(201).json({ article });
+  } catch (error) {
+    console.error('Convert to KB error:', error);
+    res.status(500).json({ error: 'Failed to convert ticket to KB article.' });
+  }
+});
+
 // PUT /api/knowledge-base/:id
 router.put('/:id', authenticate, async (req, res) => {
   try {

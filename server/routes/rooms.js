@@ -33,7 +33,26 @@ router.get('/', authenticate, async (req, res) => {
     const countMap = {};
     ticketCounts.forEach((tc) => { countMap[tc.room_id] = parseInt(tc.count); });
 
-    const enrichedRooms = rooms.map((r) => ({ ...r, open_ticket_count: countMap[r.id] || 0 }));
+    // Get the latest open ticket for each room
+    const activeTickets = await db('tickets')
+      .select('id', 'room_id', 'title')
+      .whereNotIn('status', ['closed', 'cancelled', 'resolved'])
+      .whereNull('deleted_at')
+      .whereNotNull('room_id')
+      .orderBy('created_at', 'desc');
+
+    const latestTicketMap = {};
+    activeTickets.forEach(t => {
+      if (!latestTicketMap[t.room_id]) {
+        latestTicketMap[t.room_id] = { id: t.id, title: t.title };
+      }
+    });
+
+    const enrichedRooms = rooms.map((r) => ({ 
+      ...r, 
+      open_ticket_count: countMap[r.id] || 0,
+      active_ticket: latestTicketMap[r.id] || null
+    }));
     res.json({ rooms: enrichedRooms });
   } catch (error) {
     console.error('List rooms error:', error);

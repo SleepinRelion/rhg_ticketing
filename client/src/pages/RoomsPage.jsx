@@ -3,6 +3,7 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { DoorOpen, Plus, Edit2, Trash2, X, Save, Search, Filter as FilterIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 import useSortableTable from '../hooks/useSortableTable.js';
@@ -23,6 +24,7 @@ export default function RoomsPage() {
 
   const { error, success } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isManager = ['admin', 'manager'].includes(user?.role);
 
   useEffect(() => {
@@ -276,7 +278,13 @@ export default function RoomsPage() {
             <tbody>
               {sortedItems.map(room => (
                 <tr key={room.id}>
-                  <td style={{ fontWeight: 600 }}>Room {room.room_number}</td>
+                  <td 
+                    style={{ fontWeight: 600, cursor: room.active_ticket ? 'pointer' : 'default', textDecoration: room.active_ticket ? 'underline' : 'none' }}
+                    title={room.active_ticket ? `Active Ticket: ${room.active_ticket.title}` : ''}
+                    onClick={() => room.active_ticket && navigate(`/tickets?search=${encodeURIComponent(room.room_number)}`)}
+                  >
+                    Room {room.room_number}
+                  </td>
                   <td>{room.floor || '-'}</td>
                   <td style={{ textTransform: 'capitalize' }}>{room.room_type || '-'}</td>
                   <td>

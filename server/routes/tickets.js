@@ -594,7 +594,7 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, re
             break;
           case 'change_status':
             if (!value) throw new Error('Status value is required.');
-            await updateTicketStatus(ticketId, value, req.user.id, req.user.role, 'Bulk status change');
+            await updateTicketStatus(ticketId, value, req.user.id, req.user.role, req.body.resolution_note || 'Bulk status change');
             break;
           case 'change_priority':
             if (!value) throw new Error('Priority value is required.');

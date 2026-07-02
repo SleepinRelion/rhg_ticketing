@@ -129,7 +129,18 @@ export default function TicketsPage() {
   };
 
   const handleSingleAction = async (ticketId, action, value = null) => {
-    if (!confirm('Are you sure you want to perform this action?')) return;
+    let resolutionNote = null;
+    
+    if (value === 'closed' || value === 'resolved') {
+      resolutionNote = prompt('Please enter a brief resolution note to close this ticket:');
+      if (resolutionNote === null) return; // Cancelled
+      if (resolutionNote.trim() === '') {
+        error('A resolution note is required to close a ticket.');
+        return;
+      }
+    } else {
+      if (!confirm('Are you sure you want to perform this action?')) return;
+    }
 
     try {
       await api('/tickets/bulk', {
@@ -137,7 +148,8 @@ export default function TicketsPage() {
         body: JSON.stringify({
           ticket_ids: [ticketId],
           action,
-          value
+          value,
+          resolution_note: resolutionNote
         })
       });
       success('Action completed');
@@ -490,6 +502,11 @@ export default function TicketsPage() {
                         {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
                           <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--success)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'resolved')} title="Mark Resolved">
                             <CheckCircle2 size={16} />
+                          </button>
+                        )}
+                        {ticket.status !== 'closed' && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--text-muted)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'closed')} title="Close Ticket">
+                            <X size={16} />
                           </button>
                         )}
                         {['admin', 'manager'].includes(user.role) && (

@@ -150,6 +150,7 @@ router.post('/login', async (req, res) => {
         fullName: user.full_name,
         role: user.role,
         mfaEnabled: user.mfa_enabled,
+        avatar_url: user.avatar_url,
       },
     });
   } catch (error) {

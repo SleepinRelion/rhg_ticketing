@@ -2,7 +2,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
   LayoutDashboard, Ticket, Plus, DoorOpen, HardDrive, Users, FolderOpen,
-  BookOpen, BarChart3, Bell, Shield, Settings, Wrench, ClipboardList, FileUp
+  BookOpen, BarChart3, Bell, Shield, Settings, Wrench, ClipboardList, FileUp, Calendar
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -14,6 +14,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/tickets', icon: Ticket, label: 'Tickets' },
     { path: '/tickets/new', icon: Plus, label: 'Create Ticket' },
+    { path: '/calendar', icon: Calendar, label: 'Calendar' },
 
     { section: 'Hotel' },
     { path: '/rooms', icon: DoorOpen, label: 'Rooms' },

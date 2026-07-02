@@ -80,7 +80,7 @@ export default function ReportsPage() {
       }, []);
 
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
           <div className="card" style={{ padding: '24px' }}>
             <h3 style={{ marginBottom: '16px' }}>Tickets by Status</h3>
             <div style={{ height: 300 }}>
@@ -155,12 +155,12 @@ export default function ReportsPage() {
     const columns = Object.keys(data[0]);
 
     return (
-      <div className="table-container">
-        <table className="table">
+      <div className="data-table-container" style={{ margin: 0, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+        <table className="data-table">
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={col}>{col.replace(/_/g, ' ').toUpperCase()}</th>
+                <th key={col} style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>{col.replace(/_/g, ' ')}</th>
               ))}
             </tr>
           </thead>
@@ -168,7 +168,7 @@ export default function ReportsPage() {
             {data.map((row, i) => (
               <tr key={i}>
                 {columns.map(col => (
-                  <td key={col}>{row[col] !== null && row[col] !== undefined ? String(row[col]) : '-'}</td>
+                  <td key={col} style={{ color: 'var(--text-secondary)' }}>{row[col] !== null && row[col] !== undefined ? String(row[col]) : '-'}</td>
                 ))}
               </tr>
             ))}
