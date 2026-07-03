@@ -2,11 +2,23 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import Header from './Header.jsx';
+import DailyBriefingModal from '../ui/DailyBriefingModal.jsx';
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showBriefing, setShowBriefing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Check for daily briefing on first load
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastBriefing = localStorage.getItem('last_briefing_date');
+    if (lastBriefing !== today) {
+      setShowBriefing(true);
+      localStorage.setItem('last_briefing_date', today);
+    }
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -50,6 +62,7 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </div>
+      {showBriefing && <DailyBriefingModal onClose={() => setShowBriefing(false)} />}
     </div>
   );
 }

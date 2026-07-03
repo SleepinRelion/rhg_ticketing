@@ -134,7 +134,7 @@ export default function Header({ onMenuToggle }) {
               onChange={handleHotelChange}
               style={{ width: 250, padding: '8px 12px', background: 'var(--bg-elevated)', height: '36px' }}
             >
-              {['admin', 'manager'].includes(user?.role) && hotels.length > 1 && (
+              {user?.role === 'manager' && hotels.length > 1 && (
                 <option value="all">Global View (All Hotels)</option>
               )}
               {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}

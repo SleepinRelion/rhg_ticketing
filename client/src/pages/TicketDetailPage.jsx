@@ -168,7 +168,7 @@ export default function TicketDetailPage() {
       )}
       <div className="page-header" style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="btn-icon" onClick={() => navigate('/tickets')}><ArrowLeft /></button>
+          <button className="btn-icon" onClick={() => navigate(-1)}><ArrowLeft /></button>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <h1 className="page-title">{ticketData.ticket_number}</h1>

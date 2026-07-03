@@ -230,4 +230,16 @@ router.post('/:id/link/:ticketId', authenticate, async (req, res) => {
   }
 });
 
+// DELETE /api/knowledge-base/:id
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const deleted = await db('knowledge_base_articles').where({ id: req.params.id }).del();
+    if (!deleted) return res.status(404).json({ error: 'Article not found.' });
+    res.json({ message: 'Article deleted successfully.' });
+  } catch (error) {
+    console.error('Delete article error:', error);
+    res.status(500).json({ error: 'Failed to delete article.' });
+  }
+});
+
 export default router;

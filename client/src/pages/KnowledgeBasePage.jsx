@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useSearchParams } from 'react-router-dom';
-import { BookOpen, Plus, Edit, X, Search } from 'lucide-react';
+import { BookOpen, Plus, Edit, X, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import FormatCategory from '../components/ui/FormatCategory.jsx';
@@ -68,6 +68,17 @@ export default function KnowledgeBasePage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingArticle(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this article?')) return;
+    try {
+      await api(`/knowledge-base/${id}`, { method: 'DELETE' });
+      addToast('Article deleted successfully.', 'success');
+      fetchData();
+    } catch (err) {
+      addToast(err.message || 'Failed to delete article.', 'error');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -159,10 +170,14 @@ export default function KnowledgeBasePage() {
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong>Resolution:</strong> {article.resolution_steps.substring(0, 100)}{article.resolution_steps.length > 100 ? '...' : ''}</p>
               </div>
               {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'technician') && (
-                <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                   <button className="btn btn-ghost" onClick={() => handleOpenModal(article)}>
                     <Edit size={16} style={{ marginRight: '8px' }} />
                     Edit
+                  </button>
+                  <button className="btn btn-ghost" style={{ color: 'var(--error)' }} onClick={() => handleDelete(article.id)}>
+                    <Trash2 size={16} style={{ marginRight: '8px' }} />
+                    Delete
                   </button>
                 </div>
               )}
