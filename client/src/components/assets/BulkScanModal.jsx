@@ -157,7 +157,7 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
                 </div>
               ) : (
                 <>
-                  <video id="reader" style={{ width: '100%', borderRadius: '8px', background: '#000' }}></video>
+                  <div id="reader" style={{ width: '100%', borderRadius: '8px', background: '#000', overflow: 'hidden' }}></div>
                   <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', alignSelf: 'center' }} onClick={() => setIsScanning(false)}>
                     Stop Camera
                   </button>
