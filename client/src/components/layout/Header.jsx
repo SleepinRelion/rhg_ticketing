@@ -152,42 +152,71 @@ export default function Header({ onMenuToggle }) {
             style={{ width: 280 }}
           />
           {showLiveResults && searchQuery.trim() && (
-            <div className="notification-dropdown" style={{ position: 'absolute', top: '100%', left: 0, width: '100%', marginTop: '4px', zIndex: 100 }}>
+            <div 
+              className="notification-dropdown" 
+              style={{ 
+                position: 'absolute', top: '100%', left: 0, width: '100%', marginTop: '8px', zIndex: 100,
+                background: 'rgba(20, 21, 26, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.4)', overflow: 'hidden'
+              }}
+            >
               {isSearching ? (
-                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>Searching...</div>
+                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                  Searching...
+                </div>
               ) : liveResults.length > 0 ? (
-                <>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ padding: '10px 16px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+                    Tickets
+                  </div>
                   {liveResults.map(t => (
                     <div 
                       key={t.id} 
-                      className="notification-item" 
                       onMouseDown={(e) => { 
                         e.preventDefault(); 
                         navigate(`/tickets/${t.id}`); 
                         setShowLiveResults(false); 
                         setSearchQuery(''); 
                       }}
-                      style={{ borderBottom: '1px solid var(--border-color)' }}
+                      style={{ 
+                        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'all 0.2s ease', backgroundColor: 'transparent'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.paddingLeft = '20px'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.paddingLeft = '16px'; }}
                     >
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary-400)' }}>{t.ticket_number}</div>
-                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {t.title}
+                      <div style={{ 
+                        width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                        backgroundColor: t.status === 'closed' ? 'var(--text-muted)' : (t.status === 'open' ? 'var(--primary-400)' : 'var(--warning)'),
+                        boxShadow: `0 0 8px ${t.status === 'closed' ? 'transparent' : (t.status === 'open' ? 'var(--primary-400)' : 'var(--warning)')}`
+                      }} />
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>{t.ticket_number}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {t.title}
+                        </div>
                       </div>
                     </div>
                   ))}
                   <div 
-                    style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--primary-400)' }}
+                    style={{ padding: '12px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', fontWeight: 500, color: 'var(--primary-400)', backgroundColor: 'rgba(0,0,0,0.3)', transition: 'background-color 0.2s ease' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(var(--primary-rgb), 0.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.3)'}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       navigate(`/tickets?search=${encodeURIComponent(searchQuery.trim())}`);
                       setShowLiveResults(false);
                     }}
                   >
-                    View all results
+                    View all results &rarr;
                   </div>
-                </>
+                </div>
               ) : (
-                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No tickets found</div>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+                  No tickets found matching <br/> <strong style={{ color: 'var(--text-primary)' }}>"{searchQuery}"</strong>
+                </div>
               )}
             </div>
           )}
