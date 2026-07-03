@@ -52,11 +52,18 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         };
         const onScanError = () => {};
 
+        const getConfig = (constraints) => {
+          const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+          if (constraints) config.videoConstraints = constraints;
+          return config;
+        };
+
         try {
           // Attempt 1: Environment camera, Max resolution, and Zoom (High-end Mobile)
           await html5QrCode.start(
-            { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 }, advanced: [{ zoom: 2.0 }] },
-            scanConfig, onScanSuccess, onScanError
+            { facingMode: "environment" },
+            getConfig({ width: { ideal: 4096 }, height: { ideal: 2160 }, advanced: [{ zoom: 2.0 }] }),
+            onScanSuccess, onScanError
           );
         } catch (err1) {
           console.warn("High-res environment with zoom failed:", err1);
@@ -64,8 +71,9 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
           try {
             // Attempt 2: Environment camera, Max resolution (Standard Mobile)
             await html5QrCode.start(
-              { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 } }, 
-              scanConfig, onScanSuccess, onScanError
+              { facingMode: "environment" }, 
+              getConfig({ width: { ideal: 4096 }, height: { ideal: 2160 } }),
+              onScanSuccess, onScanError
             );
           } catch (err2) {
             console.warn("High-res environment failed:", err2);
@@ -73,8 +81,9 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
             try {
               // Attempt 3: Any camera, 1440p (High-end Laptop/Desktop)
               await html5QrCode.start(
-                { facingMode: "user", width: { ideal: 2560 }, height: { ideal: 1440 } }, 
-                scanConfig, onScanSuccess, onScanError
+                { facingMode: "user" }, 
+                getConfig({ width: { ideal: 2560 }, height: { ideal: 1440 } }),
+                onScanSuccess, onScanError
               );
             } catch (err3) {
               console.warn("1440p user camera failed:", err3);
@@ -82,14 +91,15 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
               try {
                 // Attempt 4: Any camera, 1080p (Standard Laptop/Desktop)
                 await html5QrCode.start(
-                  { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } }, 
-                  scanConfig, onScanSuccess, onScanError
+                  { facingMode: "user" }, 
+                  getConfig({ width: { ideal: 1920 }, height: { ideal: 1080 } }),
+                  onScanSuccess, onScanError
                 );
               } catch (err4) {
                 console.warn("1080p user camera failed, falling back to basic:", err4);
                 if (!isComponentMounted) return;
                 // Attempt 5: Basic User/Any camera (Basic Laptop/Desktop)
-                await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+                await html5QrCode.start({ facingMode: "user" }, getConfig(), onScanSuccess, onScanError);
               }
             }
           }
