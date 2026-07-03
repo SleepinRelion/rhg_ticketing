@@ -71,16 +71,26 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
             console.warn("High-res environment failed:", err2);
             if (!isComponentMounted) return;
             try {
-              // Attempt 3: Any camera, Max resolution (High-end Laptop/Desktop)
+              // Attempt 3: Any camera, 1440p (High-end Laptop/Desktop)
               await html5QrCode.start(
-                { facingMode: "user", width: { ideal: 4096 }, height: { ideal: 2160 } }, 
+                { facingMode: "user", width: { ideal: 2560 }, height: { ideal: 1440 } }, 
                 scanConfig, onScanSuccess, onScanError
               );
             } catch (err3) {
-              console.warn("High-res user camera failed, falling back to basic:", err3);
+              console.warn("1440p user camera failed:", err3);
               if (!isComponentMounted) return;
-              // Attempt 4: Basic User/Any camera (Basic Laptop/Desktop)
-              await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+              try {
+                // Attempt 4: Any camera, 1080p (Standard Laptop/Desktop)
+                await html5QrCode.start(
+                  { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } }, 
+                  scanConfig, onScanSuccess, onScanError
+                );
+              } catch (err4) {
+                console.warn("1080p user camera failed, falling back to basic:", err4);
+                if (!isComponentMounted) return;
+                // Attempt 5: Basic User/Any camera (Basic Laptop/Desktop)
+                await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+              }
             }
           }
         }
