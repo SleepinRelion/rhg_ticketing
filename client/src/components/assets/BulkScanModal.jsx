@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { X, Save, Trash2, Camera } from 'lucide-react';
+import { X, Save, Trash2, Camera, ZoomIn, ZoomOut } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import SearchableSelect from '../ui/SearchableSelect.jsx';
@@ -10,12 +10,52 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
   const [scannedAssets, setScannedAssets] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [zoomParams, setZoomParams] = useState({ min: 1, max: 1, step: 0.1, value: 1 });
   const { success, error } = useToast();
 
   const templateRef = useRef(template);
   useEffect(() => {
     templateRef.current = template;
   }, [template]);
+
+  useEffect(() => {
+    if (!isScanning) return;
+    
+    // Poll for the video element and check capabilities
+    const checkVideo = setInterval(() => {
+      const videoEl = document.querySelector('#reader video');
+      if (videoEl && videoEl.srcObject) {
+        const track = videoEl.srcObject.getVideoTracks()[0];
+        if (track) {
+          const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+          const settings = track.getSettings ? track.getSettings() : {};
+          if (capabilities.zoom) {
+            setZoomParams({
+              min: capabilities.zoom.min || 1,
+              max: capabilities.zoom.max || 10,
+              step: capabilities.zoom.step || 0.1,
+              value: settings.zoom || 1
+            });
+            clearInterval(checkVideo);
+          }
+        }
+      }
+    }, 1000);
+    
+    return () => clearInterval(checkVideo);
+  }, [isScanning]);
+
+  const handleZoomChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setZoomParams(prev => ({ ...prev, value: val }));
+    const videoEl = document.querySelector('#reader video');
+    if (videoEl && videoEl.srcObject) {
+      const track = videoEl.srcObject.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        track.applyConstraints({ advanced: [{ zoom: val }] }).catch(err => console.warn('Zoom failed', err));
+      }
+    }
+  };
 
   useEffect(() => {
     if (!isScanning) return;
@@ -222,7 +262,27 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
               ) : (
                 <>
                   <div id="reader" style={{ width: '100%', borderRadius: '8px', background: '#000', overflow: 'hidden' }}></div>
-                  <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', alignSelf: 'center' }} onClick={() => setIsScanning(false)}>
+                  
+                  {zoomParams.max > zoomParams.min && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', padding: '0 12px' }}>
+                      <ZoomOut size={16} color="var(--text-secondary)" />
+                      <input 
+                        type="range" 
+                        min={zoomParams.min} 
+                        max={zoomParams.max} 
+                        step={zoomParams.step}
+                        value={zoomParams.value}
+                        onChange={handleZoomChange}
+                        style={{ flex: 1, accentColor: 'var(--primary-500)' }}
+                      />
+                      <ZoomIn size={16} color="var(--text-secondary)" />
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', minWidth: '30px', textAlign: 'right' }}>
+                        {zoomParams.value.toFixed(1)}x
+                      </span>
+                    </div>
+                  )}
+
+                  <button className="btn btn-secondary btn-sm" style={{ marginTop: '16px', alignSelf: 'center' }} onClick={() => setIsScanning(false)}>
                     Stop Camera
                   </button>
                 </>
