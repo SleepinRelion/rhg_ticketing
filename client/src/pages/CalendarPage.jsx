@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle, Plus, ChevronDown, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const { error } = useToast();
   const navigate = useNavigate();
 
@@ -71,6 +72,42 @@ export default function CalendarPage() {
             <p className="page-subtitle">Track upcoming ticket deadlines</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setShowAddMenu(!showAddMenu)}
+                onBlur={() => setTimeout(() => setShowAddMenu(false), 200)}
+              >
+                <Plus size={16} style={{ marginRight: '4px' }} />
+                Add Reminder
+                <ChevronDown size={14} style={{ marginLeft: '4px' }} />
+              </button>
+              {showAddMenu && (
+                <div style={{ 
+                  position: 'absolute', top: '100%', right: 0, marginTop: '4px', 
+                  background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', 
+                  borderRadius: 'var(--radius-md)', padding: '4px', zIndex: 10,
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)', minWidth: '200px'
+                }}>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '4px' }}
+                    onClick={() => navigate('/tickets/new')}
+                  >
+                    <Ticket size={16} style={{ marginRight: '8px', color: 'var(--primary-400)' }} />
+                    New IT Task / Ticket
+                  </button>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ width: '100%', justifyContent: 'flex-start' }}
+                    onClick={() => navigate('/preventive-maintenance')}
+                  >
+                    <Wrench size={16} style={{ marginRight: '8px', color: 'var(--warning)' }} />
+                    New Maintenance Schedule
+                  </button>
+                </div>
+              )}
+            </div>
             <button className="btn btn-secondary" onClick={today}>Today</button>
             <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '4px' }}>
               <button className="btn-icon" onClick={prevMonth}>&lt;</button>
