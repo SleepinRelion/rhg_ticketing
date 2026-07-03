@@ -8,8 +8,33 @@ export default function DailyBriefingModal({ onClose }) {
   const [pmSchedules, setPmSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [canClose, setCanClose] = useState(false);
+  const [quote, setQuote] = useState(null);
   const contentRef = useRef(null);
   const navigate = useNavigate();
+
+  // Motivational quote
+  useEffect(() => {
+    const defaultQuotes = [
+      { text: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' },
+      { text: 'Success is not final, failure is not fatal: it is the courage to continue that counts.', author: 'Winston Churchill' },
+      { text: 'It always seems impossible until it\'s done.', author: 'Nelson Mandela' },
+      { text: 'Quality is not an act, it is a habit.', author: 'Aristotle' },
+      { text: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
+    ];
+    const fallback = () => setQuote(defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)]);
+    const url = 'https://zenquotes.io/api/random';
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url + '?t=' + Date.now());
+    fetch(proxyUrl)
+      .then(r => r.json())
+      .then(data => {
+        const parsed = JSON.parse(data.contents);
+        const q = parsed[0]?.q;
+        const a = parsed[0]?.a;
+        if (!a || a.trim().toLowerCase() === 'zenquotes.io') fallback();
+        else setQuote({ text: q, author: a });
+      })
+      .catch(fallback);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -115,6 +140,12 @@ export default function DailyBriefingModal({ onClose }) {
           <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
             Welcome back! Here are your active tasks and reminders for today.
           </p>
+          {quote && (
+            <div style={{ marginTop: '14px', padding: '10px 20px', fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, opacity: 0.8 }}>
+              <span>“{quote.text}”</span>
+              <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 600, fontStyle: 'normal', letterSpacing: '0.3px' }}>— {quote.author}</div>
+            </div>
+          )}
         </div>
 
         <div 
