@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, Save, Trash2, Camera } from 'lucide-react';
 import api from '../../api/client.js';
