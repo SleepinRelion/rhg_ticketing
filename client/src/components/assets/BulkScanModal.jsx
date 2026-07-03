@@ -31,7 +31,11 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         html5QrCode = new Html5Qrcode("reader");
         
         await html5QrCode.start(
-          { facingMode: "environment" },
+          { 
+            facingMode: "environment",
+            width: { ideal: 1920 }, // High resolution helps detect small/far barcodes
+            advanced: [{ zoom: 2.0 }] // Apply 2x zoom if supported by the device camera
+          },
           {
             fps: 10,
             qrbox: { width: 250, height: 100 } // wider box for barcodes
