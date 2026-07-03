@@ -14,10 +14,14 @@ export default function Header({ onMenuToggle }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveResults, setLiveResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showLiveResults, setShowLiveResults] = useState(false);
   const [hotels, setHotels] = useState([]);
   const [activeHotelId, setActiveHotelId] = useState(null);
   const notifRef = useRef(null);
   const userRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   useEffect(() => {
     fetchUnreadCount();
@@ -30,10 +34,35 @@ export default function Header({ onMenuToggle }) {
     function handleClickOutside(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
       if (userRef.current && !userRef.current.contains(e.target)) setShowUserMenu(false);
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) setShowLiveResults(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setLiveResults([]);
+      setShowLiveResults(false);
+      return;
+    }
+
+    setShowLiveResults(true);
+    setIsSearching(true);
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await api(`/tickets?search=${encodeURIComponent(query)}&limit=5`);
+        setLiveResults(res.tickets || []);
+      } catch (err) {
+        setLiveResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   async function fetchUnreadCount() {
     try {
@@ -109,7 +138,7 @@ export default function Header({ onMenuToggle }) {
         >
           <Menu size={20} />
         </button>
-        <div className="search-input-wrapper">
+        <div className="search-input-wrapper" ref={searchContainerRef} style={{ position: 'relative' }}>
           <Search />
           <input
             type="text"
@@ -119,8 +148,49 @@ export default function Header({ onMenuToggle }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
+            onFocus={() => { if (searchQuery.trim()) setShowLiveResults(true); }}
             style={{ width: 280 }}
           />
+          {showLiveResults && searchQuery.trim() && (
+            <div className="notification-dropdown" style={{ position: 'absolute', top: '100%', left: 0, width: '100%', marginTop: '4px', zIndex: 100 }}>
+              {isSearching ? (
+                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>Searching...</div>
+              ) : liveResults.length > 0 ? (
+                <>
+                  {liveResults.map(t => (
+                    <div 
+                      key={t.id} 
+                      className="notification-item" 
+                      onMouseDown={(e) => { 
+                        e.preventDefault(); 
+                        navigate(`/tickets/${t.id}`); 
+                        setShowLiveResults(false); 
+                        setSearchQuery(''); 
+                      }}
+                      style={{ borderBottom: '1px solid var(--border-color)' }}
+                    >
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary-400)' }}>{t.ticket_number}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {t.title}
+                      </div>
+                    </div>
+                  ))}
+                  <div 
+                    style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', color: 'var(--primary-400)' }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      navigate(`/tickets?search=${encodeURIComponent(searchQuery.trim())}`);
+                      setShowLiveResults(false);
+                    }}
+                  >
+                    View all results
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No tickets found</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
