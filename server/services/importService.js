@@ -320,7 +320,7 @@ export async function processImportedFiles(files, adminUserId) {
             status: ticketStatus,
             priority: 'medium',
             category_id: categoryId,
-            department: 'maintenance',
+            department: 'IT',
             hotel_id: rowHotelId,
             created_by: agentId || adminUserId,
             created_at: recordDate.toISOString(),

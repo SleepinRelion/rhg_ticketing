@@ -53,7 +53,15 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         const onScanError = () => {};
 
         const getConfig = (constraints) => {
-          const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+          const config = { 
+            fps: 10, 
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              // 70% of the screen width, max 400px, min 250px
+              const width = Math.max(250, Math.min(viewfinderWidth * 0.7, 400));
+              const height = 150; 
+              return { width, height };
+            }
+          };
           if (constraints) config.videoConstraints = constraints;
           return config;
         };
