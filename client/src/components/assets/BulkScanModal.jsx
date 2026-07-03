@@ -53,22 +53,35 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         const onScanError = () => {};
 
         try {
-          // Attempt 1: Max resolution and zoom
+          // Attempt 1: Environment camera, Max resolution, and Zoom (High-end Mobile)
           await html5QrCode.start(
             { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 }, advanced: [{ zoom: 2.0 }] },
             scanConfig, onScanSuccess, onScanError
           );
         } catch (err1) {
-          console.warn("High-res camera start failed, falling back:", err1);
+          console.warn("High-res environment with zoom failed:", err1);
           if (!isComponentMounted) return;
           try {
-            // Attempt 2: Basic environment camera
-            await html5QrCode.start({ facingMode: "environment" }, scanConfig, onScanSuccess, onScanError);
+            // Attempt 2: Environment camera, Max resolution (Standard Mobile)
+            await html5QrCode.start(
+              { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 } }, 
+              scanConfig, onScanSuccess, onScanError
+            );
           } catch (err2) {
-            console.warn("Environment camera failed, falling back to any camera:", err2);
+            console.warn("High-res environment failed:", err2);
             if (!isComponentMounted) return;
-            // Attempt 3: User/Any camera (e.g. laptop webcam)
-            await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+            try {
+              // Attempt 3: Any camera, Max resolution (High-end Laptop/Desktop)
+              await html5QrCode.start(
+                { facingMode: "user", width: { ideal: 4096 }, height: { ideal: 2160 } }, 
+                scanConfig, onScanSuccess, onScanError
+              );
+            } catch (err3) {
+              console.warn("High-res user camera failed, falling back to basic:", err3);
+              if (!isComponentMounted) return;
+              // Attempt 4: Basic User/Any camera (Basic Laptop/Desktop)
+              await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+            }
           }
         }
         
