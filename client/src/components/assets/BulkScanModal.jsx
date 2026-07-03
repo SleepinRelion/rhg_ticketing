@@ -33,7 +33,8 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         await html5QrCode.start(
           { 
             facingMode: "environment",
-            width: { ideal: 1920 }, // High resolution helps detect small/far barcodes
+            width: { ideal: 4096 }, // Requests highest supported resolution (up to 4K)
+            height: { ideal: 2160 },
             advanced: [{ zoom: 2.0 }] // Apply 2x zoom if supported by the device camera
           },
           {
