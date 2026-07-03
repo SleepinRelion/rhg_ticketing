@@ -12,6 +12,11 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
   const [saving, setSaving] = useState(false);
   const { success, error } = useToast();
 
+  const templateRef = useRef(template);
+  useEffect(() => {
+    templateRef.current = template;
+  }, [template]);
+
   useEffect(() => {
     if (!isScanning) return;
     
@@ -21,6 +26,7 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
     const startScanner = async () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 100)); // allow element to mount
+        if (!isComponentMounted) return;
         
         html5QrCode = new Html5Qrcode("reader");
         
@@ -37,12 +43,13 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
                   return prev;
                 }
                 
+                const currentTemplate = templateRef.current;
                 const newAsset = {
                   id: Date.now().toString(),
-                  name: template.name || `Scanned Asset ${prev.length + 1}`,
+                  name: currentTemplate.name || `Scanned Asset ${prev.length + 1}`,
                   asset_tag: `AST-${Math.floor(Math.random() * 10000)}-${decodedText.slice(-4) || 'XXXX'}`,
-                  category_id: template.category_id,
-                  room_id: template.room_id,
+                  category_id: currentTemplate.category_id,
+                  room_id: currentTemplate.room_id,
                   serial_number: decodedText
                 };
                 return [...prev, newAsset];
@@ -55,14 +62,21 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
             // ignore constant parse errors during scanning
           }
         );
+        
+        // If the component unmounted while the camera was starting up, stop it immediately.
+        if (!isComponentMounted && html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => html5QrCode.clear()).catch(console.error);
+        }
       } catch (err) {
         console.error("Failed to start scanner:", err);
-        if (window.isSecureContext === false) {
-          error("Camera access blocked: Insecure connection (HTTP).");
-        } else {
-          error("Camera failed to start. Please ensure you have granted camera permissions.");
+        if (isComponentMounted) {
+          if (window.isSecureContext === false) {
+            error("Camera access blocked: Insecure connection (HTTP).");
+          } else {
+            error("Camera failed to start. Please ensure you have granted camera permissions.");
+          }
+          setIsScanning(false);
         }
-        setIsScanning(false);
       }
     };
 
@@ -71,10 +85,10 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
     return () => {
       isComponentMounted = false;
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().catch(console.error);
+        html5QrCode.stop().then(() => html5QrCode.clear()).catch(console.error);
       }
     };
-  }, [isScanning, template]);
+  }, [isScanning]); // DO NOT depend on `template` here, or every keystroke restarts the camera!
 
   const handleRemove = (id) => {
     setScannedAssets(prev => prev.filter(a => a.id !== id));
