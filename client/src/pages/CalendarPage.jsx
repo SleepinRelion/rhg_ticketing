@@ -92,7 +92,7 @@ export default function CalendarPage() {
                   <button 
                     className="btn btn-ghost" 
                     style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '4px' }}
-                    onClick={() => navigate('/tickets/new')}
+                    onMouseDown={(e) => { e.preventDefault(); navigate('/tickets/new'); }}
                   >
                     <Ticket size={16} style={{ marginRight: '8px', color: 'var(--primary-400)' }} />
                     New IT Task / Ticket
@@ -100,7 +100,7 @@ export default function CalendarPage() {
                   <button 
                     className="btn btn-ghost" 
                     style={{ width: '100%', justifyContent: 'flex-start' }}
-                    onClick={() => navigate('/preventive-maintenance')}
+                    onMouseDown={(e) => { e.preventDefault(); navigate('/preventive-maintenance'); }}
                   >
                     <Wrench size={16} style={{ marginRight: '8px', color: 'var(--warning)' }} />
                     New Maintenance Schedule
