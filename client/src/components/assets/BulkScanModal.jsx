@@ -30,43 +30,47 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
         
         html5QrCode = new Html5Qrcode("reader");
         
-        await html5QrCode.start(
-          { 
-            facingMode: "environment",
-            width: { ideal: 4096 }, // Requests highest supported resolution (up to 4K)
-            height: { ideal: 2160 },
-            advanced: [{ zoom: 2.0 }] // Apply 2x zoom if supported by the device camera
-          },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 100 } // wider box for barcodes
-          },
-          (decodedText) => {
-            if (isComponentMounted) {
-              setScannedAssets(prev => {
-                if (prev.find(a => a.serial_number === decodedText)) {
-                  return prev;
-                }
-                
-                const currentTemplate = templateRef.current;
-                const newAsset = {
-                  id: Date.now().toString(),
-                  name: currentTemplate.name || `Scanned Asset ${prev.length + 1}`,
-                  asset_tag: `AST-${Math.floor(Math.random() * 10000)}-${decodedText.slice(-4) || 'XXXX'}`,
-                  category_id: currentTemplate.category_id,
-                  room_id: currentTemplate.room_id,
-                  serial_number: decodedText
-                };
-                return [...prev, newAsset];
-              });
+        const scanConfig = { fps: 10, qrbox: { width: 250, height: 100 } };
+        const onScanSuccess = (decodedText) => {
+          if (isComponentMounted) {
+            setScannedAssets(prev => {
+              if (prev.find(a => a.serial_number === decodedText)) return prev;
               
-              success(`Scanned: ${decodedText}`);
-            }
-          },
-          (errorMessage) => {
-            // ignore constant parse errors during scanning
+              const currentTemplate = templateRef.current;
+              const newAsset = {
+                id: Date.now().toString(),
+                name: currentTemplate.name || `Scanned Asset ${prev.length + 1}`,
+                asset_tag: `AST-${Math.floor(Math.random() * 10000)}-${decodedText.slice(-4) || 'XXXX'}`,
+                category_id: currentTemplate.category_id,
+                room_id: currentTemplate.room_id,
+                serial_number: decodedText
+              };
+              return [...prev, newAsset];
+            });
+            success(`Scanned: ${decodedText}`);
           }
-        );
+        };
+        const onScanError = () => {};
+
+        try {
+          // Attempt 1: Max resolution and zoom
+          await html5QrCode.start(
+            { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 }, advanced: [{ zoom: 2.0 }] },
+            scanConfig, onScanSuccess, onScanError
+          );
+        } catch (err1) {
+          console.warn("High-res camera start failed, falling back:", err1);
+          if (!isComponentMounted) return;
+          try {
+            // Attempt 2: Basic environment camera
+            await html5QrCode.start({ facingMode: "environment" }, scanConfig, onScanSuccess, onScanError);
+          } catch (err2) {
+            console.warn("Environment camera failed, falling back to any camera:", err2);
+            if (!isComponentMounted) return;
+            // Attempt 3: User/Any camera (e.g. laptop webcam)
+            await html5QrCode.start({ facingMode: "user" }, scanConfig, onScanSuccess, onScanError);
+          }
+        }
         
         // If the component unmounted while the camera was starting up, stop it immediately.
         if (!isComponentMounted && html5QrCode && html5QrCode.isScanning) {
