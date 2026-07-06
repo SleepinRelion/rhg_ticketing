@@ -22,16 +22,15 @@ export default function DailyBriefingModal({ onClose }) {
       { text: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
     ];
     const fallback = () => setQuote(defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)]);
-    const url = 'https://zenquotes.io/api/random';
-    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url + '?t=' + Date.now());
-    fetch(proxyUrl)
+    
+    fetch('https://dummyjson.com/quotes/random')
       .then(r => r.json())
       .then(data => {
-        const parsed = JSON.parse(data.contents);
-        const q = parsed[0]?.q;
-        const a = parsed[0]?.a;
-        if (!a || a.trim().toLowerCase() === 'zenquotes.io') fallback();
-        else setQuote({ text: q, author: a });
+        if (data && data.quote && data.author) {
+          setQuote({ text: data.quote, author: data.author });
+        } else {
+          fallback();
+        }
       })
       .catch(fallback);
   }, []);
