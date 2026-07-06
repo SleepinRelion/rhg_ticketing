@@ -725,6 +725,11 @@ body {
   50% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.2); }
 }
 
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
