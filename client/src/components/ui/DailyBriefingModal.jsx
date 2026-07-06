@@ -23,16 +23,28 @@ export default function DailyBriefingModal({ onClose }) {
     ];
     const fallback = () => setQuote(defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)]);
     
-    fetch('https://dummyjson.com/quotes/random')
+    fetch('https://api.quotable.io/random')
       .then(r => r.json())
       .then(data => {
-        if (data && data.quote && data.author) {
-          setQuote({ text: data.quote, author: data.author });
+        if (data && data.content && data.author) {
+          setQuote({ text: data.content, author: data.author });
         } else {
           fallback();
         }
       })
-      .catch(fallback);
+      .catch(() => {
+        // Fallback to dummyjson if quotable fails
+        fetch('https://dummyjson.com/quotes/random')
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.quote && data.author) {
+              setQuote({ text: data.quote, author: data.author });
+            } else {
+              fallback();
+            }
+          })
+          .catch(fallback);
+      });
   }, []);
 
   useEffect(() => {

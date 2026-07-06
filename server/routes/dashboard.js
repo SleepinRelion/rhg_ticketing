@@ -11,8 +11,8 @@ router.get('/stats', authenticate, async (req, res) => {
     const { date_from, date_to } = req.query;
 
     let baseQuery = db('tickets').whereNull('deleted_at');
-    if (date_from) baseQuery = baseQuery.where('created_at', '>=', date_from);
-    if (date_to) baseQuery = baseQuery.where('created_at', '<=', date_to);
+    if (date_from) baseQuery = baseQuery.where('created_at', '>=', `${date_from} 00:00:00`);
+    if (date_to) baseQuery = baseQuery.where('created_at', '<=', `${date_to} 23:59:59`);
 
     // Apply visibility
     baseQuery = buildTicketVisibilityQuery(baseQuery, req.user);

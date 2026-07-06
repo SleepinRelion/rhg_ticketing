@@ -303,12 +303,22 @@ export default function BulkScanModal({ onClose, onComplete, categories, rooms }
                 </div>
               ) : (
                 scannedAssets.map(asset => (
-                  <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '13px' }}>{asset.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>SN: {asset.serial_number}</div>
+                  <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '4px' }}>{asset.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>SN:</span>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={asset.serial_number || ''} 
+                          onChange={(e) => setScannedAssets(prev => prev.map(a => a.id === asset.id ? { ...a, serial_number: e.target.value } : a))}
+                          style={{ padding: '4px 8px', fontSize: '12px', height: '28px', flex: 1 }}
+                          placeholder="Serial Number"
+                        />
+                      </div>
                     </div>
-                    <button className="btn-icon" onClick={() => handleRemove(asset.id)} style={{ color: 'var(--error)' }}><Trash2 size={16} /></button>
+                    <button className="btn-icon" onClick={() => handleRemove(asset.id)} style={{ color: 'var(--error)', flexShrink: 0 }}><Trash2 size={16} /></button>
                   </div>
                 ))
               )}
