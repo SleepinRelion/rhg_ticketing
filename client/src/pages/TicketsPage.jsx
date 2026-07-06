@@ -141,24 +141,29 @@ export default function TicketsPage() {
     }
   };
 
-  const handleBulkAction = async (action, value = null) => {
+  const handleBulkAction = async (updates) => {
     if (selectedTickets.size === 0) return;
-    if (!confirm(`Are you sure you want to perform this action on ${selectedTickets.size} tickets?`)) return;
+    
+    let actionDesc = 'update';
+    if (updates.status) actionDesc = `change status to ${updates.status.replace('_', ' ')}`;
+    if (updates.assignee_id !== undefined) actionDesc = 'assign';
+    if (updates.priority) actionDesc = `change priority to ${updates.priority}`;
+    
+    if (!confirm(`Are you sure you want to ${actionDesc} for ${selectedTickets.size} selected tickets?`)) return;
 
     try {
       await api('/tickets/bulk', {
-        method: 'POST',
+        method: 'PUT',
         body: JSON.stringify({
-          ticket_ids: Array.from(selectedTickets),
-          action,
-          value
+          ticketIds: Array.from(selectedTickets),
+          updates
         })
       });
-      success('Bulk action completed');
+      success('Bulk action completed successfully');
       setSelectedTickets(new Set());
       fetchTickets(pagination.page);
     } catch (err) {
-      error('Bulk action failed');
+      error(err.message || 'Failed to perform bulk action');
     }
   };
 
@@ -348,14 +353,35 @@ export default function TicketsPage() {
         <div className="toolbar-spacer" />
 
         {selectedTickets.size > 0 && isManager() && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--bg-elevated)', padding: '4px 12px', borderRadius: 'var(--radius-full)', border: '1px solid var(--primary-500)' }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-400)' }}>{selectedTickets.size} selected</span>
-            <div style={{ width: 1, height: 16, background: 'var(--border-color)', margin: '0 4px' }} />
-            <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('change_status', 'in_progress')} title="Mark In Progress"><Play size={14} /></button>
-            <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('change_status', 'resolved')} title="Mark Resolved"><CheckCircle2 size={14} /></button>
-            {['admin', 'manager'].includes(user.role) && (
-              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--error)' }} onClick={() => handleBulkAction('soft_delete')} title="Delete"><Trash2 size={14} /></button>
-            )}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-elevated)', padding: '6px 16px', borderRadius: 'var(--radius-full)', border: '1px solid var(--primary-500)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-500)' }}>{selectedTickets.size} selected</span>
+            <div style={{ width: 1, height: 16, background: 'var(--border-color)' }} />
+            
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select className="form-select" style={{ padding: '4px 28px 4px 12px', fontSize: 12, height: 28, borderRadius: 14 }} onChange={(e) => { if(e.target.value) { handleBulkAction({ status: e.target.value }); e.target.value = ''; } }}>
+                <option value="">Set Status...</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+
+              <select className="form-select" style={{ padding: '4px 28px 4px 12px', fontSize: 12, height: 28, borderRadius: 14 }} onChange={(e) => { if(e.target.value !== '') { handleBulkAction({ assignee_id: e.target.value === 'unassigned' ? null : e.target.value }); e.target.value = ''; } }}>
+                <option value="">Assign To...</option>
+                <option value="unassigned">Unassigned</option>
+                {technicians.map(t => (
+                  <option key={t.id} value={t.id}>{t.full_name}</option>
+                ))}
+              </select>
+
+              <select className="form-select" style={{ padding: '4px 28px 4px 12px', fontSize: 12, height: 28, borderRadius: 14 }} onChange={(e) => { if(e.target.value) { handleBulkAction({ priority: e.target.value }); e.target.value = ''; } }}>
+                <option value="">Set Priority...</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
           </div>
         )}
       </div>

@@ -13,6 +13,7 @@ import {
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import EditTicketModal from '../components/tickets/EditTicketModal.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import ActivityTimeline from '../components/tickets/detail/ActivityTimeline.jsx';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -22,7 +23,6 @@ export default function TicketDetailPage() {
 
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('comments');
   const [commentText, setCommentText] = useState('');
   const [isInternalComment, setIsInternalComment] = useState(false);
   const [technicians, setTechnicians] = useState([]);
@@ -105,6 +105,32 @@ export default function TicketDetailPage() {
       fetchTicket();
     } catch (err) {
       error('Failed to remove assignee');
+    }
+  };
+
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('ticket_id', id);
+
+    try {
+      setUploading(true);
+      await api('/attachments', {
+        method: 'POST',
+        body: formData,
+      });
+      success('Attachment uploaded successfully');
+      fetchTicket();
+    } catch (err) {
+      error('Failed to upload attachment');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -238,86 +264,50 @@ export default function TicketDetailPage() {
             )}
           </div>
 
-          <div className="tabs">
-            <button className={`tab ${activeTab === 'comments' ? 'active' : ''}`} onClick={() => setActiveTab('comments')}>
-              <MessageSquare size={16} style={{ display: 'inline', marginRight: 4, verticalAlign: 'text-bottom' }}/> 
-              Comments ({comments.length})
-            </button>
-            <button className={`tab ${activeTab === 'activity' ? 'active' : ''}`} onClick={() => setActiveTab('activity')}>
-              <Clock size={16} style={{ display: 'inline', marginRight: 4, verticalAlign: 'text-bottom' }}/> 
-              Activity Log ({activity_logs.length})
-            </button>
-          </div>
-
-          <div className="tab-content">
-            {activeTab === 'comments' && (
-              <div>
-                <div style={{ marginBottom: '24px' }}>
-                  {comments.length === 0 ? (
-                    <div className="empty-state" style={{ padding: '24px' }}>
-                      <p>No comments yet.</p>
-                    </div>
-                  ) : (
-                    comments.map(c => (
-                      <div key={c.id} className={`comment ${c.is_internal ? 'internal' : ''}`}>
-                        <div className="comment-header">
-                          <div className="comment-author">
-                            {c.user_name}
-                            {c.is_internal && <span className="comment-internal-badge" style={{ marginLeft: 8 }}>Internal Note</span>}
-                          </div>
-                          <div className="comment-time">{format(new Date(c.created_at), 'MMM d, yyyy h:mm a')}</div>
-                        </div>
-                        <div className="comment-body">{c.content}</div>
-                      </div>
-                    ))
+          <div style={{ marginBottom: '24px' }}>
+            <h3 className="detail-section-title"><Activity size={18}/> Activity Timeline</h3>
+            
+            {isActive && (
+              <form className="card" style={{ marginBottom: '24px' }} onSubmit={handleAddComment}>
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <textarea
+                    className="form-textarea"
+                    placeholder="Type a comment or internal note..."
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {user.role !== 'staff' && (
+                    <label className="form-checkbox">
+                      <input type="checkbox" checked={isInternalComment} onChange={e => setIsInternalComment(e.target.checked)} />
+                      Internal Note (hidden from staff/guests)
+                    </label>
                   )}
-                </div>
-
-                {isActive && (
-                  <form className="card" onSubmit={handleAddComment}>
-                    <div className="form-group" style={{ marginBottom: 12 }}>
-                      <textarea
-                        className="form-textarea"
-                        placeholder="Type a comment..."
-                        value={commentText}
-                        onChange={e => setCommentText(e.target.value)}
-                        rows={3}
-                        required
+                  <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                    <div className="file-upload-wrapper">
+                      <input
+                        type="file"
+                        id="attachment"
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                        disabled={uploading}
                       />
+                      <label htmlFor="attachment" className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                        <Paperclip size={16} /> {uploading ? 'Uploading...' : 'Attach'}
+                      </label>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {user.role !== 'staff' && (
-                        <label className="form-checkbox">
-                          <input type="checkbox" checked={isInternalComment} onChange={e => setIsInternalComment(e.target.checked)} />
-                          Internal Note (hidden from staff/guests)
-                        </label>
-                      )}
-                      <button type="submit" className="btn btn-primary" disabled={!commentText.trim()}>
-                        <Send size={16} /> Post Comment
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
+                    <button type="submit" className="btn btn-primary" disabled={!commentText.trim()}>
+                      <Send size={16} /> Post
+                    </button>
+                  </div>
+                </div>
+              </form>
             )}
 
-            {activeTab === 'activity' && (
-              <div className="card">
-                <div className="timeline">
-                  {activity_logs.map(log => (
-                    <div key={log.id} className="timeline-item">
-                      <div className="timeline-item-time">{format(new Date(log.created_at), 'MMM d, h:mm a')}</div>
-                      <div className="timeline-item-content">
-                        <strong>{log.user_name}</strong> {log.action.replace(/_/g, ' ')}
-                        {log.old_value && log.new_value ? ` from ${log.old_value} to ${log.new_value}` : ''}
-                        {log.new_value && !log.old_value ? `: ${log.new_value}` : ''}
-                      </div>
-                      {log.note && <div className="timeline-item-note">"{log.note}"</div>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ActivityTimeline timeline={ticketData.timeline} />
           </div>
         </div>
 

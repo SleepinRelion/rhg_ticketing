@@ -317,9 +317,17 @@ router.get('/:id', authenticate, async (req, res) => {
       ? comments.filter((c) => !c.is_internal)
       : comments;
 
+    // Build unified timeline
+    const timeline = [
+      ...activityLogs.map(l => ({ ...l, timeline_type: 'activity_log' })),
+      ...filteredComments.map(c => ({ ...c, timeline_type: 'comment' })),
+      ...attachments.map(a => ({ ...a, timeline_type: 'attachment', user_id: a.uploaded_by, user_name: a.uploaded_by_name }))
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
     res.json({
       ticket: {
         ...ticket,
+        timeline,
         assignees: assignees.map((a) => ({
           id: a.user_id, full_name: a.full_name, username: a.username,
           assigned_by_name: a.assigned_by_name, assigned_at: a.assigned_at,
@@ -368,6 +376,71 @@ router.post('/', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(error.statusCode || 500).json({ error: error.message || 'Failed to create ticket.' });
+  }
+});
+
+// PUT /api/tickets/bulk
+router.put('/bulk', authenticate, async (req, res) => {
+  try {
+    const { ticketIds, updates } = req.body;
+    
+    if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) {
+      return res.status(400).json({ error: 'No tickets selected.' });
+    }
+    
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No updates provided.' });
+    }
+
+    // Prepare update payload
+    const payload = {};
+    if (updates.status) {
+      payload.status = updates.status;
+      if (updates.status === 'closed') {
+        payload.closed_at = new Date();
+      }
+    }
+    if (updates.priority) payload.priority = updates.priority;
+    if (updates.department) payload.department = updates.department;
+
+    await db.transaction(async (trx) => {
+      // 1. Update ticket rows if any fields changed
+      if (Object.keys(payload).length > 0) {
+        payload.updated_at = new Date();
+        await trx('tickets').whereIn('id', ticketIds).update(payload);
+      }
+
+      // 2. Assignee updates
+      if (updates.assignee_id !== undefined) {
+        if (updates.assignee_id === null) {
+          await trx('ticket_assignees').whereIn('ticket_id', ticketIds).del();
+        } else {
+          // Simplest bulk assignment: replace all assignees for these tickets with the new one
+          await trx('ticket_assignees').whereIn('ticket_id', ticketIds).del();
+          const newAssignees = ticketIds.map(tid => ({
+            ticket_id: tid,
+            user_id: updates.assignee_id,
+            assigned_at: new Date()
+          }));
+          await trx('ticket_assignees').insert(newAssignees);
+        }
+      }
+
+      // 3. Log the activity for each ticket
+      const logs = ticketIds.map(tid => ({
+        ticket_id: tid,
+        user_id: req.user.id,
+        action: 'bulk_update',
+        details: JSON.stringify(updates),
+        created_at: new Date()
+      }));
+      await trx('activity_logs').insert(logs);
+    });
+
+    res.json({ message: 'Tickets updated successfully.' });
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    res.status(500).json({ error: 'Failed to perform bulk update.' });
   }
 });
 
