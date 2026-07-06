@@ -268,6 +268,11 @@ export default function Header({ onMenuToggle }) {
                     key={n.id}
                     className={`notification-item ${!n.is_read ? 'unread' : ''}`}
                     onClick={() => {
+                      if (!n.is_read) {
+                        api(`/notifications/${n.id}/read`, { method: 'PUT' }).catch(() => {});
+                        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+                        setUnreadCount(prev => Math.max(0, prev - 1));
+                      }
                       if (n.ticket_id) navigate(`/tickets/${n.ticket_id}`);
                       setShowNotifications(false);
                     }}

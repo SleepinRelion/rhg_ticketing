@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Edit2, Trash2, X, Save, Layers, Tags, Building2, ChevronRight, ChevronDown } from 'lucide-react';

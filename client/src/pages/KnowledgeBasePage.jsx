@@ -166,8 +166,8 @@ export default function KnowledgeBasePage() {
               <div style={{ flex: 1 }}>
                 <h3 style={{ marginBottom: '8px' }}>{article.title}</h3>
                 <div style={{ fontSize: '12px', color: 'var(--primary-400)', marginBottom: '16px' }}><FormatCategory name={article.category_name || 'General'} /></div>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}><strong>Symptoms:</strong> {article.symptoms.substring(0, 100)}{article.symptoms.length > 100 ? '...' : ''}</p>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong>Resolution:</strong> {article.resolution_steps.substring(0, 100)}{article.resolution_steps.length > 100 ? '...' : ''}</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}><strong>Symptoms:</strong> {(article.symptoms || '').substring(0, 100)}{(article.symptoms || '').length > 100 ? '...' : ''}</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong>Resolution:</strong> {(article.resolution_steps || '').substring(0, 100)}{(article.resolution_steps || '').length > 100 ? '...' : ''}</p>
               </div>
               {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'technician') && (
                 <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
