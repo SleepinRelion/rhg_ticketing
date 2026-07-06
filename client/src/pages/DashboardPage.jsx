@@ -139,21 +139,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="stat-cards">
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?status=open,in_progress,assigned')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon blue"><Ticket size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Open Tickets</div>
             <div className="stat-card-value">{stats.open + stats.assigned + stats.in_progress}</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?priority=critical')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon red"><AlertCircle size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Critical Priority</div>
             <div className="stat-card-value">{stats.critical}</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?sla_status=breached')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon red" style={{ animation: stats.sla_breached > 0 ? 'pulse-glow 2s infinite' : 'none' }}>
             <AlertTriangle size={24} />
           </div>
@@ -162,21 +162,21 @@ export default function DashboardPage() {
             <div className="stat-card-value">{stats.sla_breached}</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?status=resolved,closed')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon green"><CheckCircle2 size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Resolved (7d)</div>
             <div className="stat-card-value">{stats.resolved_this_week}</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?status=resolved,closed')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon indigo"><Clock size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Avg Resolution</div>
             <div className="stat-card-value">{stats.avg_resolution_hours}h</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?priority=critical&status=open,in_progress,assigned')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon orange"><TrendingUp size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Escalated</div>
@@ -220,7 +220,12 @@ export default function DashboardPage() {
           <div style={{ height: 300 }}>
             {charts.monthlyTrend && charts.monthlyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.monthlyTrend}>
+                <LineChart data={charts.monthlyTrend} onClick={(data) => {
+                  if (data && data.activeLabel) {
+                    const [year, month] = data.activeLabel.split('-');
+                    navigate(`/tickets?year=${year}&month=${month}`);
+                  }
+                }} style={{ cursor: 'pointer' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                   <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
@@ -278,7 +283,23 @@ export default function DashboardPage() {
                     axisLine={false} 
                   />
                   <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                  <Bar dataKey="count" fill="var(--error)" radius={[0, 4, 4, 0]} />
+                  <Bar 
+                    dataKey="count" 
+                    fill="var(--error)" 
+                    radius={[0, 4, 4, 0]} 
+                    onClick={(data) => {
+                       if(data) {
+                          let q = '';
+                          if(data.room_number) q = '?search=' + encodeURIComponent(data.room_number);
+                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_name) q = '?search=' + encodeURIComponent(data.asset_name);
+                          else if(data.category) q = '?search=' + encodeURIComponent(data.category);
+                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
+                          navigate(`/tickets${q}`);
+                       }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -302,6 +323,12 @@ export default function DashboardPage() {
                     paddingAngle={5}
                     dataKey="count"
                     nameKey="full_name"
+                    onClick={(data) => {
+                       if (data && data.full_name) {
+                          navigate(`/tickets?status=open,in_progress,assigned&search=${encodeURIComponent(data.full_name)}`);
+                       }
+                    }}
+                    style={{ cursor: 'pointer' }}
                   >
                     {charts.techWorkload.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -345,7 +372,23 @@ export default function DashboardPage() {
                     width={150}
                   />
                   <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                  <Bar dataKey="count" fill="var(--error)" radius={[0, 4, 4, 0]} />
+                  <Bar 
+                    dataKey="count" 
+                    fill="var(--error)" 
+                    radius={[0, 4, 4, 0]} 
+                    onClick={(data) => {
+                       if(data) {
+                          let q = '';
+                          if(data.room_number) q = '?search=' + encodeURIComponent(data.room_number);
+                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_name) q = '?search=' + encodeURIComponent(data.asset_name);
+                          else if(data.category) q = '?search=' + encodeURIComponent(data.category);
+                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
+                          navigate(`/tickets${q}`);
+                       }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
