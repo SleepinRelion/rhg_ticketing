@@ -111,7 +111,7 @@ router.get('/charts', authenticate, async (req, res) => {
 
     // Technician workload
     let techWorkloadQuery = db('ticket_assignees')
-      .select('users.full_name', db.raw('count(*) as count'))
+      .select('users.id as user_id', 'users.full_name', db.raw('count(*) as count'))
       .join('users', 'ticket_assignees.user_id', 'users.id')
       .join('tickets', 'ticket_assignees.ticket_id', 'tickets.id')
       .whereNotIn('tickets.status', ['closed', 'cancelled'])
@@ -121,7 +121,7 @@ router.get('/charts', authenticate, async (req, res) => {
     techWorkloadQuery = buildTicketVisibilityQuery(techWorkloadQuery, req.user);
     
     const techWorkload = await techWorkloadQuery
-      .groupBy('users.full_name')
+      .groupBy('users.id', 'users.full_name')
       .orderBy('count', 'desc');
 
     // Monthly trend (last 6 months)

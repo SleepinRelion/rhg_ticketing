@@ -36,37 +36,28 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState(null);
   const [topProblemFilter, setTopProblemFilter] = useState('rooms');
   const [expandedChart, setExpandedChart] = useState(false);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [lastRefreshed, setLastRefreshed] = useState(null);
   const { error } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchDashboardData(true); // silent refresh
     }, 30000);
     return () => clearInterval(interval);
-  }, [dateFrom, dateTo]);
+  }, []);
 
   async function fetchDashboardData(silent = false) {
     try {
       if (!silent) setLoading(true);
       setFetchError(null);
-      let params = '';
-      if (dateFrom) params += `&date_from=${dateFrom}`;
-      if (dateTo) params += `&date_to=${dateTo}`;
-      if (params) params = '?' + params.slice(1);
 
       const [statsRes, chartsRes] = await Promise.all([
-        api(`/dashboard/stats${params}`),
-        api(`/dashboard/charts${params}`)
+        api(`/dashboard/stats`),
+        api(`/dashboard/charts`)
       ]);
       setStats(statsRes.stats);
       setCharts(chartsRes.charts);
-      setLastRefreshed(new Date());
     } catch (err) {
       if (!silent) {
         error('Failed to load dashboard data: ' + err.message);
@@ -105,36 +96,7 @@ export default function DashboardPage() {
           <h1 className="page-title">Dashboard Overview</h1>
           <p className="page-subtitle">
             Real-time metrics and operational status
-            {lastRefreshed && (
-              <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                · Auto-refreshes every 30s
-              </span>
-            )}
           </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <input
-            type="date"
-            className="form-input"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            style={{ width: '150px', fontSize: '13px', height: '36px' }}
-            placeholder="From"
-          />
-          <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>to</span>
-          <input
-            type="date"
-            className="form-input"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            style={{ width: '150px', fontSize: '13px', height: '36px' }}
-            placeholder="To"
-          />
-          {(dateFrom || dateTo) && (
-            <button className="btn btn-ghost btn-sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>
-              Clear
-            </button>
-          )}
         </div>
       </div>
 
@@ -324,8 +286,8 @@ export default function DashboardPage() {
                     dataKey="count"
                     nameKey="full_name"
                     onClick={(data) => {
-                       if (data && data.full_name) {
-                          navigate(`/tickets?status=open,in_progress,assigned&search=${encodeURIComponent(data.full_name)}`);
+                       if (data && data.user_id) {
+                          navigate(`/tickets?status=open,in_progress,assigned&assignee_id=${data.user_id}`);
                        }
                     }}
                     style={{ cursor: 'pointer' }}
