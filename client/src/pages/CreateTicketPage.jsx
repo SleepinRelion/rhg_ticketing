@@ -68,6 +68,7 @@ export default function CreateTicketPage() {
   const [allCategories, setAllCategories] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
 
@@ -81,11 +82,13 @@ export default function CreateTicketPage() {
     Promise.all([
       api('/categories'),
       api('/rooms'),
-      api('/assets')
-    ]).then(([catRes, roomRes, assetRes]) => {
+      api('/assets'),
+      api('/departments').catch(() => ({ departments: [] }))
+    ]).then(([catRes, roomRes, assetRes, deptRes]) => {
       setAllCategories(catRes.categories || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
+      setDepartments(deptRes.departments || []);
     }).catch(() => error('Failed to load form data'));
   }, []);
 
@@ -604,13 +607,10 @@ export default function CreateTicketPage() {
                         value={formData.department}
                         onChange={e => setFormData({ ...formData, department: e.target.value })}
                       >
-                        <option value="IT">IT</option>
-                        <option value="front_desk">Front Desk</option>
-                        <option value="housekeeping">Housekeeping</option>
-                        <option value="kitchen">Kitchen</option>
-                        <option value="finance">Finance</option>
-                        <option value="restaurant">Restaurant</option>
-                        <option value="management">Management</option>
+                        <option value="">Select Department</option>
+                        {departments.map(d => (
+                          <option key={d.id} value={d.name}>{d.name}</option>
+                        ))}
                       </SearchableSelect>
                     </div>
                     {isIT && (

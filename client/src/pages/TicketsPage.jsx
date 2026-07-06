@@ -33,6 +33,7 @@ export default function TicketsPage() {
   const [availableYears, setAvailableYears] = useState([]);
   const [categories, setCategories] = useState([]);
   const [technicians, setTechnicians] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const isInitialMount = useRef(true);
 
@@ -52,6 +53,10 @@ export default function TicketsPage() {
 
     api('/users/technicians').then(data => {
       if (data.technicians) setTechnicians(data.technicians);
+    }).catch(console.error);
+
+    api('/departments').then(data => {
+      if (data.departments) setDepartments(data.departments);
     }).catch(console.error);
   }, []);
 
@@ -384,14 +389,9 @@ export default function TicketsPage() {
               style={{ width: 160 }}
             >
               <option value="">All Departments</option>
-              <option value="IT">IT</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Housekeeping">Housekeeping</option>
-              <option value="Front Office">Front Office</option>
-              <option value="F&B">F&B</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Security">Security</option>
-              <option value="Admin">Admin</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.name}>{d.name}</option>
+              ))}
             </SearchableSelect>
           </div>
 

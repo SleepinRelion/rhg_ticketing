@@ -109,6 +109,8 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.resolve(__dirname, '../client/dist')));
 }
 
+import departmentRoutes from './routes/departments.js';
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -130,6 +132,7 @@ app.use('/api/preventive-maintenance', preventiveMaintenanceRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/backups', backupRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

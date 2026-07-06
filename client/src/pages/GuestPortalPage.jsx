@@ -12,6 +12,7 @@ export default function GuestPortalPage() {
   const [hotels, setHotels] = useState([]);
   const [categories, setCategories] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [departments, setDepartments] = useState([]);
   
   const [formData, setFormData] = useState({
     hotel_id: initialHotel,
@@ -43,12 +44,14 @@ export default function GuestPortalPage() {
 
   async function fetchHotelsAndCategories() {
     try {
-      const [hRes, cRes] = await Promise.all([
+      const [hRes, cRes, dRes] = await Promise.all([
         api('/hotels/public'),
-        api('/categories/public?ticket_type=issue')
+        api('/categories/public?ticket_type=issue'),
+        api('/departments').catch(() => ({ departments: [] }))
       ]);
       setHotels(hRes.hotels || []);
       setCategories(cRes.categories || []);
+      setDepartments(dRes.departments || []);
       
       if (hRes.hotels?.length === 1 && !initialHotel) {
         setFormData(prev => ({ ...prev, hotel_id: hRes.hotels[0].id }));
@@ -194,14 +197,9 @@ export default function GuestPortalPage() {
                   required
                 >
                   <option value="">Select Department</option>
-                  <option value="front_desk">Front Desk</option>
-                  <option value="housekeeping">Housekeeping</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="kitchen">Kitchen</option>
-                  <option value="finance">Finance</option>
-                  <option value="restaurant">Restaurant / F&B</option>
-                  <option value="management">Management</option>
-                  <option value="IT">IT / Systems</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
                 </SearchableSelect>
               </div>
             </div>
