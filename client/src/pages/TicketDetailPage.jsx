@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Clock, User, DoorOpen, HardDrive, Tag, 
   MessageSquare, FileText, CheckSquare, Wrench, Edit,
-  Paperclip, Plus, Send, X, AlertCircle, BookOpen
+  Paperclip, Plus, Send, X, AlertCircle, BookOpen, Activity
 } from 'lucide-react';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import EditTicketModal from '../components/tickets/EditTicketModal.jsx';
