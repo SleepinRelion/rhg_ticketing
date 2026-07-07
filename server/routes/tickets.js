@@ -43,7 +43,12 @@ function applyTicketFilters(query, filters, db, userId = null) {
   if (sla_status) query = query.where('tickets.sla_status', sla_status);
   if (ticket_type) query = query.where('tickets.ticket_type', ticket_type);
   if (department) query = query.where('tickets.department', department);
-  if (category_id) query = query.where('tickets.category_id', category_id);
+  if (category_id) {
+    query = query.where(function() {
+      this.where('tickets.category_id', category_id)
+        .orWhereIn('tickets.category_id', db('categories').select('id').where('parent_id', category_id));
+    });
+  }
   if (room_id) query = query.where('tickets.room_id', room_id);
   if (asset_id) query = query.where('tickets.asset_id', asset_id);
   if (created_by) query = query.where('tickets.created_by', created_by);

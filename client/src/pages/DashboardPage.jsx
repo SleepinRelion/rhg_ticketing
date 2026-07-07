@@ -163,7 +163,9 @@ export default function DashboardPage() {
                     fill="var(--primary-500)" 
                     radius={[4, 4, 0, 0]} 
                     onClick={(data) => {
-                      if (data && data.category) {
+                      if (data && data.category_id) {
+                        navigate(`/tickets?category_id=${data.category_id}`);
+                      } else if (data && data.category) {
                         navigate(`/tickets?search=${encodeURIComponent(data.category)}`);
                       }
                     }}
