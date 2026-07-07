@@ -510,7 +510,20 @@ router.put('/:id', authenticate, async (req, res) => {
 
     await createAuditEntry(req.user.id, 'ticket_updated', 'ticket', ticket.id, req.ip, req.headers['user-agent'], { fields: Object.keys(updates) });
 
-    const updated = await db('tickets').where({ id: req.params.id }).first();
+    const updated = await db('tickets')
+      .select(
+        'tickets.*',
+        'creator.full_name as creator_name',
+        'rooms.room_number',
+        'assets.name as asset_name',
+        'categories.name as category_name'
+      )
+      .leftJoin('users as creator', 'tickets.created_by', 'creator.id')
+      .leftJoin('rooms', 'tickets.room_id', 'rooms.id')
+      .leftJoin('assets', 'tickets.asset_id', 'assets.id')
+      .leftJoin('categories', 'tickets.category_id', 'categories.id')
+      .where({ 'tickets.id': req.params.id })
+      .first();
     
     // Emit socket event
     if (req.io) req.io.emit('ticket:updated', updated);
