@@ -12,6 +12,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     priority: ticket.priority || 'medium',
     ticket_type: ticket.ticket_type || 'issue',
     category_id: ticket.category_id || '',
+    department: ticket.department || '',
     room_id: ticket.room_id || '',
     asset_id: ticket.asset_id || '',
     guest_impact: ticket.guest_impact || 'none',
@@ -21,6 +22,7 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
   });
 
   const [categories, setCategories] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [assets, setAssets] = useState([]);
   const [hotels, setHotels] = useState([]);
@@ -33,11 +35,13 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
   useEffect(() => {
     Promise.all([
       api('/categories'),
+      api('/departments'),
       api('/rooms'),
       api('/assets'),
       api('/hotels/public')
-    ]).then(([catRes, roomRes, assetRes, hotelRes]) => {
+    ]).then(([catRes, depRes, roomRes, assetRes, hotelRes]) => {
       setCategories(catRes.categories || []);
+      setDepartments(depRes.departments || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
       setHotels(hotelRes.hotels || []);
@@ -131,7 +135,18 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Department</label>
+              <SearchableSelect
+                className="form-select"
+                value={formData.department || ''}
+                onChange={e => setFormData({ ...formData, department: e.target.value })}
+              >
+                <option value="">Select Department...</option>
+                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </SearchableSelect>
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
               <label className="form-label">Category</label>
               <SearchableSelect
                 className="form-select"
