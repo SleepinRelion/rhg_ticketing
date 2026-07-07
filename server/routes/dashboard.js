@@ -85,10 +85,7 @@ router.get('/charts', authenticate, async (req, res) => {
         .leftJoin('categories', 'tickets.category_id', 'categories.id')
         .leftJoin('categories as parent', 'categories.parent_id', 'parent.id')
         .whereNotNull('tickets.category_id')
-        .groupBy(
-          db.raw('COALESCE(parent.id, categories.id)'),
-          db.raw('COALESCE(parent.name, categories.name)')
-        )
+        .groupByRaw('COALESCE(parent.id, categories.id), COALESCE(parent.name, categories.name)')
     ).orderBy('count', 'desc');
 
     // Top 10 problem rooms
