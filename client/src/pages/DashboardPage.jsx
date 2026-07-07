@@ -138,7 +138,7 @@ export default function DashboardPage() {
             <div className="stat-card-value">{stats.avg_resolution_hours}h</div>
           </div>
         </div>
-        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?priority=critical&status=open,in_progress,assigned')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?escalated=true&status=open,in_progress,assigned')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon orange"><TrendingUp size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Escalated</div>

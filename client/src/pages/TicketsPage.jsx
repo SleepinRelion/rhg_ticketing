@@ -9,8 +9,8 @@ import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import FormatCategory from '../components/ui/FormatCategory.jsx';
 
-const FILTER_KEYS = ['status', 'priority', 'search', 'month', 'year', 'category_id', 'department', 'sla_status', 'assignee_id', 'ticket_type', 'sort_by', 'sort_order', 'room_id', 'my_tickets', 'date_from', 'date_to'];
-const DEFAULT_FILTERS = { status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc', room_id: '', my_tickets: '', date_from: '', date_to: '' };
+const FILTER_KEYS = ['status', 'priority', 'search', 'month', 'year', 'category_id', 'department', 'sla_status', 'assignee_id', 'ticket_type', 'sort_by', 'sort_order', 'room_id', 'my_tickets', 'date_from', 'date_to', 'escalated'];
+const DEFAULT_FILTERS = { status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc', room_id: '', my_tickets: '', date_from: '', date_to: '', escalated: '' };
 
 export default function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();

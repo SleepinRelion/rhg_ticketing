@@ -18,7 +18,7 @@ function applyTicketFilters(query, filters, db, userId = null) {
   const {
     search, status, priority, sla_status, ticket_type,
     department, category_id, room_id, asset_id, assignee_id,
-    created_by, date_from, date_to, month, year, tag_id, my_tickets
+    created_by, date_from, date_to, month, year, tag_id, my_tickets, escalated
   } = filters;
 
   const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
@@ -49,6 +49,7 @@ function applyTicketFilters(query, filters, db, userId = null) {
   if (created_by) query = query.where('tickets.created_by', created_by);
   if (date_from) query = query.where('tickets.created_at', '>=', `${date_from} 00:00:00`);
   if (date_to) query = query.where('tickets.created_at', '<=', `${date_to} 23:59:59`);
+  if (escalated === 'true') query = query.where('tickets.escalation_level', '>', 0);
   
   if (month) {
     if (db.client.config.client === 'pg') {
