@@ -19,7 +19,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const safeExt = (file.originalname.match(/\.[a-zA-Z0-9]+$/) || ['.bin'])[0];
+    cb(null, `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${safeExt}`);
   }
 });
 

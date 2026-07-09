@@ -194,7 +194,24 @@ router.post('/refresh', async (req, res) => {
       { expiresIn: authConfig.jwtExpiresIn }
     );
 
-    res.json({ accessToken: newAccessToken });
+    // Rotate: revoke old refresh token and issue a new one
+    await db('refresh_tokens').where({ id: storedToken.id }).update({ is_revoked: true });
+
+    const newRefreshToken = jwt.sign(
+      { userId: user.id, type: 'refresh' },
+      authConfig.jwtRefreshSecret,
+      { expiresIn: authConfig.jwtRefreshExpiresIn }
+    );
+
+    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await db('refresh_tokens').insert({
+      user_id: user.id,
+      token: newRefreshToken,
+      expires_at: newExpiresAt,
+      created_at: new Date(),
+    });
+
+    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
   } catch (error) {
     console.error('Refresh error:', error);
     res.status(500).json({ error: 'An error occurred during token refresh.' });
@@ -233,8 +250,8 @@ router.put('/change-password', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Current password and new password are required.' });
     }
 
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+    if (newPassword.length < 12) {
+      return res.status(400).json({ error: 'New password must be at least 12 characters.' });
     }
 
     const user = await db('users').where({ id: req.user.id }).first();

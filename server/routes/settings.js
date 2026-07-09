@@ -107,7 +107,7 @@ router.get('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
     const responseEnv = {
       ...envConfig,
       APP_NAME: envConfig.APP_NAME || process.env.APP_NAME || 'IT Ticketing System',
-      APP_URL: envConfig.APP_URL || process.env.APP_URL || 'http://localhost:5173',
+      APP_URL: envConfig.APP_URL || process.env.APP_URL || 'http://localhost:3001',
       APP_TIMEZONE: envConfig.APP_TIMEZONE || process.env.APP_TIMEZONE || 'Indian/Mauritius',
       PORT: envConfig.PORT || process.env.PORT || '3001',
       NODE_ENV: envConfig.NODE_ENV || process.env.NODE_ENV || 'development',
@@ -132,6 +132,14 @@ router.get('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
       LOGIN_RATE_LIMIT_WINDOW_MS: envConfig.LOGIN_RATE_LIMIT_WINDOW_MS || process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000',
     };
 
+    // Redact sensitive secrets — show only that they are configured, never the actual value
+    const REDACTED_KEYS = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DB_PASSWORD', 'SMTP_PASS'];
+    for (const key of REDACTED_KEYS) {
+      if (responseEnv[key]) {
+        responseEnv[key] = '••••••••' + responseEnv[key].slice(-4);
+      }
+    }
+
     res.json({ env: responseEnv });
   } catch (error) {
     console.error('Failed to read .env:', error);
@@ -145,6 +153,19 @@ router.put('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
     const { updates } = req.body;
     if (!updates || typeof updates !== 'object') {
       return res.status(400).json({ error: 'Invalid updates payload.' });
+    }
+
+    // Only allow modification of safe application settings
+    const ALLOWED_KEYS = [
+      'APP_NAME', 'APP_URL', 'APP_TIMEZONE', 'APP_LOGO_URL', 'APP_BG_COLOR', 'APP_BG_IMAGE_URL',
+      'SMTP_ENABLED', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM',
+      'LOGIN_RATE_LIMIT_MAX', 'LOGIN_RATE_LIMIT_WINDOW_MS',
+      'ACCOUNT_LOCKOUT_ATTEMPTS', 'ACCOUNT_LOCKOUT_DURATION_MINUTES',
+    ];
+
+    const disallowedKeys = Object.keys(updates).filter(k => !ALLOWED_KEYS.includes(k));
+    if (disallowedKeys.length > 0) {
+      return res.status(403).json({ error: `Modification of these settings is not allowed via the UI: ${disallowedKeys.join(', ')}. Contact your system administrator.` });
     }
 
     if (!fs.existsSync(envPath)) {

@@ -89,12 +89,20 @@ const morganFormat = process.env.NODE_ENV !== 'production' ? 'dev' : 'combined';
 app.use(morgan(morganFormat, { stream: { write: message => logger.info(message.trim()) } }));
 
 // Apply global rate limiter to all /api routes
-import { globalApiLimiter } from './middleware/rateLimiter.js';
+import { globalApiLimiter, loginLimiter } from './middleware/rateLimiter.js';
 app.use('/api', globalApiLimiter);
 
 // CORS
+const allowedOrigins = (process.env.APP_URL || 'http://localhost:3001').split(',').map(s => s.trim());
 app.use(cors({
-  origin: process.env.APP_URL || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 
@@ -111,7 +119,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/rooms', roomRoutes);

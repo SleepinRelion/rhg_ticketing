@@ -1,13 +1,28 @@
 import rateLimit from 'express-rate-limit';
 
 /**
- * Global API rate limiter — disabled for intranet deployments.
- * On an intranet, all users share one IP behind the gateway, so
- * IP-based rate limiting blocks everyone when one person is active.
- * Brute-force protection is handled at the database level (account lockout
- * after 5 failed attempts).
+ * Global API rate limiter.
+ * 300 requests per 15 minutes per IP. Protects against abuse on the public internet.
  */
-export const globalApiLimiter = (req, res, next) => next(); // pass-through
+export const globalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Login-specific rate limiter.
+ * 10 attempts per 15 minutes per IP. Prevents brute-force attacks.
+ */
+export const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * Rate limiter for guest/staff ticket creation to prevent spam.
