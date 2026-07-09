@@ -71,15 +71,17 @@ if (process.env.NODE_ENV === 'production') {
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false, // Can break external assets and PWA
+  crossOriginOpenerPolicy: false,
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Added unsafe-eval for some dependencies
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:"], // Allow websockets
-      upgradeInsecureRequests: null, // explicitly remove the default helmet directive
+      connectSrc: ["'self'", "ws:", "wss:", "*"], // Allow all connections for now to rule out API blocking
+      upgradeInsecureRequests: null,
     },
   } : false,
 }));
