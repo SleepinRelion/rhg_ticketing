@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'logo.png', 'logo_blue.png', 'login-bg.jpg', 'radisson-logo.svg'],
       manifest: {
         name: 'Hotel Ops Ticketing',
         short_name: 'HotelOps',
