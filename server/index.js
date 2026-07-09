@@ -95,15 +95,20 @@ import { globalApiLimiter, loginLimiter } from './middleware/rateLimiter.js';
 app.use('/api', globalApiLimiter);
 
 // CORS
-const allowedOrigins = (process.env.APP_URL || 'http://localhost:3001').split(',').map(s => s.trim());
+const allowedOrigins = (process.env.APP_URL || 'http://localhost:3001').split(',').map(s => s.trim().replace(/\/$/, ''));
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    // Allow requests with no origin (mobile apps, curl, server-to-server, same-origin)
     if (!origin) return callback(null, true);
+    
+    // Check if origin matches any of the allowed origins
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    
+    // If not allowed, DO NOT throw an error (which causes 500s). 
+    // Just return false so CORS headers are not added.
+    return callback(null, false);
   },
   credentials: true,
 }));
