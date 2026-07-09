@@ -183,7 +183,7 @@ export default function SettingsPage() {
       { key: 'SMTP_SECURE', label: 'Use SSL/TLS (Secure)', type: 'select', options: ['true', 'false'] },
       { key: 'SMTP_USER', label: 'SMTP Username / Email', type: 'text', placeholder: 'hotel@example.com' },
       { key: 'SMTP_PASS', label: 'SMTP Password', type: 'password', placeholder: '********' },
-      { key: 'SMTP_FROM', label: 'Sender Email Address', type: 'email', placeholder: 'noreply@hotel.com' },
+      { key: 'SMTP_FROM', label: 'Sender Email Address', type: 'text', placeholder: 'noreply@hotel.com' },
     ],
     database: [
       { key: 'DB_HOST', label: 'Database Host', type: 'text', placeholder: 'localhost' },
