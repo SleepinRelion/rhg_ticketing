@@ -56,8 +56,12 @@ export default function LoginPage() {
         <div className="login-header" style={{ textAlign: 'center' }}>
           <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
 
-          <h2>Welcome Back</h2>
-          <p>Hotel Ticketing & Operations System</p>
+          {!requiresMfa && (
+            <>
+              <h2>Welcome Back</h2>
+              <p>Hotel Ticketing & Operations System</p>
+            </>
+          )}
         </div>
 
         {error && <div className="login-error">{error}</div>}
