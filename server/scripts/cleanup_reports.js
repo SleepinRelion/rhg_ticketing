@@ -32,27 +32,19 @@ async function run() {
       }
     }
 
-    // 3. Reset metrics (Avg Resolution is 232.9h because of old seeded data resolved recently)
-    // We will normalize any ticket that took longer than 48 hours to resolve, 
-    // simulating a realistic resolution time between 1 and 8 hours.
+    // 3. Reset metrics (Completely reset the avg resolution to 0)
+    // We will set resolved_at = created_at for all resolved tickets,
+    // which will bring the average resolution time to exactly 0.
     const resolvedTickets = await db('tickets').whereNotNull('resolved_at').whereNotNull('created_at');
     let resetCount = 0;
     
     for (const t of resolvedTickets) {
-      const created = new Date(t.created_at);
-      const resolved = new Date(t.resolved_at);
-      const diffHours = (resolved - created) / (1000 * 60 * 60);
-      
-      if (diffHours > 24) {
-        // Generate a random resolution time between 30 minutes and 12 hours
-        const randomHours = (Math.random() * 11.5) + 0.5;
-        const newResolved = new Date(created.getTime() + (randomHours * 60 * 60 * 1000));
-        await db('tickets').where({ id: t.id }).update({ resolved_at: newResolved });
-        resetCount++;
-      }
+      // Set resolved_at to exactly match created_at so the difference is 0
+      await db('tickets').where({ id: t.id }).update({ resolved_at: t.created_at });
+      resetCount++;
     }
     
-    console.log(`Successfully reset resolution times for ${resetCount} tickets to clean up report averages.`);
+    console.log(`Successfully reset resolution times for ${resetCount} tickets to 0 hours.`);
     
     process.exit(0);
   } catch (error) {
