@@ -59,7 +59,7 @@ export default function LoginPage() {
           {!requiresMfa && (
             <>
               <h2>Welcome Back</h2>
-              <p>Hotel Ticketing & Operations System</p>
+              <p>Hotel Ticketing Platform</p>
             </>
           )}
         </div>

@@ -266,7 +266,7 @@ router.post('/mfa/setup', authenticate, async (req, res) => {
     }
 
     const secret = authenticator.generateSecret();
-    const otpauth = authenticator.keyuri(user.email, process.env.APP_NAME || 'HotelOps', secret);
+    const otpauth = authenticator.keyuri(user.email, 'Ticketing RHG Mauritius', secret);
     const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
 
     // Store secret temporarily (not yet verified)
