@@ -114,9 +114,23 @@ export default function SettingsPage() {
     e.preventDefault();
     setSavingEnv(true);
     try {
+      const ALLOWED_KEYS = [
+        'APP_NAME', 'APP_URL', 'APP_TIMEZONE', 'APP_LOGO_URL', 'APP_BG_COLOR', 'APP_BG_IMAGE_URL',
+        'SMTP_ENABLED', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM',
+        'LOGIN_RATE_LIMIT_MAX', 'LOGIN_RATE_LIMIT_WINDOW_MS',
+        'ACCOUNT_LOCKOUT_ATTEMPTS', 'ACCOUNT_LOCKOUT_DURATION_MINUTES',
+      ];
+      
+      const filteredUpdates = {};
+      Object.keys(envConfig).forEach(key => {
+        if (ALLOWED_KEYS.includes(key)) {
+          filteredUpdates[key] = envConfig[key];
+        }
+      });
+
       const res = await api('/settings/env', {
         method: 'PUT',
-        body: JSON.stringify({ updates: envConfig })
+        body: JSON.stringify({ updates: filteredUpdates })
       });
       success(res.message);
       setTimeout(() => {
@@ -170,8 +184,8 @@ export default function SettingsPage() {
       { key: 'APP_NAME', label: 'Application Name', type: 'text', placeholder: 'IT Ticketing System' },
       { key: 'APP_URL', label: 'Application URL', type: 'url', placeholder: 'http://localhost:5173' },
       { key: 'APP_TIMEZONE', label: 'Timezone', type: 'select', options: ['Indian/Mauritius', 'UTC', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney'] },
-      { key: 'PORT', label: 'Server Port', type: 'number', placeholder: '3001' },
-      { key: 'NODE_ENV', label: 'Environment', type: 'select', options: ['development', 'production'] },
+      { key: 'PORT', label: 'Server Port', type: 'number', placeholder: '3001', readOnly: true },
+      { key: 'NODE_ENV', label: 'Environment', type: 'select', options: ['development', 'production'], readOnly: true },
       { key: 'APP_LOGO_URL', label: 'Logo URL', type: 'text', placeholder: '/logo.png' },
       { key: 'APP_BG_COLOR', label: 'Background Color', type: 'text', placeholder: '#0f172a' },
       { key: 'APP_BG_IMAGE_URL', label: 'Background Image URL', type: 'text', placeholder: 'https://example.com/bg.jpg' },
@@ -186,15 +200,15 @@ export default function SettingsPage() {
       { key: 'SMTP_FROM', label: 'Sender Email Address', type: 'text', placeholder: 'noreply@hotel.com' },
     ],
     database: [
-      { key: 'DB_HOST', label: 'Database Host', type: 'text', placeholder: 'localhost' },
-      { key: 'DB_PORT', label: 'Database Port', type: 'number', placeholder: '5432' },
-      { key: 'DB_NAME', label: 'Database Name', type: 'text', placeholder: 'hotel_tickets' },
-      { key: 'DB_USER', label: 'Database Username', type: 'text', placeholder: 'postgres' },
-      { key: 'DB_PASSWORD', label: 'Database Password', type: 'password', placeholder: '********' },
+      { key: 'DB_HOST', label: 'Database Host', type: 'text', placeholder: 'localhost', readOnly: true },
+      { key: 'DB_PORT', label: 'Database Port', type: 'number', placeholder: '5432', readOnly: true },
+      { key: 'DB_NAME', label: 'Database Name', type: 'text', placeholder: 'hotel_tickets', readOnly: true },
+      { key: 'DB_USER', label: 'Database Username', type: 'text', placeholder: 'postgres', readOnly: true },
+      { key: 'DB_PASSWORD', label: 'Database Password', type: 'password', placeholder: '********', readOnly: true },
     ],
     security: [
-      { key: 'JWT_SECRET', label: 'Authentication Secret Key', type: 'password', placeholder: 'secret-key' },
-      { key: 'JWT_EXPIRES_IN', label: 'Session Timeout', type: 'text', placeholder: '15m' },
+      { key: 'JWT_SECRET', label: 'Authentication Secret Key', type: 'password', placeholder: 'secret-key', readOnly: true },
+      { key: 'JWT_EXPIRES_IN', label: 'Session Timeout', type: 'text', placeholder: '15m', readOnly: true },
       { key: 'LOGIN_RATE_LIMIT_MAX', label: 'Max Login Attempts', type: 'number', placeholder: '5' },
       { key: 'LOGIN_RATE_LIMIT_WINDOW_MS', label: 'Lockout Window (ms)', type: 'number', placeholder: '900000' },
     ]
