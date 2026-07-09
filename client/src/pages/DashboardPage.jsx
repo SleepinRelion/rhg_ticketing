@@ -257,7 +257,7 @@ export default function DashboardPage() {
                           if(data.room_number) q = '?search=' + encodeURIComponent(data.room_number);
                           else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
                           else if(data.asset_name) q = '?search=' + encodeURIComponent(data.asset_name);
-                          else if(data.category) q = '?search=' + encodeURIComponent(data.category);
+                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
                           else if(data.department) q = '?department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
