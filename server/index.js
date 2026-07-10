@@ -122,7 +122,18 @@ app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './upl
 
 // Serve built client in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.resolve(__dirname, '../client/dist')));
+  app.use(express.static(path.resolve(__dirname, '../client/dist'), {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else {
+        // Cache static assets (JS/CSS) for 1 year since they have content hashes
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+      }
+    }
+  }));
 }
 
 // API Routes
@@ -156,6 +167,9 @@ app.get('/api/health', (req, res) => {
 // Catch-all for SPA in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.resolve(__dirname, '../client/dist/index.html'));
   });
 }
