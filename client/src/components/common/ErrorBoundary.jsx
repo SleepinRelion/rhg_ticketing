@@ -12,8 +12,20 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // You can also log the error to an error reporting service like Sentry here
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Notify the backend
+    fetch('/api/settings/client-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: error ? error.toString() : 'Unknown Error',
+        componentStack: errorInfo ? errorInfo.componentStack : '',
+        url: window.location.href,
+        userAgent: navigator.userAgent
+      })
+    }).catch(e => console.error('Failed to report client error:', e));
+
     this.setState({
       error: error,
       errorInfo: errorInfo

@@ -11,6 +11,24 @@ import { sendEmail } from '../services/emailService.js';
 const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const envPath = path.resolve(__dirname, '../../.env');
+
+// POST /api/settings/client-error
+// Log frontend crash reports
+router.post('/client-error', async (req, res) => {
+  try {
+    const logLine = `[${new Date().toISOString()}] CLIENT CRASH: ${JSON.stringify(req.body)}\n`;
+    fs.appendFileSync(path.resolve(__dirname, '../../client-errors.log'), logLine);
+    
+    // Optionally: trigger email to admin
+    // await sendEmail({ to: 'admin@hotel.com', subject: 'Frontend Crash Report', text: logLine });
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Failed to log client error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/system', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const [dbResult] = await db.raw('SELECT version() as version');
