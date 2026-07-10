@@ -91,17 +91,17 @@ router.get('/charts', authenticate, async (req, res) => {
     // Top 10 problem rooms
     const topRooms = await baseFilter(
       db('tickets')
-        .select('rooms.room_number', db.raw('count(*) as count'))
+        .select('tickets.room_id', 'rooms.room_number', db.raw('count(*) as count'))
         .join('rooms', 'tickets.room_id', 'rooms.id')
-        .groupBy('rooms.room_number')
+        .groupBy('tickets.room_id', 'rooms.room_number')
     ).orderBy('count', 'desc');
 
     // Top 10 problem assets
     const topAssets = await baseFilter(
       db('tickets')
-        .select('assets.name as asset_name', db.raw('count(*) as count'))
+        .select('tickets.asset_id', 'assets.name as asset_name', db.raw('count(*) as count'))
         .join('assets', 'tickets.asset_id', 'assets.id')
-        .groupBy('assets.name')
+        .groupBy('tickets.asset_id', 'assets.name')
     ).orderBy('count', 'desc');
 
     // Top 10 problem room categories

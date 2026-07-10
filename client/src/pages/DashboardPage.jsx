@@ -254,9 +254,9 @@ export default function DashboardPage() {
                     onClick={(data) => {
                        if(data) {
                           let q = '';
-                          if(data.room_number) q = '?search=' + encodeURIComponent(data.room_number);
+                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
                           else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_name) q = '?search=' + encodeURIComponent(data.asset_name);
+                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
                           else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
                           else if(data.department) q = '?department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
@@ -343,10 +343,10 @@ export default function DashboardPage() {
                     onClick={(data) => {
                        if(data) {
                           let q = '';
-                          if(data.room_number) q = '?search=' + encodeURIComponent(data.room_number);
+                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
                           else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_name) q = '?search=' + encodeURIComponent(data.asset_name);
-                          else if(data.category) q = '?search=' + encodeURIComponent(data.category);
+                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
+                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
                           else if(data.department) q = '?department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
