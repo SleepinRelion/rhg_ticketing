@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 import { authorize } from '../middleware/authorize.js';
 import { sanitize } from '../utils/sanitize.js';
 import { publicEndpointLimiter } from '../middleware/rateLimiter.js';
+import { buildTicketVisibilityQuery } from '../services/ticketService.js';
 
 const router = Router();
 
@@ -22,24 +23,28 @@ router.get('/', authenticate, async (req, res) => {
     const rooms = await query.orderBy('room_number', 'asc');
 
     // Get open ticket counts for each room
-    const ticketCounts = await db('tickets')
+    let ticketCountsQuery = db('tickets')
       .select('room_id')
       .count('* as count')
       .whereNotIn('status', ['closed', 'cancelled', 'resolved'])
       .whereNull('deleted_at')
-      .whereNotNull('room_id')
-      .groupBy('room_id');
+      .whereNotNull('room_id');
+      
+    ticketCountsQuery = buildTicketVisibilityQuery(ticketCountsQuery, req.user);
+    const ticketCounts = await ticketCountsQuery.groupBy('room_id');
 
     const countMap = {};
     ticketCounts.forEach((tc) => { countMap[tc.room_id] = parseInt(tc.count); });
 
     // Get the latest open ticket for each room
-    const activeTickets = await db('tickets')
+    let activeTicketsQuery = db('tickets')
       .select('id', 'room_id', 'title')
       .whereNotIn('status', ['closed', 'cancelled', 'resolved'])
       .whereNull('deleted_at')
-      .whereNotNull('room_id')
-      .orderBy('created_at', 'desc');
+      .whereNotNull('room_id');
+      
+    activeTicketsQuery = buildTicketVisibilityQuery(activeTicketsQuery, req.user);
+    const activeTickets = await activeTicketsQuery.orderBy('created_at', 'desc');
 
     const latestTicketMap = {};
     activeTickets.forEach(t => {
