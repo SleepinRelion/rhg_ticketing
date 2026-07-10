@@ -48,8 +48,19 @@ import { randomUUID } from 'crypto';
  * Create a new ticket with SLA dates.
  */
 export async function createTicket(data, userId, activeHotelId = null) {
+  let finalHotelId = activeHotelId;
+  
+  // Data Integrity: If assigned to a room or asset, enforce its hotel_id to prevent ghost tickets
+  if (data.room_id) {
+    const room = await db('rooms').where({ id: data.room_id }).first();
+    if (room && room.hotel_id) finalHotelId = room.hotel_id;
+  } else if (data.asset_id) {
+    const asset = await db('assets').where({ id: data.asset_id }).first();
+    if (asset && asset.hotel_id) finalHotelId = asset.hotel_id;
+  }
+
   const ticketNumber = await generateTicketNumber();
-  const slaDates = await calculateSLADates(data.priority, new Date(), activeHotelId);
+  const slaDates = await calculateSLADates(data.priority, new Date(), finalHotelId);
 
   const ticket = {
     ticket_number: ticketNumber,
@@ -62,7 +73,7 @@ export async function createTicket(data, userId, activeHotelId = null) {
     category_id: data.category_id || null,
     room_id: data.room_id || null,
     asset_id: data.asset_id || null,
-    hotel_id: activeHotelId,
+    hotel_id: finalHotelId,
     created_by: userId || null,
     guest_impact: data.guest_impact || 'none',
     guest_room_occupied: data.guest_room_occupied || 'unknown',
