@@ -7,7 +7,7 @@ import { sanitize } from '../utils/sanitize.js';
 const router = Router();
 
 // GET /api/departments (all active departments for dropdowns)
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const departments = await db('departments')
       .where({ is_active: true })
