@@ -53,7 +53,9 @@ export default function CalendarPage() {
   async function handleSubscribe() {
     try {
       const res = await api('/calendar/token');
-      setIcalUrl(res.feedUrl);
+      const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
+      const activeHotelId = localStorage.getItem('activeHotelId') || '1';
+      setIcalUrl(`${apiBase}/api/calendar/feed/${activeHotelId}/${res.token}.ics`);
       setShowIcalModal(true);
     } catch (err) {
       error('Failed to generate calendar subscription link');
