@@ -129,7 +129,7 @@ export default function CreateTicketPage() {
 
     setSaving(true);
     try {
-      const { ticket } = await api('/tickets', {
+      const ticket = await api('/tickets', {
         method: 'POST',
         body: JSON.stringify(formData)
       });
