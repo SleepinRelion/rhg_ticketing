@@ -83,6 +83,12 @@ export default function DashboardPage() {
 
   const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#0ea5e9'];
 
+  // Active statuses used for click-through filters (everything except closed/cancelled)
+  const ACTIVE_STATUSES = 'open,assigned,in_progress,reopened,waiting_for_parts,waiting_for_vendor,waiting_for_guest,resolved';
+
+  // Date 7 days ago for "Resolved (7d)" click-through
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
   const fullProblemData = topProblemFilter === 'rooms' ? charts.topRooms :
                           topProblemFilter === 'room_types' ? charts.topRoomTypes :
                           topProblemFilter === 'assets' ? charts.topAssets :
@@ -101,21 +107,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="stat-cards">
-        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?status=open,in_progress,assigned')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate(`/tickets?status=${ACTIVE_STATUSES}`)} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon blue"><Ticket size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Open Tickets</div>
-            <div className="stat-card-value">{stats.open + stats.assigned + stats.in_progress}</div>
+            <div className="stat-card-value">{stats.total_active}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?priority=critical')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate(`/tickets?priority=critical&status=${ACTIVE_STATUSES}`)} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon red"><AlertCircle size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Critical Priority</div>
             <div className="stat-card-value">{stats.critical}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?sla_status=breached')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate(`/tickets?sla_status=breached&status=${ACTIVE_STATUSES}`)} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon red" style={{ animation: stats.sla_breached > 0 ? 'pulse-glow 2s infinite' : 'none' }}>
             <AlertTriangle size={24} />
           </div>
@@ -124,7 +130,7 @@ export default function DashboardPage() {
             <div className="stat-card-value">{stats.sla_breached}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate('/tickets?status=resolved,closed')} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+        <div className="stat-card" style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }} onClick={() => navigate(`/tickets?status=resolved,closed&date_from=${sevenDaysAgo}`)} onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
           <div className="stat-card-icon green"><CheckCircle2 size={24} /></div>
           <div className="stat-card-info">
             <div className="stat-card-label">Resolved (7d)</div>
@@ -164,9 +170,9 @@ export default function DashboardPage() {
                     radius={[4, 4, 0, 0]} 
                     onClick={(data) => {
                       if (data && data.category_id) {
-                        navigate(`/tickets?category_id=${data.category_id}`);
+                        navigate(`/tickets?status=${ACTIVE_STATUSES}&category_id=${data.category_id}`);
                       } else if (data && data.category) {
-                        navigate(`/tickets?search=${encodeURIComponent(data.category)}`);
+                        navigate(`/tickets?status=${ACTIVE_STATUSES}&search=${encodeURIComponent(data.category)}`);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -253,12 +259,12 @@ export default function DashboardPage() {
                     radius={[0, 4, 4, 0]} 
                     onClick={(data) => {
                        if(data) {
-                          let q = '';
-                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
-                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
-                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
-                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
+                          let q = `?status=${ACTIVE_STATUSES}`;
+                          if(data.room_id) q += '&room_id=' + encodeURIComponent(data.room_id);
+                          else if(data.room_type) q += '&search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_id) q += '&asset_id=' + encodeURIComponent(data.asset_id);
+                          else if(data.category_id) q += '&category_id=' + encodeURIComponent(data.category_id);
+                          else if(data.department) q += '&department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
                     }}
@@ -342,12 +348,12 @@ export default function DashboardPage() {
                     radius={[0, 4, 4, 0]} 
                     onClick={(data) => {
                        if(data) {
-                          let q = '';
-                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
-                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
-                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
-                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
+                          let q = `?status=${ACTIVE_STATUSES}`;
+                          if(data.room_id) q += '&room_id=' + encodeURIComponent(data.room_id);
+                          else if(data.room_type) q += '&search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_id) q += '&asset_id=' + encodeURIComponent(data.asset_id);
+                          else if(data.category_id) q += '&category_id=' + encodeURIComponent(data.category_id);
+                          else if(data.department) q += '&department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
                     }}

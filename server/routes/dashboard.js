@@ -63,19 +63,25 @@ router.get('/charts', authenticate, async (req, res) => {
       return buildTicketVisibilityQuery(q, req.user);
     };
 
+    // Active-only filter: excludes closed/cancelled tickets (for problem-area charts)
+    let activeFilter = (q) => {
+      q = q.whereNotIn('tickets.status', ['closed', 'cancelled']);
+      return baseFilter(q);
+    };
+
     // Tickets by status
     const byStatus = await baseFilter(db('tickets').select('status').count('* as count').groupBy('status'));
 
     // Tickets by priority
     const byPriority = await baseFilter(db('tickets').select('priority').count('* as count').groupBy('priority'));
 
-    // Tickets by department
-    const byDepartment = await baseFilter(
+    // Tickets by department (active only)
+    const byDepartment = await activeFilter(
       db('tickets').select('department').count('* as count').whereNotNull('department').groupBy('department')
     );
 
-    // Tickets by category (Grouped by parent category if it's a subcategory)
-    const byCategory = await baseFilter(
+    // Tickets by category (Grouped by parent category if it's a subcategory, active only)
+    const byCategory = await activeFilter(
       db('tickets')
         .select(
           db.raw('COALESCE(parent.id, categories.id) as category_id'),
@@ -88,24 +94,24 @@ router.get('/charts', authenticate, async (req, res) => {
         .groupByRaw('COALESCE(parent.id, categories.id), COALESCE(parent.name, categories.name)')
     ).orderBy('count', 'desc');
 
-    // Top 10 problem rooms
-    const topRooms = await baseFilter(
+    // Top 10 problem rooms (active only)
+    const topRooms = await activeFilter(
       db('tickets')
         .select('tickets.room_id', 'rooms.room_number', db.raw('count(*) as count'))
         .join('rooms', 'tickets.room_id', 'rooms.id')
         .groupBy('tickets.room_id', 'rooms.room_number')
     ).orderBy('count', 'desc');
 
-    // Top 10 problem assets
-    const topAssets = await baseFilter(
+    // Top 10 problem assets (active only)
+    const topAssets = await activeFilter(
       db('tickets')
         .select('tickets.asset_id', 'assets.name as asset_name', db.raw('count(*) as count'))
         .join('assets', 'tickets.asset_id', 'assets.id')
         .groupBy('tickets.asset_id', 'assets.name')
     ).orderBy('count', 'desc');
 
-    // Top 10 problem room categories
-    const topRoomTypes = await baseFilter(
+    // Top 10 problem room categories (active only)
+    const topRoomTypes = await activeFilter(
       db('tickets')
         .select('rooms.room_type as room_type', db.raw('count(*) as count'))
         .join('rooms', 'tickets.room_id', 'rooms.id')
