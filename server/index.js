@@ -34,6 +34,7 @@ import preventiveMaintenanceRoutes from './routes/preventiveMaintenance.js';
 import settingsRoutes from './routes/settings.js';
 import hotelRoutes from './routes/hotels.js';
 import backupRoutes from './routes/backups.js';
+import calendarRoutes from './routes/calendar.js';
 import { initializeCronJobs } from './services/backupService.js';
 
 import { rateLimit } from 'express-rate-limit';
@@ -149,6 +150,8 @@ app.use('/api/knowledge-base', knowledgeBaseRoutes);
 app.use('/api/import', importRouter);
 app.use('/api/checklists', checklistRoutes);
 app.use('/api/attachments', attachmentRoutes);
+app.use('/api/saved-views', savedViewRoutes);
+app.use('/api/calendar', calendarRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/dashboard', dashboardRoutes);

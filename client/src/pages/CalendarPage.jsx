@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle, Plus, ChevronDown, Ticket } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle, Plus, ChevronDown, Ticket, Link as LinkIcon, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function CalendarPage() {
@@ -10,7 +10,9 @@ export default function CalendarPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddMenu, setShowAddMenu] = useState(false);
-  const { error } = useToast();
+  const [icalUrl, setIcalUrl] = useState('');
+  const [showIcalModal, setShowIcalModal] = useState(false);
+  const { error, success } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +50,21 @@ export default function CalendarPage() {
     }
   }
 
+  async function handleSubscribe() {
+    try {
+      const res = await api('/calendar/token');
+      setIcalUrl(res.feedUrl);
+      setShowIcalModal(true);
+    } catch (err) {
+      error('Failed to generate calendar subscription link');
+    }
+  }
+
+  const copyIcalUrl = () => {
+    navigator.clipboard.writeText(icalUrl);
+    success('Calendar link copied to clipboard!');
+  };
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const startDate = startOfWeek(monthStart);
@@ -72,6 +89,10 @@ export default function CalendarPage() {
             <p className="page-subtitle">Track upcoming ticket deadlines</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className="btn btn-secondary" onClick={handleSubscribe}>
+              <LinkIcon size={16} style={{ marginRight: '4px' }} />
+              Subscribe (iCal)
+            </button>
             <div style={{ position: 'relative' }}>
               <button 
                 className="btn btn-primary" 
@@ -187,6 +208,36 @@ export default function CalendarPage() {
           </div>
         )}
       </div>
+
+      {/* iCal Subscribe Modal */}
+      {showIcalModal && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal" style={{ background: 'var(--bg-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', maxWidth: '500px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+              <CalendarIcon size={20} style={{ marginRight: '8px', color: 'var(--primary-500)' }} />
+              Subscribe to Calendar
+            </h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '14px', lineHeight: 1.5 }}>
+              Use the following iCal link to synchronize your IT ticketing and maintenance tasks with Microsoft Outlook, Apple Calendar, or Google Calendar. This link is secure and unique to your hotel.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+              <input 
+                type="text" 
+                value={icalUrl} 
+                readOnly 
+                className="form-input" 
+                style={{ flex: 1, fontFamily: 'monospace', fontSize: '12px', background: 'var(--bg-elevated)' }} 
+              />
+              <button className="btn btn-primary" onClick={copyIcalUrl}>
+                <Copy size={16} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowIcalModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
