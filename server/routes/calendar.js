@@ -19,9 +19,7 @@ router.get('/token', authenticate, async (req, res) => {
       await db('settings').insert({
         hotel_id: hotelId,
         key: 'CALENDAR_FEED_TOKEN',
-        value: token,
-        type: 'string',
-        description: 'Secure token for iCal feed access'
+        value: token
       });
     } else {
       token = setting.value;
