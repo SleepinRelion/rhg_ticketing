@@ -1990,6 +1990,10 @@ body {
     gap: var(--space-sm);
   }
   
+  .hotel-switcher {
+    display: none !important;
+  }
+  
   .header-left .search-input-wrapper {
     max-width: 150px; /* Shrink search on mobile */
   }
@@ -2020,8 +2024,7 @@ body {
     -webkit-overflow-scrolling: touch;
   }
   
-  .toolbar .search-input-wrapper, 
-  .toolbar .form-select {
+  .toolbar > * {
     flex-shrink: 0;
   }
 
@@ -2031,6 +2034,10 @@ body {
     overflow-x: auto;
     padding-bottom: var(--space-sm);
     -webkit-overflow-scrolling: touch;
+  }
+  
+  .filters-row > * {
+    flex-shrink: 0;
   }
   
   /* Modal */

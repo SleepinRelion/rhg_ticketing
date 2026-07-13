@@ -226,7 +226,7 @@ export default function Header({ onMenuToggle }) {
       <div className="header-right">
         {/* Hotel Switcher */}
         {hotels.length > 0 && (
-          <div style={{ marginRight: '16px' }}>
+          <div className="hotel-switcher" style={{ marginRight: '16px' }}>
             <SearchableSelect
               className="form-select"
               value={activeHotelId || ''}
