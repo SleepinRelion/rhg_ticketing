@@ -167,6 +167,25 @@ export default function TicketsPage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedTickets.size} selected tickets? This cannot be undone.`)) return;
+
+    try {
+      await api('/tickets/bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          ticket_ids: Array.from(selectedTickets),
+          action: 'soft_delete'
+        })
+      });
+      success('Bulk delete completed successfully');
+      setSelectedTickets(new Set());
+      fetchTickets(pagination.page);
+    } catch (err) {
+      error(err.message || 'Failed to perform bulk delete');
+    }
+  };
+
   const handleSingleAction = async (ticketId, action, value = null) => {
     let resolutionNote = null;
     
@@ -381,6 +400,15 @@ export default function TicketsPage() {
                 <option value="high">High</option>
                 <option value="critical">Critical</option>
               </select>
+              
+              <button 
+                onClick={handleBulkDelete}
+                className="btn btn-icon" 
+                style={{ height: 28, width: 28, padding: 0, color: 'var(--error)', border: '1px solid var(--border-color)', borderRadius: '14px', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Delete Selected"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           </div>
         )}
