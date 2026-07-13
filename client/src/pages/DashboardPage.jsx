@@ -170,9 +170,9 @@ export default function DashboardPage() {
                     radius={[4, 4, 0, 0]} 
                     onClick={(data) => {
                       if (data && data.category_id) {
-                        navigate(`/tickets?status=${ACTIVE_STATUSES}&category_id=${data.category_id}`);
+                        navigate(`/tickets?category_id=${data.category_id}`);
                       } else if (data && data.category) {
-                        navigate(`/tickets?status=${ACTIVE_STATUSES}&search=${encodeURIComponent(data.category)}`);
+                        navigate(`/tickets?search=${encodeURIComponent(data.category)}`);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -259,12 +259,12 @@ export default function DashboardPage() {
                     radius={[0, 4, 4, 0]} 
                     onClick={(data) => {
                        if(data) {
-                          let q = `?status=${ACTIVE_STATUSES}`;
-                          if(data.room_id) q += '&room_id=' + encodeURIComponent(data.room_id);
-                          else if(data.room_type) q += '&search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_id) q += '&asset_id=' + encodeURIComponent(data.asset_id);
-                          else if(data.category_id) q += '&category_id=' + encodeURIComponent(data.category_id);
-                          else if(data.department) q += '&department=' + encodeURIComponent(data.department);
+                          let q = '';
+                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
+                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
+                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
+                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
                     }}
@@ -348,12 +348,12 @@ export default function DashboardPage() {
                     radius={[0, 4, 4, 0]} 
                     onClick={(data) => {
                        if(data) {
-                          let q = `?status=${ACTIVE_STATUSES}`;
-                          if(data.room_id) q += '&room_id=' + encodeURIComponent(data.room_id);
-                          else if(data.room_type) q += '&search=' + encodeURIComponent(data.room_type);
-                          else if(data.asset_id) q += '&asset_id=' + encodeURIComponent(data.asset_id);
-                          else if(data.category_id) q += '&category_id=' + encodeURIComponent(data.category_id);
-                          else if(data.department) q += '&department=' + encodeURIComponent(data.department);
+                          let q = '';
+                          if(data.room_id) q = '?room_id=' + encodeURIComponent(data.room_id);
+                          else if(data.room_type) q = '?search=' + encodeURIComponent(data.room_type);
+                          else if(data.asset_id) q = '?asset_id=' + encodeURIComponent(data.asset_id);
+                          else if(data.category_id) q = '?category_id=' + encodeURIComponent(data.category_id);
+                          else if(data.department) q = '?department=' + encodeURIComponent(data.department);
                           navigate(`/tickets${q}`);
                        }
                     }}
