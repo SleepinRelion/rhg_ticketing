@@ -270,7 +270,7 @@ export default function CategoriesPage() {
                 
                 {/* Type Content */}
                 {expandedTypes[type] && (
-                  <div style={{ padding: '0' }}>
+                  <div className="table-responsive" style={{ padding: '0' }}>
                     {groupedCategories[type].length === 0 ? (
                       <div style={{ padding: '20px', color: 'var(--text-muted)', textAlign: 'center' }}>No categories found for this type.</div>
                     ) : (
@@ -342,7 +342,7 @@ export default function CategoriesPage() {
             ))}
           </div>
         ) : activeTab === 'departments' ? (
-          <div>
+          <div className="table-responsive">
             {departments.length === 0 ? (
               <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>
                 <Building2 size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />

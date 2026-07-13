@@ -155,7 +155,7 @@ export default function ReportsPage() {
     const columns = Object.keys(data[0]);
 
     return (
-      <div className="data-table-container" style={{ margin: 0, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+      <div className="data-table-container table-responsive" style={{ margin: 0, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
         <table className="data-table">
           <thead>
             <tr>

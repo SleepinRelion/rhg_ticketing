@@ -128,7 +128,7 @@ export default function AssetsPage() {
         )}
       </div>
 
-      <div className="data-table-container">
+      <div className="data-table-container table-responsive">
         {loading ? (
           <div className="loading-spinner"><div className="spinner"></div></div>
         ) : (

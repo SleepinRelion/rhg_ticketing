@@ -114,7 +114,7 @@ export default function GuestTicketStatusPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <MapPin size={16} className="text-secondary" />
                 <span>{ticketData.room_number ? `Room ${ticketData.room_number}` : ticketData.hotel_name || 'Hotel'}</span>

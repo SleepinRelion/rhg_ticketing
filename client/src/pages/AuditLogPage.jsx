@@ -120,7 +120,7 @@ export default function AuditLogPage() {
         </div>
       </div>
 
-      <div className="card table-container">
+      <div className="card table-container table-responsive">
         {loading ? (
           <div className="loading-spinner"><div className="spinner"></div></div>
         ) : (

@@ -107,7 +107,7 @@ export default function TicketDetailsForm({
             {isTaskType && (
               <div className="form-group">
                 <label className="form-label">Category <span style={{ color: 'var(--error)' }}>*</span></label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
                   {parentCategories.map(cat => (
                     <button
                       key={cat.id}
@@ -140,7 +140,7 @@ export default function TicketDetailsForm({
             {/* === REQUEST === */}
             {isRequestType && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                   {parentCategories.map(cat => {
                     const CatIcon = REQUEST_CATEGORY_ICONS[cat.name] || FileQuestion;
                     const isSelected = formData.category_id === String(cat.id);

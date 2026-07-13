@@ -415,7 +415,7 @@ export default function TicketsPage() {
       </div>
 
       {showMoreFilters && (
-        <div style={{
+        <div className="filters-row" style={{
           display: 'flex', flexWrap: 'wrap', gap: 10, padding: '12px 16px',
           background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-color)', margin: '0 0 16px 0',
@@ -501,7 +501,7 @@ export default function TicketsPage() {
         </div>
       )}
 
-      <div className="data-table-container">
+      <div className="data-table-container table-responsive">
         {loading && tickets.length === 0 ? (
           <div className="loading-spinner"><div className="spinner"></div></div>
         ) : tickets.length === 0 ? (

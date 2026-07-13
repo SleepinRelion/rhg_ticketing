@@ -134,7 +134,7 @@ export default function Header({ onMenuToggle }) {
           className="btn-icon mobile-menu-btn"
           onClick={onMenuToggle}
           aria-label="Toggle navigation menu"
-          style={{ display: 'none', marginRight: '8px', flexShrink: 0 }}
+          style={{ marginRight: '8px', flexShrink: 0 }}
         >
           <Menu size={20} />
         </button>
