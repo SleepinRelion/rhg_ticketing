@@ -25,8 +25,10 @@ router.get('/token', authenticate, async (req, res) => {
       token = setting.value;
     }
 
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    const feedUrl = `${baseUrl}/api/calendar/feed/${hotelId}/${token}.ics`;
+    // Use the host header directly to ensure the URL matches what the client is using (e.g. local IP vs domain)
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const feedUrl = `${protocol}://${host}/api/calendar/feed/${hotelId}/${token}.ics`;
 
     res.json({ token, feedUrl });
   } catch (error) {
