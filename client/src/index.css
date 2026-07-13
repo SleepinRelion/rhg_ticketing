@@ -1980,6 +1980,10 @@ body {
 }
 
 @media (max-width: 768px) {
+  .mobile-only-switcher {
+    display: block !important;
+  }
+  
   /* Header */
   .mobile-menu-btn {
     display: flex !important;

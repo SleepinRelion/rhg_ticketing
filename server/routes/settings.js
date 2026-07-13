@@ -173,18 +173,7 @@ router.put('/env', authenticate, authorize('admin', 'manager'), (req, res) => {
       return res.status(400).json({ error: 'Invalid updates payload.' });
     }
 
-    // Only allow modification of safe application settings
-    const ALLOWED_KEYS = [
-      'APP_NAME', 'APP_URL', 'APP_TIMEZONE', 'APP_LOGO_URL', 'APP_BG_COLOR', 'APP_BG_IMAGE_URL',
-      'SMTP_ENABLED', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM',
-      'LOGIN_RATE_LIMIT_MAX', 'LOGIN_RATE_LIMIT_WINDOW_MS',
-      'ACCOUNT_LOCKOUT_ATTEMPTS', 'ACCOUNT_LOCKOUT_DURATION_MINUTES',
-    ];
-
-    const disallowedKeys = Object.keys(updates).filter(k => !ALLOWED_KEYS.includes(k));
-    if (disallowedKeys.length > 0) {
-      return res.status(403).json({ error: `Modification of these settings is not allowed via the UI: ${disallowedKeys.join(', ')}. Contact your system administrator.` });
-    }
+    // Allowed keys restriction removed: Managers and Admins can edit any env variable via the UI.
 
     if (!fs.existsSync(envPath)) {
       fs.writeFileSync(envPath, '');

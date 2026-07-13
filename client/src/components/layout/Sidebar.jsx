@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import api from '../../api/client.js';
 import {
   LayoutDashboard, Ticket, Plus, DoorOpen, HardDrive, Users, FolderOpen,
   BookOpen, BarChart3, Bell, Shield, Settings, Wrench, ClipboardList, FileUp, Calendar
@@ -8,6 +10,34 @@ import {
 export default function Sidebar({ isOpen, onClose }) {
   const { user } = useAuth();
   const location = useLocation();
+  const [hotels, setHotels] = useState([]);
+  const [activeHotelId, setActiveHotelId] = useState(localStorage.getItem('activeHotelId') || '');
+
+  useEffect(() => {
+    fetchHotels();
+  }, []);
+
+  async function fetchHotels() {
+    try {
+      const data = await api('/hotels');
+      setHotels(data.hotels || []);
+      const localHotelId = localStorage.getItem('activeHotelId');
+      const hotelIds = (data.hotels || []).map(h => String(h.id));
+      if (localHotelId && hotelIds.includes(String(localHotelId))) {
+        setActiveHotelId(localHotelId);
+      } else if (data.activeHotelId) {
+        setActiveHotelId(data.activeHotelId);
+        localStorage.setItem('activeHotelId', data.activeHotelId);
+      }
+    } catch {}
+  }
+
+  function handleHotelChange(e) {
+    const newId = e.target.value;
+    setActiveHotelId(newId);
+    localStorage.setItem('activeHotelId', newId);
+    window.location.reload();
+  }
 
   const navItems = [
     { section: 'Main' },
@@ -45,6 +75,23 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       <div className="sidebar-nav">
+        {/* Mobile Hotel Switcher */}
+        {hotels.length > 0 && (
+          <div className="mobile-only-switcher" style={{ padding: '0 16px 16px 16px', display: 'none' }}>
+            <div className="sidebar-section-title" style={{ padding: '0 0 8px 0' }}>Location</div>
+            <select
+              className="form-select"
+              value={activeHotelId || ''}
+              onChange={handleHotelChange}
+              style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px', borderRadius: 'var(--radius-md)' }}
+            >
+              {user?.role === 'manager' && hotels.length > 1 && (
+                <option value="all">Global View (All Hotels)</option>
+              )}
+              {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+            </select>
+          </div>
+        )}
         {navItems.map((item, i) => {
           if (item.section) {
             return <div key={i} className="sidebar-section-title">{item.section}</div>;
