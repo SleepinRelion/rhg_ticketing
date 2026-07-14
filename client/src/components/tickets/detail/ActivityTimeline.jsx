@@ -113,16 +113,10 @@ export default function ActivityTimeline({ timeline }) {
 
                     if (newFields && !item.old_value) {
                       // "Set to [array of fields]" → "Updated X, Y, Z"
-                      const maxShow = 3;
-                      const shown = newFields.slice(0, maxShow).join(', ');
-                      const extra = newFields.length - maxShow;
-                      return `Updated ${shown}${extra > 0 ? `, and ${extra} more field${extra > 1 ? 's' : ''}` : ''}`;
+                      return `Updated: ${newFields.join(', ')}`;
                     }
                     if (newFields && oldFields) {
-                      const maxShow = 3;
-                      const shown = newFields.slice(0, maxShow).join(', ');
-                      const extra = newFields.length - maxShow;
-                      return `Changed ${shown}${extra > 0 ? `, and ${extra} more field${extra > 1 ? 's' : ''}` : ''}`;
+                      return `Changed: ${newFields.join(', ')}`;
                     }
 
                     // Default: plain text display
