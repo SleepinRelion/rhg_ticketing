@@ -55,7 +55,7 @@ export default function ActivityTimeline({ timeline }) {
             <div className="card" style={{ padding: '16px', margin: 0, border: isComment && item.is_internal ? '1px solid rgba(245, 158, 11, 0.3)' : undefined, background: isComment && item.is_internal ? 'rgba(245, 158, 11, 0.05)' : undefined }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                 <div style={{ fontSize: '14px' }}>
-                  <strong>{item.user_name}</strong>
+                  <strong>{item.user_name || 'System'}</strong>
                   {isActivity && (
                     <span style={{ color: 'var(--text-secondary)' }}>
                       {' '} {item.action.replace(/_/g, ' ')}

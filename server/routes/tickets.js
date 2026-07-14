@@ -298,7 +298,7 @@ router.get('/:id', authenticate, async (req, res) => {
         .where('ticket_id', ticket.id),
       db('activity_logs')
         .select('activity_logs.*', 'users.full_name as user_name')
-        .join('users', 'activity_logs.user_id', 'users.id')
+        .leftJoin('users', 'activity_logs.user_id', 'users.id')
         .where('ticket_id', ticket.id)
         .orderBy('created_at', 'desc'),
       db('comments')

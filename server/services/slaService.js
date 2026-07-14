@@ -117,7 +117,7 @@ async function checkEscalation(ticket) {
       // Activity log
       await db('activity_logs').insert({
         ticket_id: ticket.id,
-        user_id: 1, // System
+        user_id: null, // System
         action: 'escalated',
         new_value: 'Level 1 - Auto-escalated to managers',
         created_at: new Date(),
