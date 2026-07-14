@@ -82,9 +82,54 @@ export default function ActivityTimeline({ timeline }) {
               )}
 
               {isActivity && (
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  {item.old_value && item.new_value ? `Changed from ${item.old_value} to ${item.new_value}` : ''}
-                  {item.new_value && !item.old_value ? `Set to ${item.new_value}` : ''}
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', wordBreak: 'break-word' }}>
+                  {(() => {
+                    // Helper to make field names human-readable
+                    const formatFieldName = (field) => {
+                      const fieldMap = {
+                        title: 'Title', description: 'Description', priority: 'Priority',
+                        ticket_type: 'Type', category_id: 'Category', room_id: 'Room',
+                        asset_id: 'Asset', guest_impact: 'Guest Impact',
+                        guest_room_occupied: 'Guest Room Occupied', guest_name: 'Guest Name',
+                        status: 'Status', department: 'Department', vendor_name: 'Vendor',
+                        cost_estimate: 'Cost Estimate', actual_cost: 'Actual Cost',
+                        sla_status: 'SLA Status', requires_vendor: 'Requires Vendor',
+                      };
+                      return fieldMap[field] || field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    };
+
+                    // Try to parse JSON arrays in old_value/new_value
+                    const tryParseFields = (val) => {
+                      if (!val) return null;
+                      try {
+                        const parsed = JSON.parse(val);
+                        if (Array.isArray(parsed)) return parsed.map(formatFieldName);
+                      } catch { /* not JSON */ }
+                      return null;
+                    };
+
+                    const newFields = tryParseFields(item.new_value);
+                    const oldFields = tryParseFields(item.old_value);
+
+                    if (newFields && !item.old_value) {
+                      // "Set to [array of fields]" → "Updated X, Y, Z"
+                      const maxShow = 3;
+                      const shown = newFields.slice(0, maxShow).join(', ');
+                      const extra = newFields.length - maxShow;
+                      return `Updated ${shown}${extra > 0 ? `, and ${extra} more field${extra > 1 ? 's' : ''}` : ''}`;
+                    }
+                    if (newFields && oldFields) {
+                      const maxShow = 3;
+                      const shown = newFields.slice(0, maxShow).join(', ');
+                      const extra = newFields.length - maxShow;
+                      return `Changed ${shown}${extra > 0 ? `, and ${extra} more field${extra > 1 ? 's' : ''}` : ''}`;
+                    }
+
+                    // Default: plain text display
+                    if (item.old_value && item.new_value) return `Changed from ${item.old_value} to ${item.new_value}`;
+                    if (item.new_value && !item.old_value) return `Set to ${item.new_value}`;
+                    return null;
+                  })()}
                   {item.note && <div style={{ marginTop: '4px', fontStyle: 'italic', background: 'var(--bg-secondary)', padding: '8px', borderRadius: 'var(--radius-sm)' }}>"{item.note}"</div>}
                 </div>
               )}
