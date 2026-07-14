@@ -106,9 +106,13 @@ export async function processImportedFiles(files, adminUserId) {
         const titleRow = data[0][0] || '';
         let globalHotelId = null;
 
-        if (titleRow.includes('MRUZG')) globalHotelId = 3; // Azuri
-        else if (titleRow.includes('MRUZL')) globalHotelId = 2; // Poste Lafayette
-        else if (titleRow.includes('MRUIA')) globalHotelId = 1; // Crystal Beach
+        // Determine hotel dynamically by looking up the hotel code in the DB.
+        // This avoids hardcoding hotel IDs which break if hotels are re-seeded.
+        const hotelCodeInTitle = ['MRUZG', 'MRUZL', 'MRUIA'].find(c => titleRow.includes(c));
+        if (hotelCodeInTitle) {
+          const hotel = await db('hotels').where('code', hotelCodeInTitle).first();
+          if (hotel) globalHotelId = hotel.id;
+        }
 
         // Try to parse date from filename if missing in rows (e.g. Daily Intervention Report 02-May-26.xlsx)
         let defaultDate = new Date();
@@ -176,10 +180,14 @@ export async function processImportedFiles(files, adminUserId) {
             agentName = row[5];
           } else if (formatType === 'tv_activity') {
             const hotelCode = typeof row[0] === 'string' ? row[0].trim() : '';
-            if (hotelCode === 'MRUZG') rowHotelId = 3;
-            else if (hotelCode === 'MRUZL') rowHotelId = 2;
-            else if (hotelCode === 'MRUIA') rowHotelId = 1;
-            else continue; // Skip invalid hotel codes
+            // Look up hotel ID dynamically by code stored in the DB
+            if (hotelCode) {
+              const hotel = await db('hotels').where('code', hotelCode).first();
+              if (!hotel) continue; // Skip unrecognised hotel codes
+              rowHotelId = hotel.id;
+            } else {
+              continue; // Skip rows with no hotel code
+            }
 
             dateVal = row[1];
             issue = 'Hotel TV Track Activity';

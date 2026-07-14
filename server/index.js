@@ -42,12 +42,19 @@ import { rateLimit } from 'express-rate-limit';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+// Allowed origins are derived exclusively from the APP_URL environment variable.
+// Set APP_URL to a comma-separated list to allow multiple origins (e.g. dev + prod).
+// Never falls back to a localhost default — deny unrecognised origins by default.
+const allowedOrigins = process.env.APP_URL
+  ? process.env.APP_URL.split(',').map(s => s.trim().replace(/\/$/, ''))
+  : [];
+
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (e.g. Nginx) to get correct req.ip
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.APP_URL || 'http://localhost:5173',
+    origin: allowedOrigins.length ? allowedOrigins : false,
     credentials: true,
   }
 });
@@ -95,8 +102,8 @@ app.use(morgan(morganFormat, { stream: { write: message => logger.info(message.t
 import { globalApiLimiter, loginLimiter } from './middleware/rateLimiter.js';
 app.use('/api', globalApiLimiter);
 
-// CORS
-const allowedOrigins = (process.env.APP_URL || 'http://localhost:3001').split(',').map(s => s.trim().replace(/\/$/, ''));
+// CORS — uses the allowedOrigins list derived from APP_URL (defined at module top level)
+
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, server-to-server, same-origin)

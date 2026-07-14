@@ -2,6 +2,7 @@ import db from '../config/database.js';
 import { determineSLAStatus, getSLAConfig } from '../utils/slaCalculator.js';
 import { createNotification } from './notificationService.js';
 import { addMinutes, isBefore } from 'date-fns';
+import { ROLES } from '../constants/roles.js';
 
 /**
  * Run SLA check on all open tickets.
@@ -48,7 +49,7 @@ export async function runSLACheck() {
  */
 async function handleSLABreach(ticket) {
   // Notify all managers
-  const managers = await db('users').where({ role: 'manager', is_active: true }).whereNull('deleted_at');
+  const managers = await db('users').where({ role: ROLES.MANAGER, is_active: true }).whereNull('deleted_at');
   for (const manager of managers) {
     await createNotification(
       manager.id,
@@ -103,7 +104,7 @@ async function checkEscalation(ticket) {
         updated_at: new Date(),
       });
 
-      const managers = await db('users').where({ role: 'manager', is_active: true }).whereNull('deleted_at');
+      const managers = await db('users').where({ role: ROLES.MANAGER, is_active: true }).whereNull('deleted_at');
       for (const manager of managers) {
         await createNotification(
           manager.id,
@@ -132,7 +133,7 @@ async function checkEscalation(ticket) {
       updated_at: new Date(),
     });
 
-    const admins = await db('users').where({ role: 'admin', is_active: true }).whereNull('deleted_at');
+    const admins = await db('users').where({ role: ROLES.ADMIN, is_active: true }).whereNull('deleted_at');
     for (const admin of admins) {
       await createNotification(
         admin.id,

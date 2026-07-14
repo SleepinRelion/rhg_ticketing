@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, Clock, Wrench, CheckCircle, Plus, ChevronDown, Ticket, Link as LinkIcon, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +14,7 @@ export default function CalendarPage() {
   const [icalUrl, setIcalUrl] = useState('');
   const [showIcalModal, setShowIcalModal] = useState(false);
   const { error, success } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,7 +56,13 @@ export default function CalendarPage() {
     try {
       const res = await api('/calendar/token');
       const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
-      const activeHotelId = localStorage.getItem('activeHotelId') || '1';
+      // Use the active hotel from localStorage, falling back to the user's primary hotel.
+      // Never fall back to a hardcoded ID.
+      const activeHotelId = localStorage.getItem('activeHotelId') || user?.primary_hotel_id;
+      if (!activeHotelId) {
+        error('Could not determine your hotel. Please select a hotel first.');
+        return;
+      }
       setIcalUrl(`${apiBase}/api/calendar/feed/${activeHotelId}/${res.token}.ics`);
       setShowIcalModal(true);
     } catch (err) {

@@ -2,6 +2,8 @@
  * Role-based authorization middleware.
  * Usage: authorize('admin', 'manager')
  * Must be used AFTER the authenticate middleware.
+ *
+ * For canonical role name constants, see: server/constants/roles.js
  */
 export function authorize(...allowedRoles) {
   return (req, res, next) => {
