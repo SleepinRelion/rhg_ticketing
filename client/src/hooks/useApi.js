@@ -15,7 +15,7 @@ export function useApi(urlOrFn, options = {}) {
   const [loading, setLoading] = useState(immediate);
   const [error, setError] = useState(null);
   
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
   // Using a ref to hold options to prevent infinite useEffect loops
   const optionsRef = useRef(fetchOptions);
   
@@ -39,7 +39,7 @@ export function useApi(urlOrFn, options = {}) {
           ...dynamicOptions,
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
             ...optionsRef.current.headers,
             ...(dynamicOptions?.headers || {})
           }
