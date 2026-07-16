@@ -52,11 +52,34 @@ export default function EditTicketModal({ ticket, onClose, onSave }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...formData };
-      if (!payload.category_id) payload.category_id = null;
-      if (!payload.room_id) payload.room_id = null;
-      if (!payload.asset_id) payload.asset_id = null;
-      if (!payload.hotel_id) payload.hotel_id = null;
+      // Only send fields that actually changed compared to the original ticket
+      const payload = {};
+      const nullableFields = ['category_id', 'room_id', 'asset_id', 'hotel_id'];
+
+      for (const key of Object.keys(formData)) {
+        let formVal = formData[key];
+        let origVal = ticket[key];
+
+        // Normalize: convert empty strings to null for nullable fields
+        if (nullableFields.includes(key)) {
+          if (formVal === '' || formVal === undefined) formVal = null;
+          if (origVal === '' || origVal === undefined) origVal = null;
+        }
+
+        // Normalize both to strings for comparison (matching server logic)
+        const formNorm = (formVal === null || formVal === undefined || formVal === '') ? null : String(formVal);
+        const origNorm = (origVal === null || origVal === undefined || origVal === '') ? null : String(origVal);
+
+        if (formNorm !== origNorm) {
+          payload[key] = nullableFields.includes(key) ? formVal : formData[key];
+        }
+      }
+
+      if (Object.keys(payload).length === 0) {
+        success('No changes to save.');
+        onClose();
+        return;
+      }
 
       const updatedTicket = await api(`/tickets/${ticket.id}`, {
         method: 'PUT',

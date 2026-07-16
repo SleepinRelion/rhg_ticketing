@@ -469,9 +469,19 @@ router.put('/:id', authenticate, async (req, res) => {
     ];
 
     const updates = {};
+    const changedFields = []; // Track fields that actually changed
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
-        updates[field] = typeof req.body[field] === 'string' ? sanitize(req.body[field]) : req.body[field];
+        const newVal = typeof req.body[field] === 'string' ? sanitize(req.body[field]) : req.body[field];
+        // Only include if the value actually changed
+        const oldVal = ticket[field];
+        // Normalize for comparison: treat null/undefined/'' as equivalent
+        const oldNorm = (oldVal === null || oldVal === undefined || oldVal === '') ? null : String(oldVal);
+        const newNorm = (newVal === null || newVal === undefined || newVal === '') ? null : String(newVal);
+        if (oldNorm !== newNorm) {
+          updates[field] = newVal;
+          changedFields.push({ field, oldValue: oldVal, newValue: newVal });
+        }
       }
     }
 
@@ -500,13 +510,32 @@ router.put('/:id', authenticate, async (req, res) => {
 
     await db('tickets').where({ id: req.params.id }).update(updates);
 
-    await db('activity_logs').insert({
-      ticket_id: ticket.id,
-      user_id: req.user.id,
-      action: 'ticket_updated',
-      new_value: JSON.stringify(Object.keys(updates).filter((k) => k !== 'updated_at')),
-      created_at: new Date(),
-    });
+    // Log each actually-changed field individually so the activity timeline
+    // shows clear "Changed X from A to B" entries instead of one bulk dump.
+    const fieldLabelMap = {
+      title: 'title', description: 'description', priority: 'priority',
+      ticket_type: 'type', category_id: 'category', room_id: 'room',
+      asset_id: 'asset', guest_impact: 'guest impact', guest_room_occupied: 'guest room occupied',
+      guest_name: 'guest name', booking_reference: 'booking reference',
+      department: 'department', out_of_order_room: 'out of order room',
+      requires_vendor: 'requires vendor', vendor_name: 'vendor name',
+      cost_estimate: 'cost estimate', actual_cost: 'actual cost', hotel_id: 'hotel',
+    };
+
+    for (const change of changedFields) {
+      // Skip priority — already logged above with its own action
+      if (change.field === 'priority') continue;
+
+      const label = fieldLabelMap[change.field] || change.field.replace(/_/g, ' ');
+      await db('activity_logs').insert({
+        ticket_id: ticket.id,
+        user_id: req.user.id,
+        action: `${label} changed`,
+        old_value: change.oldValue != null ? String(change.oldValue) : null,
+        new_value: change.newValue != null ? String(change.newValue) : null,
+        created_at: new Date(),
+      });
+    }
 
     await createAuditEntry(req.user.id, 'ticket_updated', 'ticket', ticket.id, req.ip, req.headers['user-agent'], { fields: Object.keys(updates) });
 
