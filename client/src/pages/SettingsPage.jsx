@@ -118,6 +118,12 @@ export default function SettingsPage() {
     setSavingEnv(true);
     try {
       const filteredUpdates = { ...envConfig };
+      // Remove any redacted keys so we don't overwrite secrets with asterisks
+      for (const [key, val] of Object.entries(filteredUpdates)) {
+        if (typeof val === 'string' && val.startsWith('••••••••')) {
+          delete filteredUpdates[key];
+        }
+      }
 
       const res = await api('/settings/env', {
         method: 'PUT',
