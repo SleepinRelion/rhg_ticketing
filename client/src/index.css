@@ -11,36 +11,36 @@
 }
 
 :root {
-  /* Primary palette */
-  --primary-50: #eef2ff;
-  --primary-100: #e0e7ff;
-  --primary-200: #c7d2fe;
-  --primary-300: #a5b4fc;
-  --primary-400: #818cf8;
-  --primary-500: #6366f1;
-  --primary-600: #4f46e5;
-  --primary-700: #4338ca;
-  --primary-800: #3730a3;
-  --primary-900: #312e81;
+  /* Primary palette (Professional Tech Blue instead of Indigo) */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
 
-  /* Accent */
-  --accent-400: #a78bfa;
-  --accent-500: #8b5cf6;
-  --accent-600: #7c3aed;
+  /* Accent (Clean Teal/Emerald instead of Purple) */
+  --accent-400: #2dd4bf;
+  --accent-500: #14b8a6;
+  --accent-600: #0d9488;
 
-  /* Background layers */
-  --bg-base: #0f0f23;
-  --bg-surface: #1a1a2e;
-  --bg-elevated: #1e1e3a;
-  --bg-card: rgba(30, 30, 58, 0.8);
-  --bg-hover: rgba(99, 102, 241, 0.08);
-  --bg-active: rgba(99, 102, 241, 0.15);
+  /* Background layers (Deep Charcoal/Matte instead of deep purple) */
+  --bg-base: #121212;
+  --bg-surface: #181818;
+  --bg-elevated: #222222;
+  --bg-card: #1c1c1c;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.1);
 
-  /* Glass effect */
-  --glass-bg: rgba(30, 30, 58, 0.6);
-  --glass-border: rgba(99, 102, 241, 0.15);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --glass-blur: blur(20px);
+  /* Glass effect (REMOVED - Replaced with solid/crisp aesthetics) */
+  --glass-bg: #1c1c1c;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --glass-blur: none;
 
   /* Text colors */
   --text-primary: #f1f5f9;
@@ -49,8 +49,8 @@
   --text-inverse: #0f172a;
 
   /* Border */
-  --border-color: rgba(148, 163, 184, 0.12);
-  --border-hover: rgba(99, 102, 241, 0.3);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
 
   /* Status colors */
   --status-open: #3b82f6;
@@ -107,10 +107,10 @@
   --font-4xl: 2.25rem;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 2px 8px rgba(0, 0, 0, 0.6);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -202,10 +202,10 @@ body {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--primary-600);
   color: white;
   font-weight: 800;
   font-size: var(--font-lg);
@@ -315,8 +315,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-xl);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
+  background: var(--bg-surface);
+  box-shadow: 0 1px 0 var(--border-color);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -355,8 +355,7 @@ body {
 /* Cards */
 .card {
   background: var(--bg-card);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   box-shadow: var(--glass-shadow);
@@ -378,8 +377,7 @@ body {
 
 .stat-card {
   background: var(--bg-card);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   display: flex;
@@ -460,14 +458,21 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-500), var(--accent-600));
+  background: var(--primary-600);
   color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  background: var(--primary-500);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: var(--primary-700);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
 }
 
 .btn-secondary {
