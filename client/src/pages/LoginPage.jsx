@@ -53,13 +53,13 @@ export default function LoginPage() {
       style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
     >
       <div className="login-card">
-        <div className="login-header" style={{ textAlign: 'center' }}>
-          <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '70px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <div className="login-header" style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '48px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
 
           {!requiresMfa && (
             <>
-              <h2>Welcome Back</h2>
-              <p>Hotel Ticketing Platform</p>
+              <h2 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>Welcome Back</h2>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '15px' }}>Hotel Ticketing Platform</p>
             </>
           )}
         </div>
