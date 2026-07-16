@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Ticket, ArrowLeft, Clock, AlertTriangle, CheckCircle2, User, Building, MapPin, Loader2, Key } from 'lucide-react';
-import api from '../api/client.js';
+import { useApi } from '../hooks/useApi.js';
 
 export default function GuestTicketStatusPage() {
   const [searchParams] = useSearchParams();
   const [trackingToken, setTrackingToken] = useState(searchParams.get('token') || '');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [ticketData, setTicketData] = useState(null);
+  
+  const { data, loading, error, execute, setData } = useApi(null, { immediate: false });
+  const ticketData = data?.ticket || null;
 
   // Auto-search if token is in URL
   useEffect(() => {
@@ -21,22 +21,10 @@ export default function GuestTicketStatusPage() {
     if (e?.preventDefault) e.preventDefault();
     if (!trackingToken.trim()) return;
 
-    setLoading(true);
-    setError(null);
-    setTicketData(null);
-
-    try {
-      const res = await api(`/tickets/guest/track/${trackingToken.trim()}`);
-      setTicketData(res.ticket);
-    } catch (err) {
-      if (err.status === 404) {
-        setError("We couldn't find a ticket with that number. Please check the number and try again.");
-      } else {
-        setError(err.message || "Failed to retrieve ticket status.");
-      }
-    } finally {
-      setLoading(false);
-    }
+    setData(null);
+    await execute(`/tickets/guest/track/${trackingToken.trim()}`).catch(() => {
+       // useApi handles setting the error state automatically
+    });
   };
 
   const getStatusDisplay = (status) => {
@@ -96,9 +84,11 @@ export default function GuestTicketStatusPage() {
         </form>
 
         {error && (
-          <div className="alert alert-error" style={{ marginBottom: '1.5rem' }}>
-            <AlertTriangle size={20} style={{ flexShrink: 0 }} />
-            {error}
+          <div style={{ padding: '1rem', backgroundColor: 'var(--error-20)', color: 'var(--error)', borderRadius: 'var(--radius-md)', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertTriangle size={20} />
+            <p style={{ margin: 0 }}>
+              {error === 'Ticket not found.' ? "We couldn't find a ticket with that number. Please check the number and try again." : error}
+            </p>
           </div>
         )}
 

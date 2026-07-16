@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/client.js';
+import { useApi } from '../hooks/useApi.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Camera, Save, User, Shield, Lock, Smartphone } from 'lucide-react';
 
@@ -17,14 +18,15 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState('');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
-  const [savingProfile, setSavingProfile] = useState(false);
   const fileInputRef = useRef(null);
 
   // Security Form (Change Password)
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [savingPassword, setSavingPassword] = useState(false);
+
+  const { execute: saveProfileApi, loading: savingProfile } = useApi(null, { immediate: false });
+  const { execute: changePasswordApi, loading: savingPassword } = useApi(null, { immediate: false });
 
   // MFA State
   const [mfaEnabled, setMfaEnabled] = useState(false);
@@ -64,13 +66,12 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setSavingProfile(true);
     try {
       const formData = new FormData();
       formData.append('full_name', fullName);
       if (avatarFile) formData.append('avatar', avatarFile);
 
-      const res = await api('/users/profile', { method: 'PUT', body: formData });
+      const res = await saveProfileApi('/users/profile', { method: 'PUT', body: formData });
       const updatedUser = {
         ...user,
         fullName: res.user.full_name,
@@ -83,8 +84,6 @@ export default function ProfilePage() {
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       error(err.message || 'Failed to update profile.');
-    } finally {
-      setSavingProfile(false);
     }
   };
 
@@ -92,9 +91,8 @@ export default function ProfilePage() {
     e.preventDefault();
     if (newPassword !== confirmPassword) return error("New passwords do not match.");
     if (newPassword.length < 8) return error("New password must be at least 8 characters.");
-    setSavingPassword(true);
     try {
-      await api('/auth/change-password', {
+      await changePasswordApi('/auth/change-password', {
         method: 'PUT',
         body: JSON.stringify({ currentPassword, newPassword })
       });
@@ -104,8 +102,6 @@ export default function ProfilePage() {
       setConfirmPassword('');
     } catch (err) {
       error(err.message || 'Failed to change password.');
-    } finally {
-      setSavingPassword(false);
     }
   };
 

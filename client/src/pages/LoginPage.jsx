@@ -59,7 +59,7 @@ export default function LoginPage() {
           {!requiresMfa && (
             <>
               <h2 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>Welcome Back</h2>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '15px' }}>Hotel Ticketing Platform</p>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '15px' }}>Ticketing Platform</p>
             </>
           )}
         </div>
