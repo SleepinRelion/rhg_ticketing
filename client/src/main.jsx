@@ -21,6 +21,10 @@ async function bootstrap() {
       root.style.setProperty('--app-bg-image', `linear-gradient(rgba(18, 18, 18, 0.90), rgba(18, 18, 18, 0.98)), url("${config.APP_BG_IMAGE_URL}")`);
     }
     
+    if (config.APP_THEME) {
+      root.setAttribute('data-theme', config.APP_THEME);
+    }
+    
     window.APP_LOGO_URL = config.APP_LOGO_URL || '/logo.png';
     window.APP_NAME = config.APP_NAME || 'IT Ticketing System';
     window.APP_BG_IMAGE_URL = config.APP_BG_IMAGE_URL || '';

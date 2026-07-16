@@ -108,6 +108,9 @@ export default function SettingsPage() {
 
   const handleEnvChange = (key, value) => {
     setEnvConfig(prev => ({ ...prev, [key]: value }));
+    if (key === 'APP_THEME') {
+      document.documentElement.setAttribute('data-theme', value);
+    }
   };
 
   async function handleSaveEnv(e) {
@@ -177,6 +180,7 @@ export default function SettingsPage() {
       { key: 'APP_LOGO_URL', label: 'Logo URL', type: 'text', placeholder: '/logo.png' },
       { key: 'APP_BG_COLOR', label: 'Background Color', type: 'text', placeholder: '#0f172a' },
       { key: 'APP_BG_IMAGE_URL', label: 'Background Image URL', type: 'text', placeholder: 'https://example.com/bg.jpg' },
+      { key: 'APP_THEME', label: 'Theme', type: 'select', options: ['dark', 'light', 'ocean', 'midnight'] },
     ],
     email: [
       { key: 'SMTP_ENABLED', label: 'Enable Email Notifications', type: 'select', options: ['true', 'false'] },

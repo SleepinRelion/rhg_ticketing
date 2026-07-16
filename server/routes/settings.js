@@ -104,7 +104,8 @@ router.get('/public', asyncHandler((req, res) => {
     APP_NAME: envConfig.APP_NAME || process.env.APP_NAME || 'IT Ticketing System',
     APP_LOGO_URL: envConfig.APP_LOGO_URL || process.env.APP_LOGO_URL || '/logo.png',
     APP_BG_COLOR: envConfig.APP_BG_COLOR || process.env.APP_BG_COLOR || '#0f172a',
-    APP_BG_IMAGE_URL: envConfig.APP_BG_IMAGE_URL || process.env.APP_BG_IMAGE_URL || ''
+    APP_BG_IMAGE_URL: envConfig.APP_BG_IMAGE_URL || process.env.APP_BG_IMAGE_URL || '',
+    APP_THEME: envConfig.APP_THEME || process.env.APP_THEME || 'dark'
   });
 }));
 
@@ -123,6 +124,7 @@ router.get('/env', authenticate, authorize('admin', 'manager'), asyncHandler((re
     APP_LOGO_URL: envConfig.APP_LOGO_URL || process.env.APP_LOGO_URL || '/logo.png',
     APP_BG_COLOR: envConfig.APP_BG_COLOR || process.env.APP_BG_COLOR || '#0f172a',
     APP_BG_IMAGE_URL: envConfig.APP_BG_IMAGE_URL || process.env.APP_BG_IMAGE_URL || '',
+    APP_THEME: envConfig.APP_THEME || process.env.APP_THEME || 'dark',
     SMTP_ENABLED: envConfig.SMTP_ENABLED || process.env.SMTP_ENABLED || 'false',
     SMTP_HOST: envConfig.SMTP_HOST || process.env.SMTP_HOST || '',
     SMTP_PORT: envConfig.SMTP_PORT || process.env.SMTP_PORT || '587',
