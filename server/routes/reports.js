@@ -35,9 +35,7 @@ async function getReportData(type, query) {
       data = await baseFilter(db('tickets').select('tickets.priority', 'tickets.sla_status', db.raw('count(*) as count')).groupBy('tickets.priority', 'tickets.sla_status')).orderBy('tickets.priority');
       break;
     case 'technician-performance':
-      data = await db('ticket_assignees').select('users.full_name', db.raw('count(distinct ticket_assignees.ticket_id) as tickets_assigned'), db.raw('count(distinct case when tickets.status in (\'resolved\', \'closed\') then tickets.id end) as tickets_resolved'), db.raw('coalesce(sum(interventions.duration_minutes), 0) as total_work_minutes')).join('users', 'ticket_assignees.user_id', 'users.id').join('tickets', 'ticket_assignees.ticket_id', 'tickets.id').leftJoin('interventions', function () {
-        this.on('interventions.ticket_id', '=', 'tickets.id').andOn('interventions.technician_id', '=', 'ticket_assignees.user_id');
-      }).whereNull('tickets.deleted_at').where('users.is_active', true).modify(q => {
+      data = await db('ticket_assignees').select('users.full_name', db.raw('count(distinct ticket_assignees.ticket_id) as tickets_assigned'), db.raw('count(distinct case when tickets.status in (\'resolved\', \'closed\') then tickets.id end) as tickets_resolved')).join('users', 'ticket_assignees.user_id', 'users.id').join('tickets', 'ticket_assignees.ticket_id', 'tickets.id').whereNull('tickets.deleted_at').where('users.is_active', true).modify(q => {
         if (date_from) q.where('ticket_assignees.assigned_at', '>=', date_from);
         if (date_to) q.where('ticket_assignees.assigned_at', '<=', date_to);
       }).groupBy('users.full_name').orderBy('tickets_assigned', 'desc');
