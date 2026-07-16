@@ -17,8 +17,8 @@ async function bootstrap() {
     const root = document.documentElement;
     if (config.APP_BG_COLOR) root.style.setProperty('--app-bg-color', config.APP_BG_COLOR);
     if (config.APP_BG_IMAGE_URL) {
-      // Add a dark overlay so text remains readable on bright images
-      root.style.setProperty('--app-bg-image', `linear-gradient(rgba(18, 18, 18, 0.90), rgba(18, 18, 18, 0.98)), url("${config.APP_BG_IMAGE_URL}")`);
+      // Add a dynamic overlay that respects the current theme
+      root.style.setProperty('--app-bg-image', `linear-gradient(var(--overlay-start, rgba(18, 18, 18, 0.90)), var(--overlay-end, rgba(18, 18, 18, 0.98))), url("${config.APP_BG_IMAGE_URL}")`);
     }
     
     if (config.APP_THEME) {
