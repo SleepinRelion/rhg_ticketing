@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import api from '../api/client.js';
+import { useApi } from '../hooks/useApi.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, ChevronDown, ChevronUp, X, User } from 'lucide-react';
 import { format } from 'date-fns';
@@ -30,10 +31,16 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState(getFiltersFromURL);
   const [selectedTickets, setSelectedTickets] = useState(new Set());
-  const [availableYears, setAvailableYears] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [technicians, setTechnicians] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const { data: yearsData } = useApi('/tickets/years');
+  const { data: categoriesData } = useApi('/categories');
+  const { data: techniciansData } = useApi('/users/technicians');
+  const { data: departmentsData } = useApi('/departments');
+
+  const availableYears = yearsData?.years || [];
+  const categories = categoriesData?.categories || [];
+  const technicians = techniciansData?.technicians || [];
+  const departments = departmentsData?.departments || [];
+
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const isInitialMount = useRef(true);
 
@@ -41,24 +48,6 @@ export default function TicketsPage() {
   const { user, isManager } = useAuth();
   const { socket } = useSocket();
   const { error, success } = useToast();
-
-  useEffect(() => {
-    api('/tickets/years').then(data => {
-      if (data.years) setAvailableYears(data.years);
-    }).catch(console.error);
-
-    api('/categories').then(data => {
-      if (data.categories) setCategories(data.categories);
-    }).catch(console.error);
-
-    api('/users/technicians').then(data => {
-      if (data.technicians) setTechnicians(data.technicians);
-    }).catch(console.error);
-
-    api('/departments').then(data => {
-      if (data.departments) setDepartments(data.departments);
-    }).catch(console.error);
-  }, []);
 
   useEffect(() => {
     if (!socket) return;

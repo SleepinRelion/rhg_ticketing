@@ -154,7 +154,7 @@ export default function DailyBriefingModal({ onClose }) {
           {quote && (
             <div style={{ marginTop: '14px', padding: '10px 20px', fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, opacity: 0.8 }}>
               <span>“{quote.text}”</span>
-              <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 600, fontStyle: 'normal', letterSpacing: '0.3px' }}>— {quote.author}</div>
+              <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 600, fontStyle: 'normal', letterSpacing: '0.3px' }}>- {quote.author}</div>
             </div>
           )}
         </div>

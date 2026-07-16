@@ -7,7 +7,7 @@ export const TYPE_CONFIG = {
     color: '#22d3ee',
     bg: 'rgba(6, 182, 212, 0.1)',
     border: 'rgba(6, 182, 212, 0.3)',
-    desc: 'Routine IT operations — backups, scans, server checks',
+    desc: 'Routine IT operations: backups, scans, server checks',
   },
   request: {
     label: 'Request',
@@ -23,7 +23,7 @@ export const TYPE_CONFIG = {
     color: '#f87171',
     bg: 'rgba(239, 68, 68, 0.1)',
     border: 'rgba(239, 68, 68, 0.3)',
-    desc: 'Report a problem — room, office, or infrastructure',
+    desc: 'Report a problem: room, office, or infrastructure',
   },
 };
 

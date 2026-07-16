@@ -18,7 +18,7 @@ async function bootstrap() {
     if (config.APP_BG_COLOR) root.style.setProperty('--app-bg-color', config.APP_BG_COLOR);
     if (config.APP_BG_IMAGE_URL) {
       // Add a dark overlay so text remains readable on bright images
-      root.style.setProperty('--app-bg-image', `linear-gradient(rgba(15, 15, 35, 0.85), rgba(15, 15, 35, 0.95)), url("${config.APP_BG_IMAGE_URL}")`);
+      root.style.setProperty('--app-bg-image', `linear-gradient(rgba(18, 18, 18, 0.90), rgba(18, 18, 18, 0.98)), url("${config.APP_BG_IMAGE_URL}")`);
     }
     
     window.APP_LOGO_URL = config.APP_LOGO_URL || '/logo.png';
