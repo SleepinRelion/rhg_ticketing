@@ -45,6 +45,10 @@ export function useApi(urlOrFn, options = {}) {
           }
         };
 
+        if (finalOptions.body instanceof FormData) {
+          delete finalOptions.headers['Content-Type'];
+        }
+
         const response = await fetch(finalUrl, finalOptions);
         
         if (response.status === 401 || response.status === 403) {
