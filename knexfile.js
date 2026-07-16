@@ -22,7 +22,11 @@ export default {
     connection: pgConnection,
     pool: {
       min: 2,
-      max: 10
+      max: 10,
+      acquireTimeoutMillis: 10000,
+      afterCreate: (conn, done) => {
+        conn.query('SET statement_timeout = 30000;', (err) => done(err, conn));
+      }
     },
     migrations: {
       directory: path.resolve(__dirname, 'migrations'),
@@ -49,7 +53,11 @@ export default {
     connection: process.env.DATABASE_URL || pgConnection,
     pool: {
       min: 2,
-      max: 10
+      max: 10,
+      acquireTimeoutMillis: 10000,
+      afterCreate: (conn, done) => {
+        conn.query('SET statement_timeout = 30000;', (err) => done(err, conn));
+      }
     },
     migrations: {
       directory: path.resolve(__dirname, 'migrations'),

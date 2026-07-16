@@ -7,11 +7,11 @@ services:
       - NODE_ENV=production
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_NAME=hotel_tickets
-      - DB_USER=postgres
-      - DB_PASSWORD=6ab2ed75f87999c88c95b2f10c4a8f56
-      - DATABASE_URL=postgresql://postgres:6ab2ed75f87999c88c95b2f10c4a8f56@db:5432/hotel_tickets
-      - APP_URL=http://localhost:3001
+      - DB_NAME=${DB_NAME:-hotel_tickets}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-hotel_tickets}
+      - APP_URL=${APP_URL:-http://localhost:3001}
     env_file:
       - .env
     healthcheck:
@@ -32,10 +32,12 @@ services:
 
   db:
     image: postgres:15-alpine
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 6ab2ed75f87999c88c95b2f10c4a8f56
-      POSTGRES_DB: hotel_tickets
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-hotel_tickets}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d hotel_tickets"]
       interval: 5s
@@ -47,3 +49,4 @@ services:
 
 volumes:
   postgres_data:
+

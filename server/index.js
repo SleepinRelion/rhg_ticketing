@@ -15,7 +15,7 @@ import logger from './config/logger.js';
 import importRouter from './routes/import.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
-import ticketRoutes from './routes/tickets.js';
+import ticketRoutes from './routes/tickets/index.js';
 import roomRoutes from './routes/rooms.js';
 import assetRoutes from './routes/assets.js';
 import interventionRoutes from './routes/interventions.js';
@@ -84,11 +84,11 @@ app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Added unsafe-eval for some dependencies
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:", "*"], // Allow all connections for now to rule out API blocking
+      connectSrc: ["'self'", "ws:", "wss:"],
       upgradeInsecureRequests: null,
     },
   } : false,
@@ -169,9 +169,16 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/backups', backupRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date(), timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
+// Health check — verifies DB connectivity
+import db from './config/database.js';
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.raw('SELECT 1');
+    res.json({ status: 'ok', timestamp: new Date(), timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
+  } catch (err) {
+    logger.error(`Health check failed: ${err.message}`);
+    res.status(503).json({ status: 'unhealthy', error: 'Database connection failed' });
+  }
 });
 
 // Catch-all for SPA in production
@@ -197,10 +204,11 @@ httpServer.listen(PORT, async () => {
   await initializeCronJobs();
 });
 
-// SLA check cron - runs every 5 minutes
-setInterval(() => {
+// SLA check cron - runs every 5 minutes using node-cron for timezone-aware scheduling
+import cron from 'node-cron';
+cron.schedule('*/5 * * * *', () => {
   runSLACheck().catch((err) => logger.error(`SLA check failed: ${err.message}`));
-}, 5 * 60 * 1000);
+}, { timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
 
 // Run initial SLA check after 10 seconds
 setTimeout(() => {
