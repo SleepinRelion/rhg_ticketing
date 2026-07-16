@@ -68,7 +68,14 @@ class ErrorBoundary extends React.Component {
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '28px' }}>
               {isChunkError
                 ? 'A new version of the app is available. Please reload to get the latest updates.'
-                : 'An unexpected error occurred. Our team has been notified.'}
+                : <>
+                    An unexpected error occurred. Our team has been notified.
+                    <br/><br/>
+                    <strong style={{color:'var(--error)'}}>{this.state.error?.toString()}</strong>
+                    <pre style={{textAlign:'left', fontSize:'11px', overflowX:'auto', background:'rgba(0,0,0,0.2)', padding:'10px', marginTop:'10px'}}>
+                      {this.state.error?.stack}
+                    </pre>
+                  </>}
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>

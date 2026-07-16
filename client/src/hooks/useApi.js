@@ -70,7 +70,7 @@ export function useApi(urlOrFn, options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [urlOrFn, token, logout]);
+  }, [urlOrFn, logout]);
 
   useEffect(() => {
     if (immediate) {
