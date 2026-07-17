@@ -844,7 +844,7 @@ body {
   animation: fadeIn var(--transition-fast) ease-out;
 }
 
-.modal {
+.modal, .modal-content {
   background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
