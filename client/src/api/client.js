@@ -3,10 +3,15 @@ const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}
 let accessToken = null;
 let refreshToken = null;
 try {
-  accessToken = localStorage.getItem('accessToken');
-  refreshToken = localStorage.getItem('refreshToken');
+  // Clear any old persistent sessions from localStorage to enforce the new policy
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+
+  accessToken = sessionStorage.getItem('accessToken');
+  refreshToken = sessionStorage.getItem('refreshToken');
 } catch (e) {
-  console.warn('localStorage is disabled or unavailable.');
+  console.warn('sessionStorage is disabled or unavailable.');
 }
 
 let onLogout = null;
@@ -15,8 +20,8 @@ export function setTokens(access, refresh) {
   accessToken = access;
   refreshToken = refresh;
   try {
-    localStorage.setItem('accessToken', access);
-    if (refresh) localStorage.setItem('refreshToken', refresh);
+    sessionStorage.setItem('accessToken', access);
+    if (refresh) sessionStorage.setItem('refreshToken', refresh);
   } catch (e) {}
 }
 
@@ -24,9 +29,9 @@ export function clearTokens() {
   accessToken = null;
   refreshToken = null;
   try {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
   } catch (e) {}
 }
 
@@ -44,11 +49,11 @@ async function refreshAccessToken() {
     if (!res.ok) throw new Error('Refresh failed');
     const data = await res.json();
     accessToken = data.accessToken;
-    localStorage.setItem('accessToken', data.accessToken);
+    sessionStorage.setItem('accessToken', data.accessToken);
     // Store rotated refresh token if provided
     if (data.refreshToken) {
       refreshToken = data.refreshToken;
-      localStorage.setItem('refreshToken', data.refreshToken);
+      sessionStorage.setItem('refreshToken', data.refreshToken);
     }
     return true;
   } catch {
