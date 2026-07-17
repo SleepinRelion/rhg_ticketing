@@ -1,4 +1,4 @@
-export const compressImage = (file, maxWidth = 1280, quality = 0.5) => {
+export const compressImage = (file, maxWidth = 1280, quality = 0.75) => {
   return new Promise((resolve) => {
     // Only compress images. Ignore SVGs, PDFs, etc.
     if (!file || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {

@@ -59,7 +59,7 @@ export default function ProfilePage() {
     if (rawFile) {
       if (rawFile.size > 5 * 1024 * 1024) return error('Image must be less than 5MB');
       
-      const file = await compressImage(rawFile, 400, 0.7); // Smaller max width for avatars
+      const file = await compressImage(rawFile, 400, 0.75); // Smaller max width for avatars
       
       setAvatarFile(file);
       const reader = new FileReader();
