@@ -39,7 +39,7 @@ export function useApi(urlOrFn, options = {}) {
           ...dynamicOptions,
           headers: {
             'Content-Type': 'application/json',
-            ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+            ...(sessionStorage.getItem('accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('accessToken')}` } : {}),
             ...optionsRef.current.headers,
             ...(dynamicOptions?.headers || {})
           }
