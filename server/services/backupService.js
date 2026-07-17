@@ -20,10 +20,15 @@ export async function runBackup(recipients, label = 'Manual') {
 
     if (db.client.config.client === 'pg') {
       logger.info(`[BackupService] Starting pg_dump for ${label}...`);
-      const dbUrl = process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
-      
       await new Promise((resolve, reject) => {
-        const pgDump = spawn('pg_dump', [dbUrl]);
+        const pgDump = spawn('pg_dump', [
+          '-h', process.env.DB_HOST || '127.0.0.1',
+          '-p', process.env.DB_PORT || '5432',
+          '-U', process.env.DB_USER,
+          process.env.DB_NAME
+        ], {
+          env: { ...process.env, PGPASSWORD: process.env.DB_PASSWORD }
+        });
         const gzip = spawn('gzip');
         const writeStream = fs.createWriteStream(backupFilePath);
 
