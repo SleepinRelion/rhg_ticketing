@@ -127,6 +127,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './uploads')));
+// If express.static didn't find the file in /uploads, return 404 immediately 
+// so it doesn't fall through to the SPA catch-all and show the login screen.
+app.use('/uploads', (req, res) => {
+  res.status(404).send('Attachment not found. The file may have been deleted or the server storage is ephemeral.');
+});
 
 // Serve built client in production
 if (process.env.NODE_ENV === 'production') {
