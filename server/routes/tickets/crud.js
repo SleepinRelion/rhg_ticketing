@@ -84,7 +84,9 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
     : comments;
 
   const timeline = [
-    ...activityLogs.map(l => ({ ...l, timeline_type: 'activity_log' })),
+    ...activityLogs
+      .filter(l => !['comment_added', 'attachment_added'].includes(l.action))
+      .map(l => ({ ...l, timeline_type: 'activity_log' })),
     ...filteredComments.map(c => ({ ...c, timeline_type: 'comment' })),
     ...attachments.map(a => {
       let fileUrl = '';
