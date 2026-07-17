@@ -87,16 +87,28 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
     ...activityLogs.map(l => ({ ...l, timeline_type: 'activity_log' })),
     ...filteredComments.map(c => ({ ...c, timeline_type: 'comment' })),
     ...attachments.map(a => {
-      let normalizedPath = a.storage_path ? a.storage_path.replace(/\\/g, '/') : '';
-      if (normalizedPath && !normalizedPath.startsWith('/')) {
-        normalizedPath = '/' + normalizedPath;
+      let fileUrl = '';
+      if (a.storage_path) {
+        let normalized = a.storage_path.replace(/\\/g, '/');
+        if (normalized.includes('/uploads/')) {
+          fileUrl = normalized.substring(normalized.indexOf('/uploads/'));
+        } else if (normalized.includes('uploads/')) {
+          fileUrl = '/' + normalized.substring(normalized.indexOf('uploads/'));
+        } else {
+          const parts = normalized.split('/').filter(Boolean);
+          if (parts.length >= 2) {
+            fileUrl = '/uploads/' + parts.slice(-2).join('/');
+          } else {
+            fileUrl = '/' + normalized;
+          }
+        }
       }
       return { 
         ...a, 
         timeline_type: 'attachment', 
         user_id: a.uploaded_by, 
         user_name: a.uploaded_by_name,
-        file_url: normalizedPath
+        file_url: fileUrl
       };
     })
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

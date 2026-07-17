@@ -129,18 +129,29 @@ export default function ActivityTimeline({ timeline }) {
               )}
 
               {isAttachment && (
-                <div style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <FileText size={16} style={{ color: 'var(--text-secondary)' }} />
-                  <a 
-                    href={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.file_url}` : item.file_url} 
-                    target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: '13px', fontWeight: 500, color: 'var(--primary-500)', textDecoration: 'none' }}
-                  >
-                    {item.file_name}
-                  </a>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    ({Math.round(item.file_size / 1024)} KB)
-                  </span>
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-secondary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  {item.file_type && item.file_type.startsWith('image/') && (
+                    <div style={{ marginBottom: '8px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)', display: 'inline-block' }}>
+                      <img 
+                        src={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.file_url}` : item.file_url} 
+                        alt={item.file_name} 
+                        style={{ maxWidth: '100%', maxHeight: '300px', display: 'block', objectFit: 'contain' }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <FileText size={16} style={{ color: 'var(--text-secondary)' }} />
+                    <a 
+                      href={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.file_url}` : item.file_url} 
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: '13px', fontWeight: 500, color: 'var(--primary-500)', textDecoration: 'none' }}
+                    >
+                      {item.file_name}
+                    </a>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      ({Math.round(item.file_size / 1024)} KB)
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
