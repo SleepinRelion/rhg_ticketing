@@ -59,7 +59,13 @@ router.post('/schedules', authenticate, authorize('admin', 'manager'), asyncHand
   await createAuditEntry(req.user.id, 'backup_schedule_created', 'system', schedule.id, req.ip, req.headers['user-agent'], {
     frequency
   });
-  res.status(201).json(schedule);
+  
+  const parsedSchedule = {
+    ...schedule,
+    recipients: typeof schedule.recipients === 'string' ? JSON.parse(schedule.recipients) : schedule.recipients
+  };
+  
+  res.status(201).json(parsedSchedule);
 }));
 
 // DELETE /api/backups/schedules/:id
