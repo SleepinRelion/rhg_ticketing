@@ -39,28 +39,40 @@ export function setLogoutHandler(fn) {
   onLogout = fn;
 }
 
+let isRefreshing = false;
+let refreshPromise = null;
+
 async function refreshAccessToken() {
-  try {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-    if (!res.ok) throw new Error('Refresh failed');
-    const data = await res.json();
-    accessToken = data.accessToken;
-    sessionStorage.setItem('accessToken', data.accessToken);
-    // Store rotated refresh token if provided
-    if (data.refreshToken) {
-      refreshToken = data.refreshToken;
-      sessionStorage.setItem('refreshToken', data.refreshToken);
-    }
-    return true;
-  } catch {
-    clearTokens();
-    if (onLogout) onLogout();
-    return false;
+  if (isRefreshing) {
+    return refreshPromise;
   }
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!res.ok) throw new Error('Refresh failed');
+      const data = await res.json();
+      accessToken = data.accessToken;
+      sessionStorage.setItem('accessToken', data.accessToken);
+      if (data.refreshToken) {
+        refreshToken = data.refreshToken;
+        sessionStorage.setItem('refreshToken', data.refreshToken);
+      }
+      return true;
+    } catch {
+      clearTokens();
+      if (onLogout) onLogout();
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
 }
 
 export async function api(url, options = {}) {
