@@ -31,6 +31,8 @@
   /* Background layers (Deep Charcoal/Matte instead of deep purple) */
   --bg-base: #121212;
   --bg-surface: #181818;
+  --overlay-start: rgba(18, 18, 18, 0.90);
+  --overlay-end: rgba(18, 18, 18, 0.98);
   --bg-elevated: #222222;
   --bg-card: #1c1c1c;
   --bg-hover: rgba(255, 255, 255, 0.05);
@@ -127,6 +129,8 @@
 [data-theme="light"] {
   --bg-base: #f8fafc;
   --bg-surface: #ffffff;
+  --overlay-start: rgba(248, 250, 252, 0.85);
+  --overlay-end: rgba(248, 250, 252, 0.95);
   --bg-elevated: #f1f5f9;
   --bg-card: #ffffff;
   --bg-hover: rgba(0, 0, 0, 0.05);
@@ -152,6 +156,8 @@
 [data-theme="ocean"] {
   --bg-base: #020617;
   --bg-surface: #0f172a;
+  --overlay-start: rgba(2, 6, 23, 0.90);
+  --overlay-end: rgba(2, 6, 23, 0.98);
   --bg-elevated: #1e293b;
   --bg-card: #0f172a;
 
@@ -173,6 +179,8 @@
 [data-theme="midnight"] {
   --bg-base: #0f0a18;
   --bg-surface: #1a1025;
+  --overlay-start: rgba(15, 10, 24, 0.90);
+  --overlay-end: rgba(15, 10, 24, 0.98);
   --bg-elevated: #2d1b3d;
   --bg-card: #1a1025;
 
