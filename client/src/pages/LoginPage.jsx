@@ -54,7 +54,7 @@ export default function LoginPage() {
     >
       <div className="login-card">
         <div className="login-header" style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" style={{ height: '48px', marginBottom: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" className="app-logo-img" style={{ height: '48px', marginBottom: '24px', objectFit: 'contain' }} />
 
           {!requiresMfa && (
             <>

@@ -152,6 +152,11 @@
   --shadow-glow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+[data-theme="light"] .app-logo-img {
+  content: url('/logo_blue.png') !important;
+  filter: none !important;
+}
+
 /* Ocean Theme */
 [data-theme="ocean"] {
   --bg-base: #020617;
@@ -220,6 +225,10 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+.app-logo-img {
+  filter: brightness(0) invert(1);
 }
 
 /* Scrollbar */
