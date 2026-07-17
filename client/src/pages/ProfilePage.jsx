@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { compressImage } from '../utils/imageCompression.js';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/client.js';
 import { useApi } from '../hooks/useApi.js';
@@ -53,10 +54,13 @@ export default function ProfilePage() {
     }
   }, [user, isMfaForced]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) return error('Image must be less than 5MB');
+  const handleFileChange = async (e) => {
+    const rawFile = e.target.files[0];
+    if (rawFile) {
+      if (rawFile.size > 5 * 1024 * 1024) return error('Image must be less than 5MB');
+      
+      const file = await compressImage(rawFile, 400, 0.7); // Smaller max width for avatars
+      
       setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setAvatarPreview(reader.result);

@@ -10,6 +10,7 @@ import {
   MessageSquare, FileText, CheckSquare, Wrench, Edit,
   Paperclip, Plus, Send, X, AlertCircle, BookOpen, Activity
 } from 'lucide-react';
+import { compressImage } from '../utils/imageCompression.js';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
 import EditTicketModal from '../components/tickets/EditTicketModal.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
@@ -111,15 +112,18 @@ export default function TicketDetailPage() {
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('ticket_id', id);
+    const rawFile = e.target.files[0];
+    if (!rawFile) return;
 
     try {
       setUploading(true);
+      
+      // Heavily compress the image before upload to save bandwidth and storage
+      const file = await compressImage(rawFile);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('ticket_id', id);
       await api('/attachments', {
         method: 'POST',
         body: formData,
