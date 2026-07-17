@@ -5,6 +5,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import logger from '../config/logger.js';
+import { buildEmailTemplate } from './emailService.js';
 
 export async function runBackup(recipients, label = 'Manual') {
   const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
@@ -55,11 +56,21 @@ export async function runBackup(recipients, label = 'Manual') {
       logger.info(`[BackupService] pg_dump completed: ${backupFileName}`);
       
       const transporter = getMailTransporter();
+      const subjectText = `Hotel Ticketing System - ${label} Backup (${new Date().toISOString().split('T')[0]})`;
       const mailOptions = {
         from: SMTP_FROM,
         to: recipients.join(', '),
-        subject: `Hotel Ticketing System - ${label} Backup (${new Date().toISOString().split('T')[0]})`,
+        subject: subjectText,
         text: `Attached is the latest automated database backup for the Hotel Ticketing System.\n\nDate: ${new Date().toISOString()}\nType: ${label}\n\nNote: This is a compressed pg_dump file (.sql.gz). Keep it safe.`,
+        html: buildEmailTemplate({
+          title: `Database Backup: ${label}`,
+          content: `<p style="margin-top: 0;">Attached is the latest automated database backup.</p>
+                    <ul style="color: #475569; padding-left: 20px;">
+                      <li><strong>Type:</strong> ${label}</li>
+                      <li><strong>Date:</strong> ${new Date().toISOString()}</li>
+                    </ul>
+                    <p style="margin-bottom: 0;"><strong>Note:</strong> This is a compressed PostgreSQL dump file (<code>.sql.gz</code>). Please store it securely.</p>`,
+        }),
         attachments: [
           {
             filename: backupFileName,
