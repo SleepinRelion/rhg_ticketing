@@ -86,7 +86,19 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   const timeline = [
     ...activityLogs.map(l => ({ ...l, timeline_type: 'activity_log' })),
     ...filteredComments.map(c => ({ ...c, timeline_type: 'comment' })),
-    ...attachments.map(a => ({ ...a, timeline_type: 'attachment', user_id: a.uploaded_by, user_name: a.uploaded_by_name }))
+    ...attachments.map(a => {
+      let normalizedPath = a.storage_path ? a.storage_path.replace(/\\/g, '/') : '';
+      if (normalizedPath && !normalizedPath.startsWith('/')) {
+        normalizedPath = '/' + normalizedPath;
+      }
+      return { 
+        ...a, 
+        timeline_type: 'attachment', 
+        user_id: a.uploaded_by, 
+        user_name: a.uploaded_by_name,
+        file_url: normalizedPath
+      };
+    })
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   res.json({
