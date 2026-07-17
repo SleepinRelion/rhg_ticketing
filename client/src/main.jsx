@@ -23,6 +23,17 @@ async function bootstrap() {
     
     if (config.APP_THEME) {
       root.setAttribute('data-theme', config.APP_THEME);
+
+      const themeColors = {
+        light: '#f8fafc',
+        ocean: '#020617',
+        midnight: '#0f0a18',
+        default: '#121212'
+      };
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', themeColors[config.APP_THEME] || themeColors.default);
+      }
     }
     
     window.APP_LOGO_URL = config.APP_LOGO_URL || '/logo.png';

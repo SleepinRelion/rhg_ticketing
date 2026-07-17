@@ -110,6 +110,17 @@ export default function SettingsPage() {
     setEnvConfig(prev => ({ ...prev, [key]: value }));
     if (key === 'APP_THEME') {
       document.documentElement.setAttribute('data-theme', value);
+      
+      const themeColors = {
+        light: '#f8fafc',
+        ocean: '#020617',
+        midnight: '#0f0a18',
+        default: '#121212'
+      };
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', themeColors[value] || themeColors.default);
+      }
     }
   };
 
