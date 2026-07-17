@@ -4,7 +4,7 @@ import db from '../config/database.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorize } from '../middleware/authorize.js';
 import { sanitize } from '../utils/sanitize.js';
-import { addDays, addWeeks, addMonths } from 'date-fns';
+import { addDays, addWeeks, addMonths, format } from 'date-fns';
 const router = Router();
 const FREQUENCY_MAP = {
   daily: d => addDays(d, 1),
@@ -69,12 +69,16 @@ router.post('/:id/complete', authenticate, asyncHandler(async (req, res) => {
   if (!schedule) return res.status(404).json({
     error: 'Schedule not found.'
   });
-  const advanceFn = FREQUENCY_MAP[schedule.frequency];
+  const advanceFn = FREQUENCY_MAP[(schedule.frequency || '').toLowerCase()];
   const nextDate = advanceFn ? advanceFn(new Date(schedule.next_due_date)) : addMonths(new Date(schedule.next_due_date), 1);
+  
+  // Format the date using local timezone rather than UTC to avoid GMT+ offset bugs
+  const formattedNextDate = format(nextDate, 'yyyy-MM-dd');
+
   await db('preventive_maintenance').where({
     id: req.params.id
   }).update({
-    next_due_date: nextDate.toISOString().split('T')[0],
+    next_due_date: formattedNextDate,
     last_completed_at: new Date(),
     updated_at: new Date()
   });
@@ -84,7 +88,7 @@ router.post('/:id/complete', authenticate, asyncHandler(async (req, res) => {
     id: schedule.asset_id
   }).update({
     last_serviced_at: new Date(),
-    next_maintenance_date: nextDate.toISOString().split('T')[0],
+    next_maintenance_date: formattedNextDate,
     updated_at: new Date()
   });
   const updated = await db('preventive_maintenance').where({
