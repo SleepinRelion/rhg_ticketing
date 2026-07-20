@@ -385,7 +385,7 @@ export default function TicketDetailPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {a.avatar_url ? (
                         <img 
-                          src={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${a.avatar_url}` : a.avatar_url} 
+                          src={`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${a.avatar_url}` : a.avatar_url}?token=${sessionStorage.getItem('accessToken')}`} 
                           alt={a.full_name}
                           className="user-avatar" 
                           style={{ width: 24, height: 24, objectFit: 'cover' }} 

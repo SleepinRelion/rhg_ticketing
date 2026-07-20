@@ -43,7 +43,7 @@ export default function ProfilePage() {
       setFullName(user.fullName || user.full_name || '');
       setMfaEnabled(user.mfaEnabled || user.mfa_enabled || false);
       if (user.avatar_url) {
-        setAvatarPreview(import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${user.avatar_url}` : user.avatar_url);
+        setAvatarPreview(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${user.avatar_url}` : user.avatar_url}?token=${sessionStorage.getItem('accessToken')}`);
       }
       
       // Auto-start MFA setup if forced and not yet enabled

@@ -298,7 +298,7 @@ export default function Header({ onMenuToggle }) {
           <div className="user-menu" onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}>
             {user?.avatar_url ? (
               <img 
-                src={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${user.avatar_url}` : user.avatar_url} 
+                src={`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${user.avatar_url}` : user.avatar_url}?token=${sessionStorage.getItem('accessToken')}`} 
                 alt="Avatar" 
                 className="user-avatar" 
                 style={{ objectFit: 'cover', padding: 0 }} 
