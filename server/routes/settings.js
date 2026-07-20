@@ -15,7 +15,8 @@ const envPath = path.resolve(__dirname, '../../.env');
 // POST /api/settings/client-error
 // Log frontend crash reports
 router.post('/client-error', asyncHandler(async (req, res) => {
-  const logLine = `[${new Date().toISOString()}] CLIENT CRASH: ${JSON.stringify(req.body)}\n`;
+  const bodyString = JSON.stringify(req.body).substring(0, 2000); // Limit size
+  const logLine = `[${new Date().toISOString()}] CLIENT CRASH: ${bodyString}\n`;
   fs.appendFileSync(path.resolve(__dirname, '../../client-errors.log'), logLine);
 
   // Optionally: trigger email to admin
@@ -166,7 +167,13 @@ router.put('/env', authenticate, authorize('admin', 'manager'), asyncHandler((re
     });
   }
 
-  // Allowed keys restriction removed: Managers and Admins can edit any env variable via the UI.
+  const SAFE_KEYS = [
+    'APP_NAME', 'APP_URL', 'APP_TIMEZONE', 'APP_THEME', 'APP_LOGO_URL',
+    'APP_BG_COLOR', 'APP_BG_IMAGE_URL',
+    'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS',
+    'SMTP_FROM', 'SMTP_ENABLED',
+    'LOGIN_RATE_LIMIT_MAX', 'LOGIN_RATE_LIMIT_WINDOW_MS'
+  ];
 
   if (!fs.existsSync(envPath)) {
     fs.writeFileSync(envPath, '');
@@ -175,6 +182,9 @@ router.put('/env', authenticate, authorize('admin', 'manager'), asyncHandler((re
 
   // Update or append keys
   for (const [key, value] of Object.entries(updates)) {
+    if (!SAFE_KEYS.includes(key)) {
+      continue; // Skip dangerous keys
+    }
     const regex = new RegExp(`^${key}=.*$`, 'm');
     if (regex.test(envContent)) {
       envContent = envContent.replace(regex, () => `${key}=${value}`);

@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Router } from 'express';
 import db from '../config/database.js';
 import { authenticate } from '../middleware/auth.js';
+import { authorize } from '../middleware/authorize.js';
 import { sanitize, sanitizeRich } from '../utils/sanitize.js';
 const router = Router();
 
@@ -202,7 +203,7 @@ router.post('/:id/link/:ticketId', authenticate, asyncHandler(async (req, res) =
 }));
 
 // DELETE /api/knowledge-base/:id
-router.delete('/:id', authenticate, asyncHandler(async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const deleted = await db('knowledge_base_articles').where({
     id: req.params.id
   }).del();

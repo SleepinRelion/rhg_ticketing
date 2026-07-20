@@ -76,6 +76,12 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
     });
   }
 
+  if (password.length < 12) {
+    return res.status(400).json({
+      error: 'Password must be at least 12 characters.'
+    });
+  }
+
   // Check existing email
   const cleanEmail = email.toLowerCase().trim();
   const existing = await db('users').whereRaw('LOWER(email) = LOWER(?)', [cleanEmail]).orWhereRaw('LOWER(username) = LOWER(?)', [username.trim()]).first();
@@ -207,9 +213,9 @@ router.put('/:id/reset-password', authenticate, authorize('admin', 'manager'), a
   const {
     new_password
   } = req.body;
-  if (!new_password || new_password.length < 8) {
+  if (!new_password || new_password.length < 12) {
     return res.status(400).json({
-      error: 'Password must be at least 8 characters.'
+      error: 'Password must be at least 12 characters.'
     });
   }
   const passwordHash = await bcrypt.hash(new_password, 12);

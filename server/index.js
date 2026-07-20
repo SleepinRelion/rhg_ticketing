@@ -10,6 +10,10 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { runSLACheck } from './services/slaService.js';
 import morgan from 'morgan';
 import logger from './config/logger.js';
+import { authenticate } from './middleware/auth.js';
+import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import authConfig from './config/auth.js';
 
 // Routes
 import importRouter from './routes/import.js';
@@ -56,6 +60,18 @@ const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins.length ? allowedOrigins : false,
     credentials: true,
+  }
+});
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Authentication error: Token missing'));
+  try {
+    const decoded = jwt.verify(token, authConfig.jwtSecret);
+    socket.user = decoded;
+    next();
+  } catch (err) {
+    next(new Error('Authentication error: Invalid token'));
   }
 });
 
@@ -125,11 +141,16 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_DIR || './uploads')));
-// If express.static didn't find the file in /uploads, return 404 immediately 
-// so it doesn't fall through to the SPA catch-all and show the login screen.
-app.use('/uploads', (req, res) => {
+// Serve uploaded files securely
+app.get('/uploads/:dateDir/:filename', authenticate, (req, res) => {
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+  const filePath = path.join(uploadDir, req.params.dateDir, req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Attachment not found. The file may have been deleted or the server storage is ephemeral.');
+  }
+  res.sendFile(filePath);
+});
+app.use('/uploads', authenticate, (req, res) => {
   res.status(404).send('Attachment not found. The file may have been deleted or the server storage is ephemeral.');
 });
 
@@ -213,6 +234,16 @@ httpServer.listen(PORT, async () => {
 import cron from 'node-cron';
 cron.schedule('*/5 * * * *', () => {
   runSLACheck().catch((err) => logger.error(`SLA check failed: ${err.message}`));
+}, { timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
+
+// Cleanup expired refresh tokens daily at 3 AM
+cron.schedule('0 3 * * *', async () => {
+  try {
+    const deletedCount = await db('refresh_tokens').where('expires_at', '<', new Date()).del();
+    if (deletedCount > 0) logger.info(`Cleaned up ${deletedCount} expired refresh tokens.`);
+  } catch (err) {
+    logger.error(`Token cleanup failed: ${err.message}`);
+  }
 }, { timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
 
 // Run initial SLA check after 10 seconds

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticator } from 'otplib';
@@ -116,9 +117,10 @@ router.post('/login', asyncHandler(async (req, res) => {
   );
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
   await db('refresh_tokens').insert({
     user_id: user.id,
-    token: refreshToken,
+    token: tokenHash,
     expires_at: expiresAt,
     created_at: new Date(),
   });
@@ -159,8 +161,9 @@ router.post('/refresh', asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Invalid or expired refresh token.' });
   }
 
+  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
   const storedToken = await db('refresh_tokens')
-    .where({ token: refreshToken, is_revoked: false })
+    .where({ token: tokenHash, is_revoked: false })
     .where('expires_at', '>', new Date())
     .first();
 
@@ -188,9 +191,10 @@ router.post('/refresh', asyncHandler(async (req, res) => {
   );
 
   const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
   await db('refresh_tokens').insert({
     user_id: user.id,
-    token: newRefreshToken,
+    token: newTokenHash,
     expires_at: newExpiresAt,
     created_at: new Date(),
   });
@@ -201,7 +205,8 @@ router.post('/refresh', asyncHandler(async (req, res) => {
 router.post('/logout', authenticate, asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
   if (refreshToken) {
-    await db('refresh_tokens').where({ token: refreshToken }).update({ is_revoked: true });
+    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    await db('refresh_tokens').where({ token: tokenHash }).update({ is_revoked: true });
   }
   
   await db('refresh_tokens').where({ user_id: req.user.id, is_revoked: false }).update({ is_revoked: true });
@@ -254,7 +259,6 @@ router.post('/mfa/setup', authenticate, asyncHandler(async (req, res) => {
   await db('users').where({ id: req.user.id }).update({ mfa_secret: secret });
 
   res.json({
-    secret,
     qrCode: qrCodeDataUrl,
     message: 'Scan the QR code with your authenticator app, then verify with a code.',
   });
@@ -279,7 +283,7 @@ router.post('/mfa/verify', authenticate, asyncHandler(async (req, res) => {
   const backupCodes = [];
   const hashedBackupCodes = [];
   for (let i = 0; i < 10; i++) {
-    const backupCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const backupCode = crypto.randomBytes(4).toString('hex').toUpperCase();
     backupCodes.push(backupCode);
     hashedBackupCodes.push(bcrypt.hashSync(backupCode, 10));
   }
