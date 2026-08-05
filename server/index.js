@@ -14,6 +14,7 @@ import { authenticate } from './middleware/auth.js';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import authConfig from './config/auth.js';
+import { ensureDefaultCategories } from './services/categoryInitService.js';
 
 // Routes
 import importRouter from './routes/import.js';
@@ -228,6 +229,7 @@ httpServer.listen(PORT, async () => {
   logger.info(`   Timezone: ${process.env.APP_TIMEZONE || 'Indian/Mauritius'}\n`);
   
   await initializeCronJobs();
+  await ensureDefaultCategories();
 });
 
 // SLA check cron - runs every 5 minutes using node-cron for timezone-aware scheduling

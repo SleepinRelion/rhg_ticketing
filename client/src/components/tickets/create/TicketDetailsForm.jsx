@@ -1,9 +1,30 @@
-import { ArrowLeft, Save, X, FileQuestion, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, X, FileQuestion, AlertTriangle, Bed, Building2, HardDrive, Server, Utensils } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../../ui/SearchableSelect.jsx';
 import FormatCategory from '../../ui/FormatCategory.jsx';
 import KBSuggestions from '../KBSuggestions.jsx';
 import DuplicateWarning from './DuplicateWarning.jsx';
+
+const CATEGORY_ICON_MAP = {
+  'Room': Bed,
+  'Office/Dept': Building2,
+  'Infrastructure': HardDrive,
+  'Infra': HardDrive,
+  'System': Server,
+  'Outlets': Utensils,
+  'Outlet': Utensils,
+};
+
+function getCategoryIcon(name, defaultIcon = AlertTriangle) {
+  if (!name) return defaultIcon;
+  if (CATEGORY_ICON_MAP[name]) return CATEGORY_ICON_MAP[name];
+  if (/room|guest|suite|villa/i.test(name)) return Bed;
+  if (/office|dept|department/i.test(name)) return Building2;
+  if (/infra|network|cabling|building/i.test(name)) return HardDrive;
+  if (/system|software|pms|pos|app/i.test(name)) return Server;
+  if (/outlet|restaurant|bar|dining|fb/i.test(name)) return Utensils;
+  return defaultIcon;
+}
 
 export default function TicketDetailsForm({
   formData,
@@ -28,12 +49,17 @@ export default function TicketDetailsForm({
   const isRequestType = formData.ticket_type === 'request';
   const isIssueType = formData.ticket_type === 'issue';
 
-  const isRoomIssue = isIssueType && parentCategories.find(c => c.id === Number(formData.category_id))?.name === 'Room';
-  const isOfficeIssue = isIssueType && parentCategories.find(c => c.id === Number(formData.category_id))?.name === 'Office/Dept';
-  const isInfraIssue = isIssueType && parentCategories.find(c => c.id === Number(formData.category_id))?.name === 'Infrastructure';
+  const selectedCat = parentCategories.find(c => c.id === Number(formData.category_id));
+  const selectedCatName = selectedCat?.name || '';
 
-  const isAccountRequest = isRequestType && parentCategories.find(c => c.id === Number(formData.category_id))?.name === 'Account';
-  const isAssetRequest = isRequestType && parentCategories.find(c => c.id === Number(formData.category_id))?.name === 'Asset';
+  const isRoomIssue = isIssueType && /room|guest|suite|villa|chalet/i.test(selectedCatName);
+  const isOfficeIssue = isIssueType && /office|dept|department|admin|staff/i.test(selectedCatName);
+  const isInfraIssue = isIssueType && /infra|network|cabling|building|facility|facilities/i.test(selectedCatName);
+  const isSystemIssue = isIssueType && /system|software|pms|pos|app|application/i.test(selectedCatName);
+  const isOutletIssue = isIssueType && /outlet|restaurant|bar|dining|fb|f&b/i.test(selectedCatName);
+
+  const isAccountRequest = isRequestType && /account|access|user|login/i.test(selectedCatName);
+  const isAssetRequest = isRequestType && /asset|hardware|device|equipment|laptop|pc|printer/i.test(selectedCatName);
 
   return (
     <div>
@@ -235,9 +261,9 @@ export default function TicketDetailsForm({
             {/* === ISSUE === */}
             {isIssueType && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                   {parentCategories.map(cat => {
-                    const CatIcon = ISSUE_CATEGORY_ICONS[cat.name] || AlertTriangle;
+                    const CatIcon = getCategoryIcon(cat.name, AlertTriangle);
                     const isSelected = formData.category_id === String(cat.id);
                     return (
                       <button
@@ -245,7 +271,7 @@ export default function TicketDetailsForm({
                         type="button"
                         onClick={() => handleCategoryChange(String(cat.id))}
                         style={{
-                          padding: '20px',
+                          padding: '16px 12px',
                           borderRadius: 'var(--radius-xl)',
                           border: isSelected
                             ? `2px solid ${typeConfig.color}`
@@ -257,8 +283,8 @@ export default function TicketDetailsForm({
                         }}
                       >
                         <CatIcon size={24} style={{ color: isSelected ? typeConfig.color : 'var(--text-secondary)', marginBottom: '8px' }} />
-                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>{cat.name}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{cat.description}</div>
+                        <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>{cat.name}</div>
+                        {cat.description && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{cat.description}</div>}
                       </button>
                     );
                   })}
@@ -266,7 +292,9 @@ export default function TicketDetailsForm({
 
                 {subcategories.length > 0 && (
                   <div className="form-group">
-                    <label className="form-label">Problem Type <span style={{ color: 'var(--error)' }}>*</span></label>
+                    <label className="form-label">
+                      {isOutletIssue ? 'Select Outlet' : isSystemIssue ? 'System / Module' : 'Subcategory / Problem Type'} <span style={{ color: 'var(--error)' }}>*</span>
+                    </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
                       {subcategories.map(sub => (
                         <button
@@ -402,6 +430,39 @@ export default function TicketDetailsForm({
                     {isIT && (
                       <div className="form-group">
                         <label className="form-label">Affected Asset</label>
+                        <SearchableSelect
+                          className="form-select"
+                          value={formData.asset_id}
+                          onChange={e => setFormData({ ...formData, asset_id: e.target.value })}
+                        >
+                          <option value="">Select Asset...</option>
+                          {assets.map(a => (
+                            <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
+                          ))}
+                        </SearchableSelect>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(isSystemIssue || isOutletIssue || (!isRoomIssue && !isOfficeIssue && !isInfraIssue && formData.category_id)) && (
+                  <div className="form-row" style={{ marginTop: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Department / Area (Optional)</label>
+                      <SearchableSelect
+                        className="form-select"
+                        value={formData.department}
+                        onChange={e => setFormData({ ...formData, department: e.target.value })}
+                      >
+                        <option value="">Select Department</option>
+                        {departments.map(d => (
+                          <option key={d.id} value={d.name}>{d.name}</option>
+                        ))}
+                      </SearchableSelect>
+                    </div>
+                    {isIT && (
+                      <div className="form-group">
+                        <label className="form-label">Affected Asset / System Hardware</label>
                         <SearchableSelect
                           className="form-select"
                           value={formData.asset_id}

@@ -122,7 +122,7 @@ export default function CreateTicketPage() {
 
     if (isIssue) {
       const cat = parentCategories.find(c => c.id === Number(formData.category_id));
-      if (cat?.name === 'Room' && !formData.room_id) {
+      if (/room|guest|suite/i.test(cat?.name) && !formData.room_id) {
         return error('Please select a room for this issue');
       }
     }

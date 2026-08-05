@@ -36,6 +36,8 @@ export async function seed(knex) {
     { id: 20, name: 'Room', description: 'Room-level IT issues', ticket_type: 'issue', parent_id: null, is_active: true },
     { id: 21, name: 'Office/Dept', description: 'Office and department issues', ticket_type: 'issue', parent_id: null, is_active: true },
     { id: 22, name: 'Infra', description: 'Infrastructure-level issues', ticket_type: 'issue', parent_id: null, is_active: true },
+    { id: 31, name: 'System', description: 'Core software, PMS, POS, servers, and network systems', ticket_type: 'issue', parent_id: null, is_active: true },
+    { id: 32, name: 'Outlets', description: 'Restaurant, bar, and resort dining outlet issues', ticket_type: 'issue', parent_id: null, is_active: true },
   ]);
   // Subcategories
   await knex('categories').insert([
@@ -47,6 +49,26 @@ export async function seed(knex) {
     { id: 28, name: 'PABX issue', description: 'PBX/telephony system issues', ticket_type: 'issue', parent_id: 22, is_active: true },
     { id: 29, name: 'Network/Switch issue (room block)', description: 'Room block network/switch failure', ticket_type: 'issue', parent_id: 22, is_active: true },
     { id: 30, name: 'Server issue', description: 'Server hardware or software failures', ticket_type: 'issue', parent_id: 22, is_active: true },
+    // System Subcategories
+    { id: 33, name: 'POS (Point of Sale)', description: 'Restaurant/bar POS terminal and software issues', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 34, name: 'PMS / Opera System', description: 'Property Management System and reservation software', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 35, name: 'Paymaster System', description: 'Payroll and paymaster system issues', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 36, name: 'SunSystems / Financials', description: 'Accounting and financial software issues', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 37, name: 'Network & Wi-Fi System', description: 'Hotel network, Wi-Fi controllers, and connectivity', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 38, name: 'IPTV System', description: 'IPTV headend, channel streaming, and server issues', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 39, name: 'PBX / Telephony System', description: 'PABX server, trunk lines, and phone system', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 40, name: 'Keycard / Door Lock System', description: 'Vingcard/Onity keycard encoder and server issues', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 41, name: 'Email & Software System', description: 'Outlook, email routing, and general office software', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 42, name: 'Printer & Scanner Server', description: 'Network print server and shared scanners', ticket_type: 'issue', parent_id: 31, is_active: true },
+    { id: 43, name: 'Server & Storage System', description: 'Physical/Virtual servers, NAS, and backup storage', ticket_type: 'issue', parent_id: 31, is_active: true },
+    // Outlets Subcategories
+    { id: 44, name: 'Ferney', description: 'Ferney restaurant outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 45, name: 'Tavola', description: 'Tavola restaurant outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 46, name: 'Quatre Cocos', description: 'Quatre Cocos outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 47, name: 'Belle Vue', description: 'Belle Vue restaurant outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 48, name: 'Ocean Grill', description: 'Ocean Grill beach restaurant', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 49, name: 'Aqualand', description: 'Aqualand waterpark/outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
+    { id: 50, name: 'Icery Bar', description: 'Icery Bar outlet', ticket_type: 'issue', parent_id: 32, is_active: true },
   ]);
 
   // Reset sequence (PostgreSQL only)
