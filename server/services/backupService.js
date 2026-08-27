@@ -117,8 +117,14 @@ export async function initializeCronJobs() {
         default: continue;
       }
 
-      const recipients = JSON.parse(schedule.recipients);
-      if (!recipients || recipients.length === 0) continue;
+      let recipients = [];
+      try {
+        recipients = typeof schedule.recipients === 'string' ? JSON.parse(schedule.recipients) : schedule.recipients;
+      } catch (err) {
+        logger.error(`[BackupService] Failed to parse recipients for schedule ${schedule.id}: ${err.message}`);
+        continue;
+      }
+      if (!recipients || !Array.isArray(recipients) || recipients.length === 0) continue;
 
       const job = cron.schedule(cronExp, async () => {
         logger.info(`[BackupService] Running scheduled ${schedule.frequency} backup...`);
@@ -128,6 +134,8 @@ export async function initializeCronJobs() {
         } catch (err) {
           logger.error(`[BackupService] Scheduled backup failed: ${err.message}`, { error: err });
         }
+      }, {
+        timezone: process.env.APP_TIMEZONE || 'UTC'
       });
       
       scheduledJobs.push(job);

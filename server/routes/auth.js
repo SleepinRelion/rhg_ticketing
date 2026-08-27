@@ -10,6 +10,7 @@ import { authenticate } from '../middleware/auth.js';
 import { createAuditEntry } from '../middleware/auditLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../config/logger.js';
+import { sendPasswordResetEmail } from '../services/emailService.js';
 
 const router = Router();
 
@@ -307,5 +308,82 @@ router.post('/mfa/verify', authenticate, asyncHandler(async (req, res) => {
 router.post('/mfa/disable', authenticate, (req, res) => {
   return res.status(403).json({ error: 'Two-Factor Authentication is compulsory for all staff and cannot be disabled. If you lost your device, contact an administrator to reset it.' });
 });
+
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required.' });
+  }
+
+  const user = await db('users')
+    .whereRaw('LOWER(email) = LOWER(?)', [email.trim()])
+    .whereNull('deleted_at')
+    .first();
+
+  if (!user || !user.is_active) {
+    // Return success even if user not found to prevent email enumeration
+    return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await db('users').where({ id: user.id }).update({
+    reset_password_token: tokenHash,
+    reset_password_expires: expiresAt,
+  });
+
+  try {
+    await sendPasswordResetEmail(user.email, resetToken);
+    await createAuditEntry(user.id, 'password_reset_requested', 'user', user.id, req.ip, req.headers['user-agent'], {});
+  } catch (error) {
+    logger.error('Failed to send password reset email', { error, userId: user.id });
+  }
+
+  res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+}));
+
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token and new password are required.' });
+  }
+
+  if (newPassword.length < 12) {
+    return res.status(400).json({ error: 'New password must be at least 12 characters.' });
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  
+  const user = await db('users')
+    .where({ reset_password_token: tokenHash })
+    .where('reset_password_expires', '>', new Date())
+    .whereNull('deleted_at')
+    .first();
+
+  if (!user || !user.is_active) {
+    return res.status(400).json({ error: 'Invalid or expired password reset token.' });
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  
+  await db('users').where({ id: user.id }).update({
+    password_hash: hash,
+    reset_password_token: null,
+    reset_password_expires: null,
+    updated_at: new Date(),
+    failed_login_attempts: 0,
+    locked_until: null
+  });
+
+  // Invalidate all active sessions (refresh tokens) when password is reset
+  await db('refresh_tokens').where({ user_id: user.id, is_revoked: false }).update({ is_revoked: true });
+
+  await createAuditEntry(user.id, 'password_reset_completed', 'user', user.id, req.ip, req.headers['user-agent'], {});
+  
+  res.json({ message: 'Password has been successfully reset. You can now log in.' });
+}));
 
 export default router;

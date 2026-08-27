@@ -119,3 +119,20 @@ export async function sendMFACodeEmail(email, code) {
 
   return sendEmail({ to: email, subject, text, html });
 }
+
+export async function sendPasswordResetEmail(email, token) {
+  const resetUrl = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+  const subject = 'Password Reset Request';
+  const text = `You requested a password reset. Click the link below to reset your password:\n\n${resetUrl}\n\nThis link will expire in 1 hour.\nIf you did not request a password reset, please ignore this email.`;
+  const html = buildEmailTemplate({
+    title: 'Password Reset',
+    content: `
+      <p>We received a request to reset your password. Click the button below to choose a new password.</p>
+      <p>This link will expire in 1 hour.</p>
+    `,
+    buttonLabel: 'Reset Password',
+    buttonUrl: resetUrl
+  });
+
+  return sendEmail({ to: email, subject, text, html });
+}

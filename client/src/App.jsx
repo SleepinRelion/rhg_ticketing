@@ -5,6 +5,8 @@ import AppLayout from './components/layout/AppLayout.jsx';
 import ErrorBoundary from './components/common/ErrorBoundary.jsx';
 
 const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.jsx'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'));
 const GuestPortalPage = lazy(() => import('./pages/GuestPortalPage.jsx'));
 const GuestTicketStatusPage = lazy(() => import('./pages/GuestTicketStatusPage.jsx'));
@@ -53,6 +55,8 @@ export default function App() {
     <Suspense fallback={<div className="loading-spinner" style={{ minHeight: '100vh' }}><div className="spinner"></div></div>}>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPasswordPage />} />
+        <Route path="/reset-password" element={user ? <Navigate to="/" replace /> : <ResetPasswordPage />} />
         <Route path="/staff-portal" element={user ? <Navigate to="/" replace /> : <GuestPortalPage />} />
         <Route path="/staff-status" element={user ? <Navigate to="/" replace /> : <GuestTicketStatusPage />} />
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
