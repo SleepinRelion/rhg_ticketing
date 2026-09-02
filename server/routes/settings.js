@@ -100,7 +100,14 @@ router.put('/sla', authenticate, authorize('admin', 'manager'), asyncHandler(asy
 
 // GET /api/settings/public (Unauthenticated)
 router.get('/public', asyncHandler((req, res) => {
-  const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {};
+  let envConfig = {};
+  try {
+    if (fs.existsSync(envPath)) {
+      envConfig = dotenv.parse(fs.readFileSync(envPath, 'utf8'));
+    }
+  } catch (err) {
+    console.error('[Settings] Failed to read .env file:', err);
+  }
   res.json({
     APP_NAME: envConfig.APP_NAME || process.env.APP_NAME || 'IT Ticketing System',
     APP_LOGO_URL: envConfig.APP_LOGO_URL || process.env.APP_LOGO_URL || '/logo.png',
@@ -112,7 +119,14 @@ router.get('/public', asyncHandler((req, res) => {
 
 // GET /api/settings/env (Admin only)
 router.get('/env', authenticate, authorize('admin', 'manager'), asyncHandler((req, res) => {
-  const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {};
+  let envConfig = {};
+  try {
+    if (fs.existsSync(envPath)) {
+      envConfig = dotenv.parse(fs.readFileSync(envPath, 'utf8'));
+    }
+  } catch (err) {
+    console.error('[Settings] Failed to read .env file:', err);
+  }
 
   // Merge with process.env and provide fallback defaults for UI
   const responseEnv = {
