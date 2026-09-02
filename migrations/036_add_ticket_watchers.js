@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export const up = function(knex) {
   return knex.schema.createTable('ticket_watchers', function(table) {
     table.integer('ticket_id').references('id').inTable('tickets').onDelete('CASCADE');
     table.integer('user_id').references('id').inTable('users').onDelete('CASCADE');
@@ -8,6 +8,6 @@ exports.up = function(knex) {
   });
 };
 
-exports.down = function(knex) {
+export const down = function(knex) {
   return knex.schema.dropTableIfExists('ticket_watchers');
 };

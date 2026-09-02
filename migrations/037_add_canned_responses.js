@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export const up = function(knex) {
   return knex.schema.createTable('canned_responses', function(table) {
     table.increments('id').primary();
     table.string('title').notNullable();
@@ -10,6 +10,6 @@ exports.up = function(knex) {
   });
 };
 
-exports.down = function(knex) {
+export const down = function(knex) {
   return knex.schema.dropTableIfExists('canned_responses');
 };
