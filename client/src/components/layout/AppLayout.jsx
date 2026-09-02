@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import Header from './Header.jsx';
 import DailyBriefingModal from '../ui/DailyBriefingModal.jsx';
+import CommandPalette from '../ui/CommandPalette.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { WifiOff } from 'lucide-react';
@@ -165,8 +166,12 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </div>
-      {showBriefing && <DailyBriefingModal onClose={() => setShowBriefing(false)} />}
+
+      {showBriefing && (
+        <DailyBriefingModal onClose={() => setShowBriefing(false)} />
+      )}
+      
+      <CommandPalette />
     </div>
   );
 }
-

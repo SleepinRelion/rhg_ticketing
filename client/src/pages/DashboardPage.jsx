@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import api from '../api/client.js';
-import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Maximize2, X } from 'lucide-react';
+import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Maximize2, X, Settings2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import { useNavigate } from 'react-router-dom';
@@ -36,8 +36,26 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState(null);
   const [topProblemFilter, setTopProblemFilter] = useState('rooms');
   const [expandedChart, setExpandedChart] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
   const { error } = useToast();
   const navigate = useNavigate();
+
+  const defaultLayout = {
+    category: true,
+    trend: true,
+    problem: true,
+    workload: true,
+    sla: true
+  };
+
+  const [layout, setLayout] = useState(() => {
+    const saved = localStorage.getItem('dashboardLayout');
+    return saved ? JSON.parse(saved) : defaultLayout;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dashboardLayout', JSON.stringify(layout));
+  }, [layout]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -104,6 +122,11 @@ export default function DashboardPage() {
             Real-time metrics and operational status
           </p>
         </div>
+        <div className="header-actions">
+          <button className="btn btn-secondary" onClick={() => setShowCustomize(true)}>
+            <Settings2 size={16} /> Customize
+          </button>
+        </div>
       </div>
 
       <div className="stat-cards">
@@ -154,8 +177,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="charts-grid">
-        <div className="chart-card">
-          <h3 className="chart-card-title">Tickets by Category</h3>
+        {layout.category && (
+          <div className="chart-card">
+            <h3 className="chart-card-title">Tickets by Category</h3>
           <div style={{ height: 300 }}>
             {charts.byCategory && charts.byCategory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -184,7 +208,9 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        )}
 
+        {layout.trend && (
         <div className="chart-card">
           <h3 className="chart-card-title">Ticket Volume Trend (6 Months)</h3>
           <div style={{ height: 300 }}>
@@ -208,7 +234,9 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        )}
 
+        {layout.problem && (
         <div className="chart-card">
           <div className="chart-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 className="chart-card-title" style={{ margin: 0 }}>Top Problem Areas</h3>
@@ -277,7 +305,9 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        )}
 
+        {layout.workload && (
         <div className="chart-card">
           <h3 className="chart-card-title">Technician Workload (Active Tickets)</h3>
           <div style={{ height: 300 }}>
@@ -312,6 +342,87 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        )}
+
+        {layout.sla && (
+        <div className="chart-card">
+          <h3 className="chart-card-title">SLA Compliance</h3>
+          <div style={{ height: 300 }}>
+            {charts.slaCompliance && charts.slaCompliance.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.slaCompliance}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="count"
+                    nameKey="sla_status"
+                    onClick={(data) => {
+                       if (data && data.sla_status) {
+                          navigate(`/tickets?sla_status=${data.sla_status}`);
+                       }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {charts.slaCompliance.map((entry, index) => {
+                      let color = '#22c55e'; // ok
+                      if (entry.sla_status === 'breached') color = '#ef4444'; // red
+                      if (entry.sla_status === 'at_risk') color = '#f59e0b'; // amber
+                      return <Cell key={`cell-${index}`} fill={color} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>No SLA data available</div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {layout.sla && (
+        <div className="chart-card">
+          <h3 className="chart-card-title">SLA Compliance</h3>
+          <div style={{ height: 300 }}>
+            {charts.slaCompliance && charts.slaCompliance.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.slaCompliance}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="count"
+                    nameKey="sla_status"
+                    onClick={(data) => {
+                       if (data && data.sla_status) {
+                          navigate(`/tickets?sla_status=${data.sla_status}`);
+                       }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {charts.slaCompliance.map((entry, index) => {
+                      let color = '#22c55e'; // ok
+                      if (entry.sla_status === 'breached') color = '#ef4444'; // red
+                      if (entry.sla_status === 'at_risk') color = '#f59e0b'; // amber
+                      return <Cell key={`cell-${index}`} fill={color} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>No SLA data available</div>
+            )}
+          </div>
+        </div>
+        )}
       </div>
 
       {expandedChart && (
@@ -361,6 +472,42 @@ export default function DashboardPage() {
                   />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCustomize && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Customize Dashboard</h3>
+              <button className="btn-icon" onClick={() => setShowCustomize(false)}><X size={20} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <label className="form-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                <input type="checkbox" checked={layout.category} onChange={e => setLayout(p => ({...p, category: e.target.checked}))} />
+                Tickets by Category
+              </label>
+              <label className="form-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                <input type="checkbox" checked={layout.trend} onChange={e => setLayout(p => ({...p, trend: e.target.checked}))} />
+                Ticket Volume Trend
+              </label>
+              <label className="form-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                <input type="checkbox" checked={layout.problem} onChange={e => setLayout(p => ({...p, problem: e.target.checked}))} />
+                Top Problem Areas
+              </label>
+              <label className="form-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                <input type="checkbox" checked={layout.workload} onChange={e => setLayout(p => ({...p, workload: e.target.checked}))} />
+                Technician Workload
+              </label>
+              <label className="form-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                <input type="checkbox" checked={layout.sla} onChange={e => setLayout(p => ({...p, sla: e.target.checked}))} />
+                SLA Compliance
+              </label>
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => setShowCustomize(false)}>Done</button>
             </div>
           </div>
         </div>

@@ -93,4 +93,35 @@ router.get('/guest/track/:trackingToken', publicEndpointLimiter, asyncHandler(as
     }
   });
 }));
+
+// POST /api/tickets/guest/track/:trackingToken/rate — Public endpoint to rate a resolved/closed ticket
+router.post('/guest/track/:trackingToken/rate', publicEndpointLimiter, asyncHandler(async (req, res) => {
+  const { trackingToken } = req.params;
+  const { rating, rating_comment } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5.' });
+  }
+
+  const ticket = await db('tickets').where('guest_tracking_token', trackingToken).whereNull('deleted_at').first();
+  if (!ticket) {
+    return res.status(404).json({ error: 'Ticket not found.' });
+  }
+
+  if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+    return res.status(400).json({ error: 'Only resolved or closed tickets can be rated.' });
+  }
+
+  if (ticket.rating !== null) {
+    return res.status(400).json({ error: 'This ticket has already been rated.' });
+  }
+
+  await db('tickets').where('id', ticket.id).update({
+    rating,
+    rating_comment,
+    updated_at: new Date()
+  });
+
+  res.json({ success: true, message: 'Rating submitted successfully.' });
+}));
 export default router;

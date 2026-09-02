@@ -40,6 +40,8 @@ import settingsRoutes from './routes/settings.js';
 import hotelRoutes from './routes/hotels.js';
 import backupRoutes from './routes/backups.js';
 import calendarRoutes from './routes/calendar.js';
+import searchRoutes from './routes/search.js';
+import cannedResponseRoutes from './routes/cannedResponses.js';
 import { initializeCronJobs } from './services/backupService.js';
 
 import { rateLimit } from 'express-rate-limit';
@@ -195,6 +197,8 @@ app.use('/api/preventive-maintenance', preventiveMaintenanceRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/backups', backupRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/canned-responses', cannedResponseRoutes);
 
 // Health check — verifies DB connectivity
 import db from './config/database.js';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Download, BarChart2, PieChart as PieChartIcon, Activity, Users, Settings, Building, CreditCard, Wrench } from 'lucide-react';
+import { Download, Printer, BarChart2, PieChart as PieChartIcon, Activity, Users, Settings, Building, CreditCard, Wrench } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const REPORT_TYPES = [
@@ -60,6 +60,10 @@ export default function ReportsPage() {
         window.URL.revokeObjectURL(downloadUrl);
       })
       .catch(err => error('Failed to export CSV.'));
+  }
+
+  function handleExportPDF() {
+    window.print();
   }
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
@@ -212,15 +216,20 @@ export default function ReportsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="reports-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
             <h1 className="page-title">{REPORT_TYPES.find(r => r.id === activeReport)?.label}</h1>
             <p className="page-subtitle">Real-time data and analytics</p>
           </div>
-          <button onClick={handleExport} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Download size={16} /> Export CSV
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }} className="no-print">
+            <button onClick={handleExportPDF} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Printer size={16} /> Export PDF
+            </button>
+            <button onClick={handleExport} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Download size={16} /> Export CSV
+            </button>
+          </div>
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto' }}>
@@ -233,6 +242,25 @@ export default function ReportsPage() {
           )}
         </div>
       </div>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .reports-content, .reports-content * {
+            visibility: visible;
+          }
+          .reports-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print, .no-print * {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

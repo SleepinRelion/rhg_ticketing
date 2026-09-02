@@ -7,6 +7,7 @@ import { createTicketSchema, updateTicketSchema } from '../../constants/schemas.
 import { createTicket } from '../../services/ticketService.js';
 import { sanitize } from '../../utils/sanitize.js';
 import { createAuditEntry } from '../../middleware/auditLog.js';
+import { createNotification } from '../../services/notificationService.js';
 import { getMailTransporter, SMTP_FROM } from '../../config/email.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../config/logger.js';
@@ -47,7 +48,7 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
     }
   }
 
-  const [assignees, tags, activityLogs, comments, checklists, attachments, linkedArticles] = await Promise.all([
+  const [assignees, tags, activityLogs, comments, checklists, attachments, linkedArticles, watchersList] = await Promise.all([
     db('ticket_assignees')
       .select('ticket_assignees.*', 'users.full_name', 'users.username', 'users.avatar_url', 'assigner.full_name as assigned_by_name')
       .join('users', 'ticket_assignees.user_id', 'users.id')
@@ -73,10 +74,12 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
       .join('users', 'attachments.uploaded_by', 'users.id')
       .where('ticket_id', ticket.id)
       .orderBy('created_at', 'desc'),
-    db('ticket_knowledge_links')
       .select('knowledge_base_articles.*')
       .join('knowledge_base_articles', 'ticket_knowledge_links.article_id', 'knowledge_base_articles.id')
       .where('ticket_knowledge_links.ticket_id', ticket.id),
+    db('ticket_watchers')
+      .select('user_id')
+      .where('ticket_id', ticket.id),
   ]);
 
   const filteredComments = req.user.role === 'staff'
@@ -129,6 +132,8 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
       checklists,
       attachments,
       linked_articles: linkedArticles,
+      watchers: watchersList.map(w => w.user_id),
+      is_watching: watchersList.some(w => w.user_id === req.user.id)
     },
   });
 }));
@@ -253,6 +258,26 @@ router.put('/:id', authenticate, validate(updateTicketSchema), asyncHandler(asyn
     .where({ 'tickets.id': req.params.id })
     .first();
   
+  // Notify watchers
+  if (changedFields.length > 0) {
+    const watchers = await db('ticket_watchers').where({ ticket_id: ticket.id });
+    const assignees = await db('ticket_assignees').where({ ticket_id: ticket.id });
+    for (const w of watchers) {
+      const isCreator = w.user_id === ticket.created_by;
+      const isAssignee = assignees.some(a => a.user_id === w.user_id);
+      if (w.user_id !== req.user.id && !isCreator && !isAssignee) {
+        await createNotification(
+          w.user_id, 
+          ticket.id, 
+          `Ticket updated: ${ticket.ticket_number}`, 
+          `A ticket you are watching has been updated.`, 
+          'ticket_update', 
+          ticket.hotel_id
+        );
+      }
+    }
+  }
+
   if (req.io) req.io.emit('ticket:updated', updated);
 
   res.json(updated);
@@ -274,6 +299,110 @@ router.delete('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(
 
   await createAuditEntry(req.user.id, 'ticket_deleted', 'ticket', ticket.id, req.ip, req.headers['user-agent'], { ticket_number: ticket.ticket_number });
   res.json({ message: 'Ticket deleted.' });
+}));
+
+// POST /api/tickets/bulk-update
+router.post('/bulk-update', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
+  const { ticketIds, updates } = req.body;
+  if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) {
+    return res.status(400).json({ error: 'No tickets selected.' });
+  }
+
+  // Filter allowed fields for bulk update
+  const allowedFields = ['status', 'priority', 'ticket_type', 'department', 'category_id'];
+  const safeUpdates = {};
+  for (const field of allowedFields) {
+    if (updates[field] !== undefined) {
+      safeUpdates[field] = updates[field];
+    }
+  }
+
+  if (Object.keys(safeUpdates).length === 0) {
+    return res.status(400).json({ error: 'No valid fields to update.' });
+  }
+
+  safeUpdates.updated_at = new Date();
+
+  // Perform update in a transaction
+  await db.transaction(async (trx) => {
+    for (const ticketId of ticketIds) {
+      const ticket = await trx('tickets').where({ id: ticketId }).first();
+      if (!ticket) continue;
+
+      if (safeUpdates.priority && safeUpdates.priority !== ticket.priority) {
+        const { calculateSLADates } = await import('../../utils/slaCalculator.js');
+        const slaDates = await calculateSLADates(safeUpdates.priority, ticket.created_at, ticket.hotel_id);
+        safeUpdates.first_response_due_at = slaDates.first_response_due_at;
+        safeUpdates.resolution_due_at = slaDates.resolution_due_at;
+      }
+
+      await trx('tickets').where({ id: ticketId }).update(safeUpdates);
+
+      // Log activity for each field
+      for (const [field, value] of Object.entries(safeUpdates)) {
+        if (field === 'updated_at' || field === 'first_response_due_at' || field === 'resolution_due_at') continue;
+        
+        await trx('activity_logs').insert({
+          ticket_id: ticketId,
+          user_id: req.user.id,
+          action: `${field}_changed`,
+          old_value: ticket[field],
+          new_value: value,
+          note: 'Bulk update',
+          created_at: new Date()
+        });
+      }
+      
+      // Notify watchers
+      const watchers = await trx('ticket_watchers').where({ ticket_id: ticketId });
+      for (const w of watchers) {
+        if (w.user_id !== req.user.id) {
+          await createNotification(
+            w.user_id, 
+            ticketId, 
+            `Ticket updated: ${ticket.ticket_number}`, 
+            `A ticket you are watching was bulk updated.`, 
+            'ticket_update', 
+            ticket.hotel_id
+          );
+        }
+      }
+    }
+    
+    await createAuditEntry(req.user.id, 'tickets_bulk_updated', 'tickets', null, req.ip, req.headers['user-agent'], { ticketIds, updates: safeUpdates });
+  });
+
+  if (req.io) {
+    req.io.emit('tickets:bulk_updated', { ticketIds });
+  }
+
+  res.json({ message: `${ticketIds.length} tickets updated successfully.` });
+}));
+
+// POST /api/tickets/:id/watch
+router.post('/:id/watch', authenticate, asyncHandler(async (req, res) => {
+  const ticket = await db('tickets').where({ id: req.params.id }).whereNull('deleted_at').first();
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found.' });
+
+  await db('ticket_watchers').insert({
+    ticket_id: ticket.id,
+    user_id: req.user.id
+  }).onConflict(['ticket_id', 'user_id']).ignore();
+
+  res.json({ message: 'Now watching this ticket.' });
+}));
+
+// DELETE /api/tickets/:id/watch
+router.delete('/:id/watch', authenticate, asyncHandler(async (req, res) => {
+  const ticket = await db('tickets').where({ id: req.params.id }).whereNull('deleted_at').first();
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found.' });
+
+  await db('ticket_watchers').where({
+    ticket_id: ticket.id,
+    user_id: req.user.id
+  }).del();
+
+  res.json({ message: 'Stopped watching this ticket.' });
 }));
 
 export default router;

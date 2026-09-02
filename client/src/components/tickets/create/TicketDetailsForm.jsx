@@ -1,4 +1,5 @@
-import { ArrowLeft, Save, X, FileQuestion, AlertTriangle, Bed, Building2, HardDrive, Server, Utensils } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Save, X, FileQuestion, AlertTriangle, Bed, Building2, HardDrive, Server, Utensils } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../../ui/SearchableSelect.jsx';
 import FormatCategory from '../../ui/FormatCategory.jsx';
@@ -61,6 +62,17 @@ export default function TicketDetailsForm({
   const isAccountRequest = isRequestType && /account|access|user|login/i.test(selectedCatName);
   const isAssetRequest = isRequestType && /asset|hardware|device|equipment|laptop|pc|printer/i.test(selectedCatName);
 
+  const [step, setStep] = useState(1);
+  const totalSteps = 3;
+
+  const handleNext = () => {
+    if (step < totalSteps) setStep(step + 1);
+  };
+
+  const handlePrev = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -97,40 +109,61 @@ export default function TicketDetailsForm({
         </div>
       </div>
 
+      <div style={{ padding: '0 20px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[1, 2, 3].map(s => (
+            <div key={s} style={{
+              flex: 1,
+              height: '4px',
+              backgroundColor: step >= s ? 'var(--primary-500)' : 'var(--border-color)',
+              borderRadius: '2px',
+              transition: 'background-color 0.3s ease'
+            }} />
+          ))}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px', textAlign: 'center' }}>
+          Step {step} of {totalSteps}: {
+            step === 1 ? 'Basic Information' :
+            step === 2 ? 'Specific Details' :
+            'Description & Submit'
+          }
+        </div>
+      </div>
+
       <div className="ticket-detail-grid">
         <div className="ticket-detail-main">
           
           <DuplicateWarning duplicates={duplicates} />
 
           <form className="card" onSubmit={onSubmit}>
-            {/* ===== TITLE ===== */}
-            <div className="form-group">
-              <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
-              <input
-                type="text"
-                className="form-input"
-                required
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                placeholder={
-                  isTaskType ? 'e.g., Daily server health check' :
-                  isRequestType ? 'e.g., New laptop for Front Desk' :
-                  'e.g., TV not working in Room 204'
-                }
-              />
-              <KBSuggestions query={formData.title} categoryId={formData.category_id} discrete={false} />
-            </div>
+            {/* === STEP 1: TITLE & CATEGORY === */}
+            <div style={{ display: step === 1 ? 'block' : 'none' }}>
+              <div className="form-group">
+                <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
+                <input
+                  type="text"
+                  className="form-input"
+                  required
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  placeholder={
+                    isTaskType ? 'e.g., Daily server health check' :
+                    isRequestType ? 'e.g., New laptop for Front Desk' :
+                    'e.g., TV not working in Room 204'
+                  }
+                />
+                <KBSuggestions query={formData.title} categoryId={formData.category_id} discrete={false} />
+              </div>
 
-            {/* ===== CATEGORY SECTION ===== */}
-            <div style={{ marginTop: '24px', marginBottom: '8px' }}>
-              <hr style={{ margin: '0 0 20px 0', borderColor: 'var(--border-color)', opacity: 0.3 }} />
-              <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: '16px', fontSize: '14px' }}>
-                {isTaskType ? 'Task Type' : isRequestType ? 'Request Type' : 'Issue Location'}
-              </h3>
-            </div>
+              <div style={{ marginTop: '24px', marginBottom: '8px' }}>
+                <hr style={{ margin: '0 0 20px 0', borderColor: 'var(--border-color)', opacity: 0.3 }} />
+                <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: '16px', fontSize: '14px' }}>
+                  {isTaskType ? 'Task Type' : isRequestType ? 'Request Type' : 'Issue Location'}
+                </h3>
+              </div>
 
-            {/* === TASK === */}
-            {isTaskType && (
+              {/* === TASK === */}
+              {isTaskType && (
               <div className="form-group">
                 <label className="form-label">Category <span style={{ color: 'var(--error)' }}>*</span></label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
@@ -324,7 +357,12 @@ export default function TicketDetailsForm({
                     </div>
                   </div>
                 )}
+              </>
+            )}
+            </div>
 
+            {/* === STEP 2: DETAILS === */}
+              <div style={{ display: step === 2 ? 'block' : 'none' }}>
                 {isRoomIssue && (
                   <>
                     <div className="form-row" style={{ marginTop: '16px' }}>
@@ -477,16 +515,15 @@ export default function TicketDetailsForm({
                     )}
                   </div>
                 )}
-              </>
-            )}
+              </div>
 
-            {/* ===== PRIORITY ===== */}
-            <div style={{ marginTop: '24px', marginBottom: '8px' }}>
-              <hr style={{ margin: '0 0 20px 0', borderColor: 'var(--border-color)', opacity: 0.3 }} />
-              <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: '16px', fontSize: '14px' }}>Priority & Details</h3>
-            </div>
+              {/* === STEP 3: DESCRIPTION & PRIORITY === */}
+              <div style={{ display: step === 3 ? 'block' : 'none' }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <h3 className="detail-section-title" style={{ marginTop: 0, marginBottom: '16px', fontSize: '14px' }}>Priority & Details</h3>
+                </div>
 
-            <div className="form-group">
+                <div className="form-group">
               <label className="form-label">Priority</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 {[
@@ -541,15 +578,29 @@ export default function TicketDetailsForm({
                 rows={5}
               />
             </div>
+            </div>
 
-            {/* ===== SUBMIT ===== */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-              <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>
-                <X /> Cancel
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                <Save /> {saving ? 'Creating...' : `Create ${typeConfig.label}`}
-              </button>
+            {/* ===== SUBMIT / NAVIGATION ===== */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '32px' }}>
+              {step > 1 ? (
+                <button type="button" className="btn btn-secondary" onClick={handlePrev} disabled={saving}>
+                  <ArrowLeft size={16} /> Back
+                </button>
+              ) : (
+                <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>
+                  <X size={16} /> Cancel
+                </button>
+              )}
+              
+              {step < totalSteps ? (
+                <button type="button" className="btn btn-primary" onClick={handleNext} disabled={saving}>
+                  Next <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  <Save size={16} /> {saving ? 'Creating...' : `Create ${typeConfig.label}`}
+                </button>
+              )}
             </div>
           </form>
         </div>

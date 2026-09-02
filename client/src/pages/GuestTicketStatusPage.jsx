@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Ticket, ArrowLeft, Clock, AlertTriangle, CheckCircle2, User, Building, MapPin, Loader2, Key } from 'lucide-react';
+import { Search, Ticket, ArrowLeft, Clock, AlertTriangle, CheckCircle2, User, Building, MapPin, Loader2, Key, Star } from 'lucide-react';
 import { useApi } from '../hooks/useApi.js';
+import api from '../api/client.js';
 
 export default function GuestTicketStatusPage() {
   const [searchParams] = useSearchParams();
@@ -9,6 +10,12 @@ export default function GuestTicketStatusPage() {
   
   const { data, loading, error, execute, setData } = useApi(null, { immediate: false });
   const ticketData = data?.ticket || null;
+
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [ratingSuccess, setRatingSuccess] = useState(false);
 
   // Auto-search if token is in URL
   useEffect(() => {
@@ -22,9 +29,31 @@ export default function GuestTicketStatusPage() {
     if (!trackingToken.trim()) return;
 
     setData(null);
+    setRating(0);
+    setRatingComment('');
+    setRatingSuccess(false);
     await execute(`/tickets/guest/track/${trackingToken.trim()}`).catch(() => {
        // useApi handles setting the error state automatically
     });
+  };
+
+  const handleRate = async (e) => {
+    e.preventDefault();
+    if (rating === 0) return;
+    try {
+      setSubmittingRating(true);
+      await api(`/tickets/guest/track/${trackingToken.trim()}/rate`, {
+        method: 'POST',
+        body: JSON.stringify({ rating, rating_comment: ratingComment })
+      });
+      setRatingSuccess(true);
+      // Re-fetch to see the rating updated
+      await execute(`/tickets/guest/track/${trackingToken.trim()}`);
+    } catch (err) {
+      alert(err.message || 'Failed to submit rating.');
+    } finally {
+      setSubmittingRating(false);
+    }
   };
 
   const getStatusDisplay = (status) => {
@@ -129,6 +158,53 @@ export default function GuestTicketStatusPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* Rating Section */}
+            {(ticketData.status === 'resolved' || ticketData.status === 'closed') && (
+              <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+                {ticketData.rating || ratingSuccess ? (
+                  <div>
+                    <CheckCircle2 size={32} style={{ color: 'var(--success)', margin: '0 auto 1rem auto' }} />
+                    <h4 style={{ margin: '0 0 0.5rem 0' }}>Thank you for your feedback!</h4>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>You rated this resolution {ticketData.rating || rating} out of 5 stars.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleRate}>
+                    <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem' }}>How would you rate our service?</h4>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          className="btn-icon"
+                          style={{ color: (hoverRating || rating) >= star ? '#f59e0b' : 'var(--border-color)', width: 48, height: 48 }}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          onClick={() => setRating(star)}
+                        >
+                          <Star size={32} fill={(hoverRating || rating) >= star ? '#f59e0b' : 'none'} />
+                        </button>
+                      ))}
+                    </div>
+                    {rating > 0 && (
+                      <div style={{ animation: 'fadeIn 0.3s' }}>
+                        <textarea
+                          className="form-textarea"
+                          placeholder="Tell us what you think (optional)"
+                          rows={3}
+                          value={ratingComment}
+                          onChange={e => setRatingComment(e.target.value)}
+                          style={{ marginBottom: '1rem', width: '100%' }}
+                        />
+                        <button type="submit" className="btn btn-primary" disabled={submittingRating} style={{ width: '100%', justifyContent: 'center' }}>
+                          {submittingRating ? 'Submitting...' : 'Submit Feedback'}
+                        </button>
+                      </div>
+                    )}
+                  </form>
+                )}
               </div>
             )}
           </div>

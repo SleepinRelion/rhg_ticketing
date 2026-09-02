@@ -67,8 +67,19 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
       ticket_id
     });
     for (const a of assignees) {
-      if (a.user_id !== req.user.id) {
+      if (a.user_id !== req.user.id && a.user_id !== ticket.created_by) {
         await createNotification(a.user_id, ticket_id, `New comment on ${ticket.ticket_number}`, `A comment was added to a ticket assigned to you.`, 'comment', ticket.hotel_id);
+      }
+    }
+    
+    // Notify watchers
+    const watchers = await db('ticket_watchers').where({ ticket_id });
+    for (const w of watchers) {
+      // Don't duplicate notifications if they are creator or assignee
+      const isCreator = w.user_id === ticket.created_by;
+      const isAssignee = assignees.some(a => a.user_id === w.user_id);
+      if (w.user_id !== req.user.id && !isCreator && !isAssignee) {
+        await createNotification(w.user_id, ticket_id, `New comment on ${ticket.ticket_number}`, `A comment was added to a ticket you are watching.`, 'comment', ticket.hotel_id);
       }
     }
   }

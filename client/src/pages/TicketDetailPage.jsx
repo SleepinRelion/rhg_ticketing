@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Clock, User, DoorOpen, HardDrive, Tag, 
   MessageSquare, FileText, CheckSquare, Wrench, Edit,
-  Paperclip, Plus, Send, X, AlertCircle, BookOpen, Activity
+  Paperclip, Plus, Send, X, AlertCircle, BookOpen, Activity, Eye, EyeOff, MessageCircle
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompression.js';
 import KBSuggestions from '../components/tickets/KBSuggestions.jsx';
@@ -29,6 +29,7 @@ export default function TicketDetailPage() {
   const [technicians, setTechnicians] = useState([]);
   const [selectedTech, setSelectedTech] = useState('');
   const [isEditingTicket, setIsEditingTicket] = useState(false);
+  const [cannedResponses, setCannedResponses] = useState([]);
 
   const { socket } = useSocket();
 
@@ -36,6 +37,9 @@ export default function TicketDetailPage() {
     fetchTicket();
     if (isManager()) {
       api('/users/technicians').then(res => setTechnicians(res.technicians || []));
+    }
+    if (['admin', 'manager', 'technician'].includes(user.role)) {
+      api('/canned-responses').then(res => setCannedResponses(res.responses || []));
     }
   }, [id]);
 
@@ -106,6 +110,21 @@ export default function TicketDetailPage() {
       fetchTicket();
     } catch (err) {
       error('Failed to remove assignee');
+    }
+  };
+
+  const handleWatchToggle = async () => {
+    try {
+      if (ticketData.is_watching) {
+        await api(`/tickets/${id}/watch`, { method: 'DELETE' });
+        success('Stopped watching this ticket');
+      } else {
+        await api(`/tickets/${id}/watch`, { method: 'POST' });
+        success('Now watching this ticket');
+      }
+      fetchTicket();
+    } catch (err) {
+      error('Failed to update watch status');
     }
   };
 
@@ -240,6 +259,13 @@ export default function TicketDetailPage() {
               <BookOpen size={16} /> Convert to KB
             </button>
           )}
+          <button 
+            className={`btn ${ticketData.is_watching ? 'btn-primary' : 'btn-secondary'}`} 
+            onClick={handleWatchToggle}
+            title={ticketData.is_watching ? 'Stop watching this ticket' : 'Get notified of updates'}
+          >
+            {ticketData.is_watching ? <><EyeOff size={16} /> Unwatch</> : <><Eye size={16} /> Watch</>}
+          </button>
         </div>
       </div>
 
@@ -291,6 +317,24 @@ export default function TicketDetailPage() {
                     </label>
                   )}
                   <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                    {cannedResponses.length > 0 && (
+                      <SearchableSelect 
+                        className="form-select" 
+                        value="" 
+                        onChange={e => {
+                          if(e.target.value) {
+                            setCommentText(prev => prev + (prev ? '\n\n' : '') + e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        style={{ padding: '6px 10px', maxWidth: '150px' }}
+                      >
+                        <option value="">Insert Template...</option>
+                        {cannedResponses.map(r => (
+                          <option key={r.id} value={r.content}>{r.title}</option>
+                        ))}
+                      </SearchableSelect>
+                    )}
                     <div className="file-upload-wrapper">
                       <input
                         type="file"

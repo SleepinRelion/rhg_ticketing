@@ -1,4 +1,4 @@
-'use strict';
+ser'use strict';
 
 /**
  * Radisson Hotel Group Mauritius
