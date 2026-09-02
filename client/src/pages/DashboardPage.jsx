@@ -384,45 +384,7 @@ export default function DashboardPage() {
         </div>
         )}
 
-        {layout.sla && (
-        <div className="chart-card">
-          <h3 className="chart-card-title">SLA Compliance</h3>
-          <div style={{ height: 300 }}>
-            {charts.slaCompliance && charts.slaCompliance.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={charts.slaCompliance}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="count"
-                    nameKey="sla_status"
-                    onClick={(data) => {
-                       if (data && data.sla_status) {
-                          navigate(`/tickets?sla_status=${data.sla_status}`);
-                       }
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {charts.slaCompliance.map((entry, index) => {
-                      let color = '#22c55e'; // ok
-                      if (entry.sla_status === 'breached') color = '#ef4444'; // red
-                      if (entry.sla_status === 'at_risk') color = '#f59e0b'; // amber
-                      return <Cell key={`cell-${index}`} fill={color} />;
-                    })}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>No SLA data available</div>
-            )}
-          </div>
-        </div>
-        )}
+
       </div>
 
       {expandedChart && (
