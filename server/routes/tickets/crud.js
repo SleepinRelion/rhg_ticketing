@@ -74,6 +74,7 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
       .join('users', 'attachments.uploaded_by', 'users.id')
       .where('ticket_id', ticket.id)
       .orderBy('created_at', 'desc'),
+    db('ticket_knowledge_links')
       .select('knowledge_base_articles.*')
       .join('knowledge_base_articles', 'ticket_knowledge_links.article_id', 'knowledge_base_articles.id')
       .where('ticket_knowledge_links.ticket_id', ticket.id),
