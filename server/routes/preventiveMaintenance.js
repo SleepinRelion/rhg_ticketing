@@ -19,11 +19,15 @@ const FREQUENCY_MAP = {
 
 // GET /api/preventive-maintenance
 router.get('/', authenticate, asyncHandler(async (req, res) => {
-  const {
-    is_active,
-    asset_id
-  } = req.query;
-  let query = db('preventive_maintenance').select('preventive_maintenance.*', 'assets.name as asset_name', 'assets.asset_tag', 'users.full_name as assigned_to_name').join('assets', 'preventive_maintenance.asset_id', 'assets.id').leftJoin('users', 'preventive_maintenance.assigned_to', 'users.id');
+  const hotelId = req.headers['x-hotel-id'];
+  if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  let query = db('preventive_maintenance')
+    .select('preventive_maintenance.*', 'assets.name as asset_name', 'assets.asset_tag', 'users.full_name as assigned_to_name')
+    .join('assets', 'preventive_maintenance.asset_id', 'assets.id')
+    .leftJoin('users', 'preventive_maintenance.assigned_to', 'users.id')
+    .where('assets.hotel_id', hotelId);
+    
   if (is_active !== undefined) query = query.where('preventive_maintenance.is_active', is_active === 'true');
   if (asset_id) query = query.where('preventive_maintenance.asset_id', asset_id);
   const schedules = await query.orderBy('next_due_date', 'asc');
@@ -47,6 +51,15 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
       error: 'Asset, title, frequency, and next due date are required.'
     });
   }
+  
+  const hotelId = req.headers['x-hotel-id'];
+  if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  // Verify asset belongs to hotel
+  const asset = await db('assets').where({ id: asset_id, hotel_id: hotelId }).first();
+  if (!asset) {
+    return res.status(403).json({ error: 'Asset does not belong to this hotel.' });
+  }
   const [schedule] = await db('preventive_maintenance').insert({
     asset_id,
     title: sanitize(title),
@@ -63,12 +76,17 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
 
 // POST /api/preventive-maintenance/:id/complete
 router.post('/:id/complete', authenticate, asyncHandler(async (req, res) => {
-  const schedule = await db('preventive_maintenance').where({
-    id: req.params.id
-  }).first();
-  if (!schedule) return res.status(404).json({
-    error: 'Schedule not found.'
-  });
+  const hotelId = req.headers['x-hotel-id'];
+  if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  const schedule = await db('preventive_maintenance')
+    .join('assets', 'preventive_maintenance.asset_id', 'assets.id')
+    .where('preventive_maintenance.id', req.params.id)
+    .where('assets.hotel_id', hotelId)
+    .select('preventive_maintenance.*')
+    .first();
+
+  if (!schedule) return res.status(404).json({ error: 'Schedule not found or unauthorized.' });
   const advanceFn = FREQUENCY_MAP[(schedule.frequency || '').toLowerCase()];
   const nextDate = advanceFn ? advanceFn(new Date(schedule.next_due_date)) : addMonths(new Date(schedule.next_due_date), 1);
   
@@ -106,10 +124,23 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
   for (const f of allowed) {
     if (req.body[f] !== undefined) updates[f] = typeof req.body[f] === 'string' ? sanitize(req.body[f]) : req.body[f];
   }
+  const hotelId = req.headers['x-hotel-id'];
+  if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  const schedule = await db('preventive_maintenance')
+    .join('assets', 'preventive_maintenance.asset_id', 'assets.id')
+    .where('preventive_maintenance.id', req.params.id)
+    .where('assets.hotel_id', hotelId)
+    .select('preventive_maintenance.*')
+    .first();
+
+  if (!schedule) return res.status(404).json({ error: 'Schedule not found or unauthorized.' });
+
   await db('preventive_maintenance').where({
     id: req.params.id
   }).update(updates);
-  const schedule = await db('preventive_maintenance').where({
+  
+  const updatedSchedule = await db('preventive_maintenance').where({
     id: req.params.id
   }).first();
   res.json(schedule);
@@ -117,6 +148,17 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
 
 // DELETE /api/preventive-maintenance/:id
 router.delete('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
+  const hotelId = req.headers['x-hotel-id'];
+  if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  const schedule = await db('preventive_maintenance')
+    .join('assets', 'preventive_maintenance.asset_id', 'assets.id')
+    .where('preventive_maintenance.id', req.params.id)
+    .where('assets.hotel_id', hotelId)
+    .first();
+
+  if (!schedule) return res.status(404).json({ error: 'Schedule not found or unauthorized.' });
+
   const deleted = await db('preventive_maintenance').where({
     id: req.params.id
   }).del();
