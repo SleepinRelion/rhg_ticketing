@@ -50,11 +50,11 @@ async function bootstrap() {
       <ErrorBoundary>
         <BrowserRouter>
           <AuthProvider>
-            <SocketProvider>
-              <ToastProvider>
+            <ToastProvider>
+              <SocketProvider>
                 <App />
-              </ToastProvider>
-            </SocketProvider>
+              </SocketProvider>
+            </ToastProvider>
           </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>
