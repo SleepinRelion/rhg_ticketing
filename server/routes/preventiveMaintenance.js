@@ -19,6 +19,11 @@ const FREQUENCY_MAP = {
 
 // GET /api/preventive-maintenance
 router.get('/', authenticate, asyncHandler(async (req, res) => {
+  const {
+    is_active,
+    asset_id
+  } = req.query;
+
   const hotelId = req.headers['x-hotel-id'];
   if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
 
