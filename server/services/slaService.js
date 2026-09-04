@@ -60,14 +60,16 @@ async function handleSLABreach(ticket) {
     );
   }
 
-  // Notify ticket creator
-  await createNotification(
-    ticket.created_by,
-    ticket.id,
-    `Ticket ${ticket.ticket_number} is Overdue`,
-    `Your ticket "${ticket.title}" has passed its resolution deadline.`,
-    'sla_breach'
-  );
+  // Notify ticket creator if one exists (guest tickets have created_by = null)
+  if (ticket.created_by) {
+    await createNotification(
+      ticket.created_by,
+      ticket.id,
+      `Ticket ${ticket.ticket_number} is Overdue`,
+      `Your ticket "${ticket.title}" has passed its resolution deadline.`,
+      'sla_breach'
+    );
+  }
 }
 
 /**
