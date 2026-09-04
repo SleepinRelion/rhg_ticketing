@@ -48,7 +48,7 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
     }
   }
 
-  const [assignees, tags, activityLogs, comments, checklists, attachments, linkedArticles, watchersList] = await Promise.all([
+  const [assignees, tags, activityLogs, comments, checklists, attachments, linkedArticles, watchersList, viewsList] = await Promise.all([
     db('ticket_assignees')
       .select('ticket_assignees.*', 'users.full_name', 'users.username', 'users.avatar_url', 'assigner.full_name as assigned_by_name')
       .join('users', 'ticket_assignees.user_id', 'users.id')
@@ -81,6 +81,11 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
     db('ticket_watchers')
       .select('user_id')
       .where('ticket_id', ticket.id),
+    db('ticket_views')
+      .select('ticket_views.*', 'users.full_name as user_name', 'users.avatar_url')
+      .join('users', 'ticket_views.user_id', 'users.id')
+      .where('ticket_id', ticket.id)
+      .orderBy('last_viewed_at', 'desc'),
   ]);
 
   const filteredComments = req.user.role === 'staff'
@@ -134,9 +139,24 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
       attachments,
       linked_articles: linkedArticles,
       watchers: watchersList.map(w => w.user_id),
-      is_watching: watchersList.some(w => w.user_id === req.user.id)
+      is_watching: watchersList.some(w => w.user_id === req.user.id),
+      views: req.user.role === 'admin' || req.user.role === 'manager' ? viewsList : []
     },
   });
+}));
+
+// POST /api/tickets/:id/view
+router.post('/:id/view', authenticate, asyncHandler(async (req, res) => {
+  const ticket = await db('tickets').where({ id: req.params.id }).whereNull('deleted_at').first();
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found.' });
+
+  await db('ticket_views').insert({
+    ticket_id: ticket.id,
+    user_id: req.user.id,
+    last_viewed_at: new Date()
+  }).onConflict(['ticket_id', 'user_id']).merge(['last_viewed_at']);
+
+  res.json({ message: 'View recorded.' });
 }));
 
 router.post('/', authenticate, validate(createTicketSchema), asyncHandler(async (req, res) => {

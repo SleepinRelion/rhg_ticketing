@@ -35,8 +35,9 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     fetchTicket();
-    if (isManager()) {
+    if (isManager() || user.role === 'admin') {
       api('/users/technicians').then(res => setTechnicians(res.technicians || []));
+      api(`/tickets/${id}/view`, { method: 'POST' }).catch(() => {});
     }
     if (['admin', 'manager', 'technician'].includes(user.role)) {
       api('/canned-responses').then(res => setCannedResponses(res.responses || []));
@@ -200,7 +201,7 @@ export default function TicketDetailPage() {
     return <div className="loading-spinner"><div className="spinner"></div></div>;
   }
 
-  const { comments = [], assignees = [], activity_logs = [] } = ticketData;
+  const { comments = [], assignees = [], activity_logs = [], views = [] } = ticketData;
   const isActive = !['closed', 'cancelled'].includes(ticketData.status);
 
   return (
@@ -447,18 +448,52 @@ export default function TicketDetailPage() {
               </div>
             )}
 
-            {isManager() && isActive && (
+            {isManager() && (
               <div style={{ display: 'flex', gap: '8px' }}>
-                <SearchableSelect className="form-select" value={selectedTech} onChange={e => setSelectedTech(e.target.value)} style={{ padding: '6px 10px' }}>
-                  <option value="">Select tech...</option>
-                  {technicians.filter(t => !assignees.find(a => a.id === t.id)).map(t => (
-                    <option key={t.id} value={t.id}>{t.full_name}</option>
-                  ))}
+                <SearchableSelect 
+                  className="form-input" 
+                  value={selectedTech}
+                  onChange={e => setSelectedTech(e.target.value)}
+                >
+                  <option value="">Select Technician...</option>
+                  {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </SearchableSelect>
-                <button className="btn btn-secondary btn-sm" onClick={handleAssign} disabled={!selectedTech}>Assign</button>
+                <button className="btn btn-primary" onClick={handleAddAssignee} disabled={!selectedTech}><Plus size={16}/></button>
               </div>
             )}
           </div>
+          
+          {(isManager() || user.role === 'admin') && (
+            <div className="card">
+              <h3 className="detail-section-title"><Eye size={16} /> Seen By</h3>
+              {views.length === 0 ? (
+                <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>No views recorded yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {views.map(v => (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {v.avatar_url ? (
+                          <img 
+                            src={`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${v.avatar_url}` : v.avatar_url}?token=${sessionStorage.getItem('accessToken')}`} 
+                            alt={v.user_name}
+                            className="user-avatar" 
+                            style={{ width: 24, height: 24, objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: 10 }}>{v.user_name.charAt(0)}</div>
+                        )}
+                        <span style={{ fontSize: 'var(--font-sm)', fontWeight: 500 }}>{v.user_name}</span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {format(new Date(v.last_viewed_at), 'MMM d, HH:mm')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

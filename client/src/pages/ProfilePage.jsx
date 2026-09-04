@@ -5,7 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../api/client.js';
 import { useApi } from '../hooks/useApi.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Camera, Save, User, Shield, Lock, Smartphone } from 'lucide-react';
+import { Camera, Save, User, Shield, Lock, Smartphone, Bell } from 'lucide-react';
+import { subscribeToPush, unsubscribeFromPush, getPushSubscriptionStatus } from '../utils/pushUtils.js';
 
 export default function ProfilePage() {
   const { user, login } = useAuth();
@@ -38,6 +39,10 @@ export default function ProfilePage() {
   const [mfaBackupCodes, setMfaBackupCodes] = useState([]);
   const [mfaPassword, setMfaPassword] = useState(''); // for disabling MFA
 
+  // Push Notifications State
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(true);
+
   useEffect(() => {
     if (user) {
       setFullName(user.fullName || user.full_name || '');
@@ -51,8 +56,38 @@ export default function ProfilePage() {
         setActiveTab('security');
         handleStartMfaSetup();
       }
+
+      // Check push status
+      getPushSubscriptionStatus().then(status => {
+        setPushEnabled(status);
+        setPushLoading(false);
+      }).catch(() => setPushLoading(false));
     }
   }, [user, isMfaForced]);
+
+  const handleTogglePush = async () => {
+    try {
+      setPushLoading(true);
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+        success('Push notifications disabled.');
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          await subscribeToPush();
+          setPushEnabled(true);
+          success('Push notifications enabled!');
+        } else {
+          error('Notification permission denied by browser.');
+        }
+      }
+    } catch (err) {
+      error(err.message || 'Failed to toggle push notifications.');
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   const handleFileChange = async (e) => {
     const rawFile = e.target.files[0];

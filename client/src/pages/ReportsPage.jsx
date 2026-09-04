@@ -17,18 +17,24 @@ const REPORT_TYPES = [
 
 export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState('ticket-summary');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const { error } = useToast();
 
   useEffect(() => {
     fetchReport(activeReport);
-  }, [activeReport]);
+  }, [activeReport, dateFrom, dateTo]);
 
   async function fetchReport(type) {
     setLoading(true);
     try {
-      const res = await api(`/reports/${type}`);
+      const params = new URLSearchParams();
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      
+      const res = await api(`/reports/${type}?${params.toString()}`);
       setData(res.report.data || []);
     } catch (err) {
       error(err.message || 'Failed to load report data');
@@ -39,13 +45,11 @@ export default function ReportsPage() {
   }
 
   function handleExport() {
-    const token = localStorage.getItem('accessToken');
-    const hotelId = localStorage.getItem('activeHotelId');
-    const url = `/api/reports/${activeReport}/export`;
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
     
-    // Create a temporary link to download the file directly through the browser
-    // passing the token in the URL is unsafe, so we use fetch to get the blob
-    api(`/reports/${activeReport}/export`)
+    api(`/reports/${activeReport}/export?${params.toString()}`)
       .then(blob => {
         if (!(blob instanceof Blob)) {
           throw new Error('Failed to download report');
@@ -222,7 +226,31 @@ export default function ReportsPage() {
             <h1 className="page-title">{REPORT_TYPES.find(r => r.id === activeReport)?.label}</h1>
             <p className="page-subtitle">Real-time data and analytics</p>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }} className="no-print">
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }} className="no-print">
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px', background: 'var(--bg-elevated)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <input 
+                type="date" 
+                className="form-input" 
+                style={{ border: 'none', background: 'transparent' }} 
+                value={dateFrom} 
+                onChange={e => setDateFrom(e.target.value)} 
+                title="Start Date"
+              />
+              <span style={{ color: 'var(--text-muted)' }}>-</span>
+              <input 
+                type="date" 
+                className="form-input" 
+                style={{ border: 'none', background: 'transparent' }} 
+                value={dateTo} 
+                onChange={e => setDateTo(e.target.value)} 
+                title="End Date"
+              />
+              {(dateFrom || dateTo) && (
+                <button type="button" className="btn btn-ghost" style={{ padding: '4px 8px' }} onClick={() => { setDateFrom(''); setDateTo(''); }}>Clear</button>
+              )}
+            </div>
+
             <button onClick={handleExportPDF} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Printer size={16} /> Export PDF
             </button>

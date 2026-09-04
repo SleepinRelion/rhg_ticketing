@@ -41,6 +41,7 @@ export default function CreateTicketPage() {
   const [rooms, setRooms] = useState([]);
   const [assets, setAssets] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
 
@@ -55,12 +56,14 @@ export default function CreateTicketPage() {
       api('/categories'),
       api('/rooms'),
       api('/assets'),
-      api('/departments').catch(() => ({ departments: [] }))
-    ]).then(([catRes, roomRes, assetRes, deptRes]) => {
+      api('/departments').catch(() => ({ departments: [] })),
+      api('/tickets/templates').catch(() => ({ templates: [] }))
+    ]).then(([catRes, roomRes, assetRes, deptRes, tmplRes]) => {
       setAllCategories(catRes.categories || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
       setDepartments(deptRes.departments || []);
+      setTemplates(tmplRes.templates || []);
     }).catch(() => error('Failed to load form data'));
   }, []);
 
@@ -88,6 +91,26 @@ export default function CreateTicketPage() {
 
   function handleCategoryChange(catId) {
     setFormData(prev => ({ ...prev, category_id: catId, subcategory_id: '' }));
+  }
+
+  function handleTemplateSelect(e) {
+    const templateId = e.target.value;
+    if (!templateId) return;
+    
+    const template = templates.find(t => t.id === Number(templateId));
+    if (!template) return;
+
+    // We assume templates are for "Issue" type for now, but could be either.
+    setFormData(prev => ({
+      ...prev,
+      ticket_type: 'issue', 
+      title: template.title || '',
+      description: template.description_template || '',
+      category_id: template.category_id || '',
+      priority: template.priority || 'medium',
+      // If template has default assignee, the backend will handle it based on category/template ID,
+      // but we populate the text fields for the user.
+    }));
   }
 
   function handleTypeSelect(type) {
@@ -155,6 +178,8 @@ export default function CreateTicketPage() {
       rooms={rooms}
       assets={assets}
       departments={departments}
+      templates={templates}
+      handleTemplateSelect={handleTemplateSelect}
       duplicates={duplicates}
       saving={saving}
       onSubmit={handleSubmit}

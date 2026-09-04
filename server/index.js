@@ -238,8 +238,15 @@ httpServer.listen(PORT, async () => {
 
 // SLA check cron - runs every 5 minutes using node-cron for timezone-aware scheduling
 import cron from 'node-cron';
+import { runWeeklyReports } from './services/reportScheduler.js';
+
 cron.schedule('*/5 * * * *', () => {
   runSLACheck().catch((err) => logger.error(`SLA check failed: ${err.message}`));
+}, { timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
+
+// Weekly reports - runs every Monday at 8:00 AM
+cron.schedule('0 8 * * 1', () => {
+  runWeeklyReports().catch((err) => logger.error(`Weekly report failed: ${err.message}`));
 }, { timezone: process.env.APP_TIMEZONE || 'Indian/Mauritius' });
 
 // Cleanup expired refresh tokens daily at 3 AM

@@ -9,6 +9,8 @@ import { Plus, Filter, Download, Trash2, Tag, Play, Ticket, CheckCircle2, Chevro
 import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import FormatCategory from '../components/ui/FormatCategory.jsx';
+import KanbanBoard from '../components/tickets/KanbanBoard.jsx';
+import { Columns, List } from 'lucide-react';
 
 const FILTER_KEYS = ['status', 'priority', 'search', 'month', 'year', 'category_id', 'department', 'sla_status', 'assignee_id', 'ticket_type', 'sort_by', 'sort_order', 'room_id', 'my_tickets', 'date_from', 'date_to', 'escalated'];
 const DEFAULT_FILTERS = { status: '', priority: '', search: '', month: '', year: '', category_id: '', department: '', sla_status: '', assignee_id: '', ticket_type: '', sort_by: 'created_at', sort_order: 'desc', room_id: '', my_tickets: '', date_from: '', date_to: '', escalated: '' };
@@ -42,6 +44,7 @@ export default function TicketsPage() {
   const departments = departmentsData?.departments || [];
 
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'board'
   const isInitialMount = useRef(true);
 
   const navigate = useNavigate();
@@ -237,6 +240,24 @@ export default function TicketsPage() {
           <p className="page-subtitle">Manage maintenance and guest requests</p>
         </div>
         <div className="header-actions">
+          <div className="btn-group" style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginRight: '8px' }}>
+            <button 
+              className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`} 
+              style={{ borderRadius: 0, padding: '8px 12px' }} 
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <List size={18} />
+            </button>
+            <button 
+              className={`btn ${viewMode === 'board' ? 'btn-primary' : 'btn-ghost'}`} 
+              style={{ borderRadius: 0, padding: '8px 12px' }} 
+              onClick={() => setViewMode('board')}
+              title="Board View"
+            >
+              <Columns size={18} />
+            </button>
+          </div>
           <button className="btn btn-secondary" onClick={handleExport}><Download /> Export CSV</button>
           <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}><Plus /> New Ticket</button>
         </div>
@@ -499,6 +520,8 @@ export default function TicketsPage() {
             <h3>No tickets found</h3>
             <p>Try adjusting your filters or create a new ticket.</p>
           </div>
+        ) : viewMode === 'board' ? (
+          <KanbanBoard tickets={tickets} onStatusChange={(id, status) => handleSingleAction(id, 'change_status', status)} />
         ) : (
           <table className="data-table">
             <thead>

@@ -91,4 +91,40 @@ router.put('/read-all', authenticate, asyncHandler(async (req, res) => {
     message: 'All marked as read.'
   });
 }));
+
+// POST /api/notifications/push/subscribe
+router.post('/push/subscribe', authenticate, asyncHandler(async (req, res) => {
+  const { endpoint, keys } = req.body;
+  if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
+    return res.status(400).json({ error: 'Invalid subscription object.' });
+  }
+
+  // Upsert subscription
+  const existing = await db('push_subscriptions').where({ endpoint, user_id: req.user.id }).first();
+  if (existing) {
+    await db('push_subscriptions').where({ id: existing.id }).update({
+      p256dh: keys.p256dh,
+      auth: keys.auth
+    });
+  } else {
+    await db('push_subscriptions').insert({
+      user_id: req.user.id,
+      endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth
+    });
+  }
+
+  res.json({ message: 'Subscribed to push notifications.' });
+}));
+
+// DELETE /api/notifications/push/unsubscribe
+router.delete('/push/unsubscribe', authenticate, asyncHandler(async (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) return res.status(400).json({ error: 'Endpoint required.' });
+
+  await db('push_subscriptions').where({ endpoint, user_id: req.user.id }).del();
+  res.json({ message: 'Unsubscribed from push notifications.' });
+}));
+
 export default router;

@@ -44,7 +44,9 @@ export default function TicketDetailsForm({
   isIT,
   handleCategoryChange,
   REQUEST_CATEGORY_ICONS,
-  ISSUE_CATEGORY_ICONS
+  ISSUE_CATEGORY_ICONS,
+  templates = [],
+  handleTemplateSelect
 }) {
   const isTaskType = formData.ticket_type === 'task';
   const isRequestType = formData.ticket_type === 'request';
@@ -138,6 +140,21 @@ export default function TicketDetailsForm({
           <form className="card" onSubmit={onSubmit}>
             {/* === STEP 1: TITLE & CATEGORY === */}
             <div style={{ display: step === 1 ? 'block' : 'none' }}>
+              
+              {templates && templates.length > 0 && (
+                <div className="form-group" style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--primary-300)' }}>
+                  <label className="form-label" style={{ color: 'var(--primary-600)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Save size={16} /> Use a Template
+                  </label>
+                  <select className="form-input" onChange={handleTemplateSelect} defaultValue="">
+                    <option value="" disabled>Select a common issue...</option>
+                    {templates.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
                 <input

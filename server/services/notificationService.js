@@ -1,6 +1,7 @@
 import db from '../config/database.js';
 import { getMailTransporter, SMTP_FROM } from '../config/email.js';
 import { buildEmailTemplate } from './emailService.js';
+import { sendPushNotification } from './pushService.js';
 
 /**
  * Create an in-app notification and optionally send email.
@@ -20,6 +21,14 @@ export async function createNotification(userId, ticketId, title, message, type,
 
     // Try to send email notification
     await sendEmailNotification(userId, title, message, ticketId);
+    
+    // Try to send push notification
+    await sendPushNotification(userId, {
+      title,
+      body: message,
+      url: ticketId ? `/tickets/${ticketId}` : '/',
+      type
+    });
   } catch (error) {
     console.error('Failed to create notification:', error);
   }
