@@ -87,4 +87,47 @@ router.get('/feed/:hotelId/:token.ics', asyncHandler(async (req, res) => {
   });
   res.send(lines.join('\r\n'));
 }));
+
+// PUT /api/calendar/reschedule (Authenticated, Manager/Admin only)
+router.put('/reschedule', authenticate, asyncHandler(async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Only managers and admins can reschedule items.' });
+  }
+
+  const { itemType, itemId, newDate, reason } = req.body;
+
+  if (!itemType || !itemId || !newDate) {
+    return res.status(400).json({ error: 'itemType, itemId, and newDate are required.' });
+  }
+
+  if (itemType === 'ticket') {
+    const ticket = await db('tickets').where({ id: itemId }).whereNull('deleted_at').first();
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found.' });
+
+    await db('tickets').where({ id: itemId }).update({ resolution_due_at: new Date(newDate) });
+
+    // Log the reschedule in activity logs
+    await db('activity_logs').insert({
+      ticket_id: itemId,
+      user_id: req.user.id,
+      action: 'deadline_rescheduled',
+      old_value: ticket.resolution_due_at ? ticket.resolution_due_at.toISOString() : null,
+      new_value: new Date(newDate).toISOString(),
+      note: reason || 'Rescheduled via calendar',
+      created_at: new Date()
+    });
+
+    res.json({ message: 'Ticket deadline updated.' });
+  } else if (itemType === 'pm') {
+    const pm = await db('preventive_maintenance').where({ id: itemId }).first();
+    if (!pm) return res.status(404).json({ error: 'PM schedule not found.' });
+
+    await db('preventive_maintenance').where({ id: itemId }).update({ next_due_date: newDate });
+
+    res.json({ message: 'PM schedule updated.' });
+  } else {
+    return res.status(400).json({ error: 'Invalid itemType. Must be "ticket" or "pm".' });
+  }
+}));
+
 export default router;
