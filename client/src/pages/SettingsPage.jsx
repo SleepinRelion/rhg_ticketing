@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Save, Plus, Trash2, Download, Server, Mail, Shield, Settings as SettingsIcon, Zap, Network } from 'lucide-react';
+import { Save, Plus, Trash2, Download, Server, Mail, Shield, Settings as SettingsIcon, Zap } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import AutomationsSettings from '../components/tickets/AutomationsSettings.jsx';
 
@@ -221,14 +221,14 @@ export default function SettingsPage() {
       { key: 'JWT_EXPIRES_IN', label: 'Session Timeout', type: 'text', placeholder: '15m' },
       { key: 'LOGIN_RATE_LIMIT_MAX', label: 'Max Login Attempts', type: 'number', placeholder: '5' },
       { key: 'LOGIN_RATE_LIMIT_WINDOW_MS', label: 'Lockout Window (ms)', type: 'number', placeholder: '900000' },
-    ],
-    ldap: [
-      { key: 'LDAP_URL', label: 'LDAP Connection URL', type: 'text', placeholder: 'ldap://dc.hotel.local:389' },
-      { key: 'LDAP_BIND_DN', label: 'Bind DN (Service Account)', type: 'text', placeholder: 'CN=Administrator,CN=Users,DC=hotel,DC=local' },
-      { key: 'LDAP_BIND_PASSWORD', label: 'Bind Password', type: 'password', placeholder: '********' },
-      { key: 'LDAP_SEARCH_BASE', label: 'Search Base', type: 'text', placeholder: 'DC=hotel,DC=local' },
-      { key: 'LDAP_USER_FILTER', label: 'User Filter (use {{username}})', type: 'text', placeholder: '(sAMAccountName={{username}})' },
-      { key: 'LDAP_DEFAULT_ROLE', label: 'Auto-Provision Default Role', type: 'select', options: ['guest', 'staff', 'technician'] }
+      { key: 'PASSWORD_MIN_LENGTH', label: 'Min Password Length', type: 'number', placeholder: '12' },
+      { key: 'PASSWORD_REQUIRE_UPPERCASE', label: 'Require Uppercase Letter', type: 'select', options: ['true', 'false'] },
+      { key: 'PASSWORD_REQUIRE_LOWERCASE', label: 'Require Lowercase Letter', type: 'select', options: ['true', 'false'] },
+      { key: 'PASSWORD_REQUIRE_NUMBERS', label: 'Require Number', type: 'select', options: ['true', 'false'] },
+      { key: 'PASSWORD_REQUIRE_SYMBOLS', label: 'Require Symbol', type: 'select', options: ['true', 'false'] },
+      { key: 'PASSWORD_HISTORY_COUNT', label: 'Password History Count (prevent reuse)', type: 'number', placeholder: '5' },
+      { key: 'PASSWORD_EXPIRATION_DAYS', label: 'Password Expiration (Days)', type: 'number', placeholder: '90' },
+      { key: 'INACTIVE_ACCOUNT_LOCKOUT_DAYS', label: 'Inactive Account Lockout (Days)', type: 'number', placeholder: '30' }
     ]
   };
 
@@ -298,13 +298,6 @@ export default function SettingsPage() {
           onClick={() => setActiveTab('environment')}
         >
           Environment Config
-        </button>
-        <button 
-          className={`btn ${activeTab === 'ldap' ? 'btn-primary' : 'btn-ghost'}`} 
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
-          onClick={() => setActiveTab('ldap')}
-        >
-          Active Directory (LDAP)
         </button>
       </div>
 
@@ -538,29 +531,6 @@ export default function SettingsPage() {
             </div>
           </div>
         </form>
-      )}
-
-      {activeTab === 'ldap' && (
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h2 className="detail-section-title" style={{ marginBottom: '4px' }}>Active Directory (LDAP)</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
-                Configure Windows Active Directory integration for Single Sign-On. Users will be automatically provisioned on successful login.
-              </p>
-            </div>
-          </div>
-          <form onSubmit={handleSaveEnv}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {envFields.ldap.map(renderField)}
-            </div>
-            <div style={{ marginTop: '24px' }}>
-              <button type="submit" className="btn btn-primary" disabled={savingEnv}>
-                <Save size={16} /> {savingEnv ? 'Saving...' : 'Save LDAP Configuration'}
-              </button>
-            </div>
-          </form>
-        </div>
       )}
     </div>
   );

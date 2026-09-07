@@ -11,7 +11,7 @@ import { createAuditEntry } from '../middleware/auditLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../config/logger.js';
 import { sendPasswordResetEmail } from '../services/emailService.js';
-import { authenticateLDAP } from '../services/ldapService.js';
+import { checkPasswordComplexity, checkPasswordHistory, updatePasswordHistory } from '../utils/passwordSecurity.js';
 
 const router = Router();
 
@@ -27,7 +27,7 @@ router.post('/login', asyncHandler(async (req, res) => {
   }
 
   const loginStr = email.trim();
-  let user = await db('users')
+  const user = await db('users')
     .where(function() {
       this.whereRaw('LOWER(email) = LOWER(?)', [loginStr])
           .orWhereRaw('LOWER(username) = LOWER(?)', [loginStr]);
@@ -35,41 +35,9 @@ router.post('/login', asyncHandler(async (req, res) => {
     .whereNull('deleted_at')
     .first();
 
-  let ldapAuthSuccess = false;
-  let ldapUserAttrs = null;
-
-  // Try LDAP if user is not found or user is explicitly LDAP
-  if ((!user || user.auth_provider === 'ldap') && process.env.LDAP_URL) {
-    try {
-      ldapUserAttrs = await authenticateLDAP(loginStr, password);
-      if (ldapUserAttrs) {
-        ldapAuthSuccess = true;
-      }
-    } catch (e) {
-      logger.warn('LDAP authentication error', { error: e.message });
-    }
-  }
-
-  if (!user && !ldapAuthSuccess) {
+  if (!user) {
     await createAuditEntry(null, 'login_failed', 'user', null, req.ip, req.headers['user-agent'], { email, reason: 'user_not_found' });
     return res.status(401).json({ error: 'Invalid email or password.' });
-  }
-
-  // Auto-provision LDAP user if they don't exist in local DB
-  if (!user && ldapAuthSuccess) {
-    const defaultRole = process.env.LDAP_DEFAULT_ROLE || 'technician';
-    const [newUserId] = await db('users').insert({
-      username: ldapUserAttrs.username,
-      email: ldapUserAttrs.email,
-      full_name: ldapUserAttrs.fullName,
-      password_hash: '', // Handled by AD
-      role: defaultRole,
-      auth_provider: 'ldap',
-      created_at: new Date(),
-      updated_at: new Date()
-    }).returning('id');
-    
-    user = await db('users').where({ id: newUserId.id || newUserId }).first();
   }
 
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
@@ -81,24 +49,33 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
   }
 
-  // Verify password locally if not LDAP authenticated
-  if (!ldapAuthSuccess) {
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword) {
-      const attempts = user.failed_login_attempts + 1;
-      const updates = { failed_login_attempts: attempts };
-
-      if (attempts >= authConfig.accountLockoutAttempts) {
-        const lockUntil = new Date(Date.now() + authConfig.accountLockoutDurationMinutes * 60 * 1000);
-        updates.locked_until = lockUntil;
-        updates.failed_login_attempts = 0;
-      }
-
-      await db('users').where({ id: user.id }).update(updates);
-      await createAuditEntry(user.id, 'login_failed', 'user', user.id, req.ip, req.headers['user-agent'], { reason: 'invalid_password', attempts });
-
-      return res.status(401).json({ error: 'Invalid email or password.' });
+  // Check Inactive Account Lockout
+  const inactiveDays = parseInt(process.env.INACTIVE_ACCOUNT_LOCKOUT_DAYS || '0');
+  if (inactiveDays > 0 && user.last_login_at) {
+    const daysSinceLogin = (Date.now() - new Date(user.last_login_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceLogin > inactiveDays) {
+      // Deactivate the account
+      await db('users').where({ id: user.id }).update({ is_active: false });
+      await createAuditEntry(user.id, 'user_deactivated', 'user', user.id, req.ip, req.headers['user-agent'], { reason: 'inactive_account_lockout', daysSinceLogin });
+      return res.status(403).json({ error: 'Your account has been automatically deactivated due to inactivity. Contact an administrator.' });
     }
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password_hash);
+  if (!validPassword) {
+    const attempts = user.failed_login_attempts + 1;
+    const updates = { failed_login_attempts: attempts };
+
+    if (attempts >= authConfig.accountLockoutAttempts) {
+      const lockUntil = new Date(Date.now() + authConfig.accountLockoutDurationMinutes * 60 * 1000);
+      updates.locked_until = lockUntil;
+      updates.failed_login_attempts = 0;
+    }
+
+    await db('users').where({ id: user.id }).update(updates);
+    await createAuditEntry(user.id, 'login_failed', 'user', user.id, req.ip, req.headers['user-agent'], { reason: 'invalid_password', attempts });
+
+    return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
   if (user.mfa_enabled) {
@@ -148,6 +125,21 @@ router.post('/login', asyncHandler(async (req, res) => {
       { expiresIn: '15m' }
     );
     return res.json({ requirePasswordChange: true, tempToken });
+  }
+
+  // Check Password Expiration
+  const expirationDays = parseInt(process.env.PASSWORD_EXPIRATION_DAYS || '0');
+  if (expirationDays > 0 && user.password_changed_at) {
+    const daysSinceChange = (Date.now() - new Date(user.password_changed_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceChange > expirationDays) {
+      await db('users').where({ id: user.id }).update({ force_password_change: true });
+      const tempToken = jwt.sign(
+        { userId: user.id, type: 'force_password_change' },
+        authConfig.jwtSecret,
+        { expiresIn: '15m' }
+      );
+      return res.json({ requirePasswordChange: true, tempToken, message: 'Your password has expired. Please change it.' });
+    }
   }
 
   const accessToken = jwt.sign(
@@ -200,8 +192,9 @@ router.post('/force-change-password', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Token and new password are required.' });
   }
   
-  if (newPassword.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+  const complexityError = checkPasswordComplexity(newPassword);
+  if (complexityError) {
+    return res.status(400).json({ error: complexityError });
   }
 
   try {
@@ -215,12 +208,20 @@ router.post('/force-change-password', asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'Password change not required or user invalid.' });
     }
 
+    const historyCheckPassed = await checkPasswordHistory(user.id, newPassword);
+    if (!historyCheckPassed) {
+      return res.status(400).json({ error: 'You cannot reuse a recent password.' });
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await db('users').where({ id: user.id }).update({
       password_hash: passwordHash,
       force_password_change: false,
+      password_changed_at: new Date(),
       updated_at: new Date()
     });
+    
+    await updatePasswordHistory(user.id, passwordHash);
 
     res.json({ message: 'Password updated successfully. Please login with your new password.' });
   } catch (err) {

@@ -7,6 +7,7 @@ import { authorize } from '../middleware/authorize.js';
 import { sanitize } from '../utils/sanitize.js';
 import { createAuditEntry } from '../middleware/auditLog.js';
 import { upload } from '../middleware/upload.js';
+import { checkPasswordComplexity, updatePasswordHistory } from '../utils/passwordSecurity.js';
 const router = Router();
 
 // GET /api/users
@@ -77,10 +78,10 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
     });
   }
 
-  if (password.length < 12) {
-    return res.status(400).json({
-      error: 'Password must be at least 12 characters.'
-    });
+  // Check password complexity using environment rules
+  const complexityError = checkPasswordComplexity(password);
+  if (complexityError) {
+    return res.status(400).json({ error: complexityError });
   }
 
   // Check existing email
@@ -104,6 +105,7 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
       is_active: true,
       primary_hotel_id,
       force_password_change: !!force_password_change,
+      password_changed_at: new Date(),
       created_at: new Date(),
       updated_at: new Date()
     }).returning(['id', 'username', 'email', 'full_name', 'role', 'primary_hotel_id']);
@@ -116,6 +118,9 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
       await trx('user_hotels').insert(hotelInserts);
     }
   });
+  
+  await updatePasswordHistory(createdUser.id, passwordHash);
+
   await createAuditEntry(req.user.id, 'user_created', 'user', createdUser.id, req.ip, req.headers['user-agent'], {
     username: createdUser.username,
     role: createdUser.role
@@ -217,10 +222,12 @@ router.put('/:id/reset-password', authenticate, authorize('admin', 'manager'), a
   const {
     new_password
   } = req.body;
-  if (!new_password || new_password.length < 12) {
-    return res.status(400).json({
-      error: 'Password must be at least 12 characters.'
-    });
+  if (!new_password) {
+    return res.status(400).json({ error: 'Password is required.' });
+  }
+  const complexityError = checkPasswordComplexity(new_password);
+  if (complexityError) {
+    return res.status(400).json({ error: complexityError });
   }
   const passwordHash = await bcrypt.hash(new_password, 12);
   await db('users').where({
@@ -229,8 +236,11 @@ router.put('/:id/reset-password', authenticate, authorize('admin', 'manager'), a
     password_hash: passwordHash,
     failed_login_attempts: 0,
     locked_until: null,
+    password_changed_at: new Date(),
     updated_at: new Date()
   });
+  
+  await updatePasswordHistory(req.params.id, passwordHash);
   await createAuditEntry(req.user.id, 'password_reset', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], {});
   res.json({
     message: 'Password has been reset.'
