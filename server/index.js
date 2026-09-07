@@ -42,6 +42,7 @@ import backupRoutes from './routes/backups.js';
 import calendarRoutes from './routes/calendar.js';
 import searchRoutes from './routes/search.js';
 import cannedResponseRoutes from './routes/cannedResponses.js';
+import automationRoutes from './routes/automations.js';
 import { initializeCronJobs } from './services/backupService.js';
 
 import { rateLimit } from 'express-rate-limit';
@@ -176,9 +177,6 @@ if (process.env.NODE_ENV === 'production') {
   }));
 }
 
-import searchRoutes from './routes/search.js';
-import cannedResponseRoutes from './routes/cannedResponses.js';
-import automationRoutes from './routes/automations.js';
 
 // API Routes
 app.use('/api/auth', loginLimiter, authRoutes);
