@@ -111,7 +111,7 @@ function TicketCard({ ticket, onDragStart, onDragEnd }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {ticket.room_number && (
-            <span title={`Room ${ticket.room_number}`}>🏨 {ticket.room_number}</span>
+            <span title={`Room ${ticket.room_number}`}>Rm {ticket.room_number}</span>
           )}
           {ticket.ticket_type && (
             <span style={{

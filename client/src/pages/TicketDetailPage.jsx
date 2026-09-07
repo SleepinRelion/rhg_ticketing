@@ -68,7 +68,7 @@ export default function TicketDetailPage() {
       const data = await api(`/tickets/${id}`);
       setTicketData(data.ticket);
     } catch (err) {
-      error('Failed to load ticket details');
+      error(err.message || 'Failed to load ticket details');
       navigate('/tickets');
     } finally {
       setLoading(false);
