@@ -458,7 +458,7 @@ export default function TicketDetailPage() {
                   <option value="">Select Technician...</option>
                   {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </SearchableSelect>
-                <button className="btn btn-primary" onClick={handleAddAssignee} disabled={!selectedTech}><Plus size={16}/></button>
+                <button className="btn btn-primary" onClick={handleAssign} disabled={!selectedTech}><Plus size={16}/></button>
               </div>
             )}
           </div>
