@@ -4,6 +4,8 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, CheckCheck, Check, Filter, Ticket, UserPlus, AlertTriangle, Clock, Shield } from 'lucide-react';
+import { useSocket } from '../context/SocketContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const TYPE_CONFIG = {
   ticket_assigned:   { icon: UserPlus,       color: 'var(--primary-400)',  label: 'Assignment' },
@@ -29,8 +31,10 @@ export default function NotificationsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const { success, error } = useToast();
+  const { success, error, info } = useToast();
   const navigate = useNavigate();
+  const { socket } = useSocket();
+  const { user } = useAuth();
   const limit = 20;
 
   const fetchNotifications = useCallback(async () => {
@@ -49,6 +53,22 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (!socket || !user) return;
+    
+    const handleNewNotification = (notif) => {
+      setNotifications(prev => [notif, ...prev]);
+      setTotal(prev => prev + 1);
+      info(notif.title);
+    };
+    
+    socket.on(`notification:${user.id}`, handleNewNotification);
+    
+    return () => {
+      socket.off(`notification:${user.id}`, handleNewNotification);
+    };
+  }, [socket, user]);
 
   async function handleMarkRead(id) {
     try {

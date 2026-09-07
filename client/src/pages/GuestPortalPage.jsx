@@ -25,6 +25,8 @@ export default function GuestPortalPage() {
     room_id: initialRoom
   });
   
+  const [suggestedArticles, setSuggestedArticles] = useState([]);
+  
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
@@ -257,11 +259,49 @@ export default function GuestPortalPage() {
               type="text" 
               className="form-input" 
               value={formData.title} 
-              onChange={e => setFormData({...formData, title: e.target.value})}
+              onChange={e => {
+                setFormData({...formData, title: e.target.value});
+                // Debounce search
+                if (window.kbSuggestTimeout) clearTimeout(window.kbSuggestTimeout);
+                window.kbSuggestTimeout = setTimeout(async () => {
+                  if (e.target.value.trim().length > 2) {
+                    try {
+                      const res = await api(`/knowledge-base/public/suggestions?title=${encodeURIComponent(e.target.value)}${formData.category_id ? `&category_id=${formData.category_id}` : ''}`);
+                      setSuggestedArticles(res.suggestions || []);
+                    } catch (err) { /* ignore */ }
+                  } else {
+                    setSuggestedArticles([]);
+                  }
+                }, 500);
+              }}
               placeholder="Briefly describe the problem"
               required 
             />
           </div>
+
+          {suggestedArticles.length > 0 && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--info)' }}>
+                <CheckCircle2 size={16} />
+                <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Suggested Solutions</span>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                Before submitting, see if these guides can help solve your issue instantly:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {suggestedArticles.map(article => (
+                  <details key={article.id} style={{ background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '4px' }}>
+                    <summary style={{ fontWeight: 500, cursor: 'pointer', fontSize: '0.875rem', outline: 'none' }}>
+                      {article.title}
+                    </summary>
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <div dangerouslySetInnerHTML={{ __html: article.resolution_steps }} />
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="form-group" style={{ marginBottom: '2rem' }}>
             <label className="form-label">Details</label>

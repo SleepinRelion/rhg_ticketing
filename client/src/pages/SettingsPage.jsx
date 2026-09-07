@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Save, Plus, Trash2, Download, Server, Mail, Shield, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Plus, Trash2, Download, Server, Mail, Shield, Settings as SettingsIcon, Zap } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
+import AutomationsSettings from '../components/tickets/AutomationsSettings.jsx';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('backups');
@@ -277,6 +278,13 @@ export default function SettingsPage() {
           Automated Backups
         </button>
         <button 
+          className={`btn ${activeTab === 'automations' ? 'btn-primary' : 'btn-ghost'}`} 
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          onClick={() => setActiveTab('automations')}
+        >
+          Automations
+        </button>
+        <button 
           className={`btn ${activeTab === 'environment' ? 'btn-primary' : 'btn-ghost'}`} 
           style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
           onClick={() => setActiveTab('environment')}
@@ -284,6 +292,8 @@ export default function SettingsPage() {
           Environment Config
         </button>
       </div>
+
+      {activeTab === 'automations' && <AutomationsSettings />}
 
       {activeTab === 'hotel' && (
         <form onSubmit={handleSaveHotelSettings} className="card">

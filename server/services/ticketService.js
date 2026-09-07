@@ -3,6 +3,7 @@ import { calculateSLADates, determineSLAStatus } from '../utils/slaCalculator.js
 import { generateTicketNumber } from '../utils/ticketNumber.js';
 import { sanitize } from '../utils/sanitize.js';
 import { createNotification } from './notificationService.js';
+import { processAutomations } from './automationService.js';
 
 // Valid status transitions
 const STATUS_TRANSITIONS = {
@@ -102,6 +103,9 @@ export async function createTicket(data, userId, activeHotelId = null) {
     new_value: 'open',
     created_at: new Date(),
   });
+
+  // Process any matching automation rules asynchronously
+  processAutomations(result.id, 'ticket_created').catch(err => console.error('Automation failed:', err));
 
   return result;
 }

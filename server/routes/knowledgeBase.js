@@ -81,6 +81,42 @@ router.get('/suggestions', authenticate, asyncHandler(async (req, res) => {
   });
 }));
 
+// GET /api/knowledge-base/public/suggestions (Public endpoint for guest portal)
+router.get('/public/suggestions', asyncHandler(async (req, res) => {
+  const { title, category_id } = req.query;
+  
+  if (!title) {
+    return res.json({ suggestions: [] });
+  }
+
+  let query = db('knowledge_base_articles')
+    .select('id', 'title', 'symptoms', 'resolution_steps', 'category_id')
+    .where('is_published', true);
+    
+  if (category_id) {
+    query = query.where('category_id', category_id);
+  }
+  
+  const words = title.toLowerCase().split(/\s+/).filter(w => w.length > 2).slice(0, 5);
+  
+  if (words.length > 0) {
+    query = query.where(function () {
+      const operator = db.client.config.client === 'pg' ? 'ilike' : 'like';
+      for (const word of words) {
+        this.orWhere('title', operator, `%${word}%`)
+            .orWhere('symptoms', operator, `%${word}%`);
+      }
+    });
+  } else {
+    // If no meaningful words, return empty
+    return res.json({ suggestions: [] });
+  }
+  
+  const suggestions = await query.limit(3);
+  res.json({ suggestions });
+}));
+
+
 // GET /api/knowledge-base/:id
 router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   const article = await db('knowledge_base_articles').select('knowledge_base_articles.*', 'categories.name as category_name', 'users.full_name as author_name').leftJoin('categories', 'knowledge_base_articles.category_id', 'categories.id').join('users', 'knowledge_base_articles.created_by', 'users.id').where('knowledge_base_articles.id', req.params.id).first();

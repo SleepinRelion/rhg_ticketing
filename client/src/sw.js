@@ -1,7 +1,42 @@
 import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { NetworkOnly, NetworkFirst } from 'workbox-strategies';
+import { BackgroundSyncPlugin } from 'workbox-background-sync';
 
 // Required for vite-plugin-pwa injectManifest
 precacheAndRoute(self.__WB_MANIFEST || []);
+
+// Configure Background Sync for tickets API
+const bgSyncPlugin = new BackgroundSyncPlugin('ticketQueue', {
+  maxRetentionTime: 24 * 60 // Retry for max of 24 Hours (specified in minutes)
+});
+
+// Cache POST/PUT/DELETE requests to the API
+registerRoute(
+  ({url}) => url.pathname.startsWith('/api/'),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin]
+  }),
+  'POST'
+);
+
+registerRoute(
+  ({url}) => url.pathname.startsWith('/api/'),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin]
+  }),
+  'PUT'
+);
+
+// Cache GET requests to the API for offline reading
+registerRoute(
+  ({url}) => url.pathname.startsWith('/api/'),
+  new NetworkFirst({
+    cacheName: 'api-cache',
+    networkTimeoutSeconds: 3,
+  }),
+  'GET'
+);
 
 self.addEventListener('install', () => {
   self.skipWaiting();

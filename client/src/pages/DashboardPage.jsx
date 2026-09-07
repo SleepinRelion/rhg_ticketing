@@ -5,6 +5,7 @@ import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Ma
 import { useToast } from '../context/ToastContext.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../context/SocketContext.jsx';
 
 function DashboardSkeleton() {
   return (
@@ -57,13 +58,36 @@ export default function DashboardPage() {
     localStorage.setItem('dashboardLayout', JSON.stringify(layout));
   }, [layout]);
 
+  const { socket } = useSocket();
+
   useEffect(() => {
     fetchDashboardData();
+    
+    // Fallback polling just in case
     const interval = setInterval(() => {
       fetchDashboardData(true); // silent refresh
-    }, 30000);
+    }, 60000); // reduced frequency since we have websockets now
+    
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleUpdate = () => {
+      fetchDashboardData(true); // silent refresh on websocket event
+    };
+    
+    socket.on('ticket:created', handleUpdate);
+    socket.on('ticket:updated', handleUpdate);
+    socket.on('status_changed', handleUpdate);
+    
+    return () => {
+      socket.off('ticket:created', handleUpdate);
+      socket.off('ticket:updated', handleUpdate);
+      socket.off('status_changed', handleUpdate);
+    };
+  }, [socket]);
 
   async function fetchDashboardData(silent = false) {
     try {

@@ -66,6 +66,9 @@ const io = new Server(httpServer, {
   }
 });
 
+export { io };
+
+
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) return next(new Error('Authentication error: Token missing'));
@@ -173,6 +176,10 @@ if (process.env.NODE_ENV === 'production') {
   }));
 }
 
+import searchRoutes from './routes/search.js';
+import cannedResponseRoutes from './routes/cannedResponses.js';
+import automationRoutes from './routes/automations.js';
+
 // API Routes
 app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/users', userRoutes);
@@ -199,6 +206,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/canned-responses', cannedResponseRoutes);
+app.use('/api/automations', automationRoutes);
 
 // Health check — verifies DB connectivity
 import db from './config/database.js';

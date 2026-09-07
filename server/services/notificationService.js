@@ -2,13 +2,14 @@ import db from '../config/database.js';
 import { getMailTransporter, SMTP_FROM } from '../config/email.js';
 import { buildEmailTemplate } from './emailService.js';
 import { sendPushNotification } from './pushService.js';
+import { io } from '../index.js';
 
 /**
  * Create an in-app notification and optionally send email.
  */
 export async function createNotification(userId, ticketId, title, message, type, hotelId = null) {
   try {
-    await db('notifications').insert({
+    const [notif] = await db('notifications').insert({
       user_id: userId,
       ticket_id: ticketId,
       title,
@@ -17,7 +18,10 @@ export async function createNotification(userId, ticketId, title, message, type,
       hotel_id: hotelId,
       is_read: false,
       created_at: new Date(),
-    });
+    }).returning('*');
+
+    // Emit live websocket event to the specific user
+    io.emit(`notification:${userId}`, notif);
 
     // Try to send email notification
     await sendEmailNotification(userId, title, message, ticketId);
@@ -33,6 +37,7 @@ export async function createNotification(userId, ticketId, title, message, type,
     console.error('Failed to create notification:', error);
   }
 }
+
 
 /**
  * Send email notification to user.

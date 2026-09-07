@@ -3,6 +3,8 @@ import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Download, Printer, BarChart2, PieChart as PieChartIcon, Activity, Users, Settings, Building, CreditCard, Wrench } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const REPORT_TYPES = [
   { id: 'ticket-summary', label: 'Ticket Summary', icon: PieChartIcon },
@@ -66,8 +68,37 @@ export default function ReportsPage() {
       .catch(err => error('Failed to export CSV.'));
   }
 
-  function handleExportPDF() {
-    window.print();
+  async function handleExportPDF() {
+    const element = document.getElementById('pdf-content');
+    if (!element) return;
+    
+    try {
+      // Add a class temporarily to fix charting animations during capture
+      element.classList.add('pdf-export-mode');
+      
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      element.classList.remove('pdf-export-mode');
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`report_${activeReport}_${new Date().toISOString().split('T')[0]}.pdf`);
+      success('PDF Export successful');
+    } catch (err) {
+      console.error(err);
+      error('Failed to generate PDF');
+    }
   }
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
@@ -261,13 +292,15 @@ export default function ReportsPage() {
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto' }}>
-          {loading ? (
-            <div className="card" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="loading-spinner"><div className="spinner"></div></div>
-            </div>
-          ) : (
-            renderDashboard()
-          )}
+          <div id="pdf-content">
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                <div className="spinner"></div>
+              </div>
+            ) : (
+              renderDashboard()
+            )}
+          </div>
         </div>
       </div>
       <style>{`
