@@ -198,7 +198,6 @@ export default function KanbanBoard({ tickets, onStatusChange }) {
               borderBottom: `2px solid ${col.color}22`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '16px' }}>{col.emoji}</span>
                 <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{col.title}</h3>
               </div>
               <span style={{
@@ -237,7 +236,6 @@ export default function KanbanBoard({ tickets, onStatusChange }) {
                   background: isDropTarget ? 'rgba(59, 130, 246, 0.04)' : 'transparent',
                   transition: 'all 0.2s ease',
                 }}>
-                  <div style={{ fontSize: '24px', marginBottom: '8px', opacity: 0.5 }}>{col.emoji}</div>
                   {isDropTarget ? 'Drop to move here' : 'No tickets'}
                 </div>
               )}
