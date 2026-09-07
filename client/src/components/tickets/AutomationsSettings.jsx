@@ -1,17 +1,44 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { Plus, Trash2, Save, Play } from 'lucide-react';
+import { Plus, Trash2, Save, Play, Edit2 } from 'lucide-react';
 import SearchableSelect from '../ui/SearchableSelect.jsx';
+import AutomationRuleModal from './AutomationRuleModal.jsx';
 
 export default function AutomationsSettings() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
   const { success, error } = useToast();
 
   useEffect(() => {
     fetchRules();
   }, []);
+
+  async function handleSaveRule(ruleData) {
+    try {
+      if (ruleData.id) {
+        const res = await api(`/automations/${ruleData.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(ruleData)
+        });
+        setRules(rules.map(r => r.id === ruleData.id ? res.rule : r));
+        success('Rule updated successfully');
+      } else {
+        const res = await api('/automations', {
+          method: 'POST',
+          body: JSON.stringify(ruleData)
+        });
+        setRules([res.rule, ...rules]);
+        success('Rule created successfully');
+      }
+      setShowModal(false);
+      setEditingRule(null);
+    } catch (err) {
+      error(err.message || 'Failed to save rule');
+    }
+  }
 
   async function fetchRules() {
     try {
@@ -58,7 +85,7 @@ export default function AutomationsSettings() {
             Rules run automatically when a new ticket is created.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => alert('Advanced rule builder coming soon.')}>
+        <button className="btn btn-primary" onClick={() => { setEditingRule(null); setShowModal(true); }}>
           <Plus size={16} /> New Rule
         </button>
       </div>
@@ -80,7 +107,7 @@ export default function AutomationsSettings() {
                 </div>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                   {rule.conditions && rule.conditions.length > 0 ? (
-                    `If ${rule.conditions.map(c => `${c.field} ${c.operator} ${c.value}`).join(' AND ')}`
+                    `If ${rule.conditions.map(c => `${c.field.replace('_id', '')} ${c.operator.replace('_', ' ')} ${c.value}`).join(' AND ')}`
                   ) : 'Always runs'}
                   {' ➔ '}
                   {rule.actions && rule.actions.length > 0 ? (
@@ -89,6 +116,9 @@ export default function AutomationsSettings() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-ghost" onClick={() => { setEditingRule(rule); setShowModal(true); }}>
+                  <Edit2 size={16} />
+                </button>
                 <button className="btn btn-ghost" onClick={() => handleToggleRule(rule)}>
                   {rule.is_active ? 'Disable' : 'Enable'}
                 </button>
@@ -99,6 +129,14 @@ export default function AutomationsSettings() {
             </div>
           ))}
         </div>
+      )}
+
+      {showModal && (
+        <AutomationRuleModal
+          rule={editingRule}
+          onClose={() => { setShowModal(false); setEditingRule(null); }}
+          onSave={handleSaveRule}
+        />
       )}
     </div>
   );
