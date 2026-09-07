@@ -287,23 +287,27 @@ router.post('/test-email', authenticate, authorize('admin', 'manager'), asyncHan
   if (!to) return res.status(400).json({
     error: 'Recipient email is required.'
   });
-  const success = await sendEmail({
-    to,
-    subject: 'Hotel Operations System - SMTP Test',
-    text: 'Hello! If you are reading this, your SMTP configuration is successfully working.',
-    html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2>SMTP Configuration Successful 🎉</h2>
-          <p>Hello,</p>
-          <p>If you are reading this email, your Hotel Operations System SMTP configuration is correctly set up and functioning.</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">This is an automated test email sent from your system settings.</p>
-        </div>
-      `
-  }, true); // pass true to throw error
+  try {
+    const success = await sendEmail({
+      to,
+      subject: 'Hotel Operations System - SMTP Test',
+      text: 'Hello! If you are reading this, your SMTP configuration is successfully working.',
+      html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>SMTP Configuration Successful 🎉</h2>
+            <p>Hello,</p>
+            <p>If you are reading this email, your Hotel Operations System SMTP configuration is correctly set up and functioning.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+            <p style="color: #6b7280; font-size: 12px;">This is an automated test email sent from your system settings.</p>
+          </div>
+        `
+    }, true); // pass true to throw error
 
-  res.json({
-    message: 'Test email sent successfully.'
-  });
+    res.json({
+      message: 'Test email sent successfully.'
+    });
+  } catch (err) {
+    res.status(400).json({ error: `SMTP Error: ${err.message}` });
+  }
 }));
 export default router;
