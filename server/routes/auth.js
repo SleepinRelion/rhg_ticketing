@@ -11,6 +11,7 @@ import { createAuditEntry } from '../middleware/auditLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../config/logger.js';
 import { sendPasswordResetEmail } from '../services/emailService.js';
+import { authenticateLDAP } from '../services/ldapService.js';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.post('/login', asyncHandler(async (req, res) => {
   }
 
   const loginStr = email.trim();
-  const user = await db('users')
+  let user = await db('users')
     .where(function() {
       this.whereRaw('LOWER(email) = LOWER(?)', [loginStr])
           .orWhereRaw('LOWER(username) = LOWER(?)', [loginStr]);
@@ -34,9 +35,41 @@ router.post('/login', asyncHandler(async (req, res) => {
     .whereNull('deleted_at')
     .first();
 
-  if (!user) {
+  let ldapAuthSuccess = false;
+  let ldapUserAttrs = null;
+
+  // Try LDAP if user is not found or user is explicitly LDAP
+  if ((!user || user.auth_provider === 'ldap') && process.env.LDAP_URL) {
+    try {
+      ldapUserAttrs = await authenticateLDAP(loginStr, password);
+      if (ldapUserAttrs) {
+        ldapAuthSuccess = true;
+      }
+    } catch (e) {
+      logger.warn('LDAP authentication error', { error: e.message });
+    }
+  }
+
+  if (!user && !ldapAuthSuccess) {
     await createAuditEntry(null, 'login_failed', 'user', null, req.ip, req.headers['user-agent'], { email, reason: 'user_not_found' });
     return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  // Auto-provision LDAP user if they don't exist in local DB
+  if (!user && ldapAuthSuccess) {
+    const defaultRole = process.env.LDAP_DEFAULT_ROLE || 'technician';
+    const [newUserId] = await db('users').insert({
+      username: ldapUserAttrs.username,
+      email: ldapUserAttrs.email,
+      full_name: ldapUserAttrs.fullName,
+      password_hash: '', // Handled by AD
+      role: defaultRole,
+      auth_provider: 'ldap',
+      created_at: new Date(),
+      updated_at: new Date()
+    }).returning('id');
+    
+    user = await db('users').where({ id: newUserId.id || newUserId }).first();
   }
 
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
@@ -48,21 +81,24 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
   }
 
-  const validPassword = await bcrypt.compare(password, user.password_hash);
-  if (!validPassword) {
-    const attempts = user.failed_login_attempts + 1;
-    const updates = { failed_login_attempts: attempts };
+  // Verify password locally if not LDAP authenticated
+  if (!ldapAuthSuccess) {
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      const attempts = user.failed_login_attempts + 1;
+      const updates = { failed_login_attempts: attempts };
 
-    if (attempts >= authConfig.accountLockoutAttempts) {
-      const lockUntil = new Date(Date.now() + authConfig.accountLockoutDurationMinutes * 60 * 1000);
-      updates.locked_until = lockUntil;
-      updates.failed_login_attempts = 0;
+      if (attempts >= authConfig.accountLockoutAttempts) {
+        const lockUntil = new Date(Date.now() + authConfig.accountLockoutDurationMinutes * 60 * 1000);
+        updates.locked_until = lockUntil;
+        updates.failed_login_attempts = 0;
+      }
+
+      await db('users').where({ id: user.id }).update(updates);
+      await createAuditEntry(user.id, 'login_failed', 'user', user.id, req.ip, req.headers['user-agent'], { reason: 'invalid_password', attempts });
+
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
-
-    await db('users').where({ id: user.id }).update(updates);
-    await createAuditEntry(user.id, 'login_failed', 'user', user.id, req.ip, req.headers['user-agent'], { reason: 'invalid_password', attempts });
-
-    return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
   if (user.mfa_enabled) {
@@ -103,6 +139,15 @@ router.post('/login', asyncHandler(async (req, res) => {
       backupCodes.splice(usedBackupCodeIndex, 1);
       await db('users').where({ id: user.id }).update({ mfa_backup_codes: JSON.stringify(backupCodes) });
     }
+  }
+
+  if (user.force_password_change) {
+    const tempToken = jwt.sign(
+      { userId: user.id, type: 'force_password_change' },
+      authConfig.jwtSecret,
+      { expiresIn: '15m' }
+    );
+    return res.json({ requirePasswordChange: true, tempToken });
   }
 
   const accessToken = jwt.sign(
@@ -147,6 +192,40 @@ router.post('/login', asyncHandler(async (req, res) => {
       avatar_url: user.avatar_url,
     },
   });
+}));
+
+router.post('/force-change-password', asyncHandler(async (req, res) => {
+  const { tempToken, newPassword } = req.body;
+  if (!tempToken || !newPassword) {
+    return res.status(400).json({ error: 'Token and new password are required.' });
+  }
+  
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+  }
+
+  try {
+    const decoded = jwt.verify(tempToken, authConfig.jwtSecret);
+    if (decoded.type !== 'force_password_change') {
+      return res.status(401).json({ error: 'Invalid token type.' });
+    }
+
+    const user = await db('users').where({ id: decoded.userId }).first();
+    if (!user || !user.force_password_change) {
+      return res.status(400).json({ error: 'Password change not required or user invalid.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db('users').where({ id: user.id }).update({
+      password_hash: passwordHash,
+      force_password_change: false,
+      updated_at: new Date()
+    });
+
+    res.json({ message: 'Password updated successfully. Please login with your new password.' });
+  } catch (err) {
+    return res.status(401).json({ error: 'Session expired or invalid. Please login again.' });
+  }
 }));
 
 router.post('/refresh', asyncHandler(async (req, res) => {

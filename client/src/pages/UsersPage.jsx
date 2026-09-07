@@ -15,7 +15,7 @@ export default function UsersPage() {
   
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [] });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [], force_password_change: false });
   const [saving, setSaving] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetUserId, setResetUserId] = useState(null);
@@ -50,7 +50,7 @@ export default function UsersPage() {
 
   function openCreateModal() {
     setEditingUser(null);
-    setFormData({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [] });
+    setFormData({ username: '', email: '', password: '', full_name: '', role: 'staff', hotel_ids: [], force_password_change: false });
     setShowModal(true);
   }
 
@@ -63,7 +63,8 @@ export default function UsersPage() {
       full_name: user.full_name, 
       role: user.role, 
       is_active: user.is_active,
-      hotel_ids: user.hotel_ids || (user.primary_hotel_id ? [user.primary_hotel_id] : [])
+      hotel_ids: user.hotel_ids || (user.primary_hotel_id ? [user.primary_hotel_id] : []),
+      force_password_change: user.force_password_change || false
     });
     setShowModal(true);
   }
@@ -80,7 +81,8 @@ export default function UsersPage() {
             role: formData.role,
             is_active: formData.is_active,
             email: formData.email,
-            hotel_ids: formData.hotel_ids.map(id => parseInt(id))
+            hotel_ids: formData.hotel_ids.map(id => parseInt(id)),
+            force_password_change: formData.force_password_change
           })
         });
         success('User updated successfully');
@@ -267,11 +269,24 @@ export default function UsersPage() {
                 </div>
               </div>
               {!editingUser && (
-                <div className="form-group">
-                  <label className="form-label">Password *</label>
-                  <input type="password" className="form-input" required minLength={8} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Password *</label>
+                    <input type="password" className="form-input" required minLength={8} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                  </div>
+                </>
               )}
+              
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.force_password_change} 
+                    onChange={e => setFormData({...formData, force_password_change: e.target.checked})} 
+                  />
+                  Require user to change password on first login
+                </label>
+              </div>
               <div className="form-row">
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Role</label>

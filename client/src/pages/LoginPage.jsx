@@ -12,6 +12,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
+  const [requirePasswordChange, setRequirePasswordChange] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [bgImage, setBgImage] = useState(null);
 
@@ -35,13 +39,50 @@ export default function LoginPage() {
 
     try {
       const res = await login(loginId.trim(), password, mfaCode, emailConfirm);
-      if (res.mfaRequired) {
+      if (res.requirePasswordChange) {
+        setRequirePasswordChange(true);
+        setTempToken(res.tempToken);
+      } else if (res.mfaRequired) {
         setRequiresMfa(true);
       } else if (res.success) {
         navigate('/');
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      return setError('Passwords do not match.');
+    }
+    if (newPassword.length < 8) {
+      return setError('Password must be at least 8 characters.');
+    }
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api/auth/force-change-password' : '/api/auth/force-change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update password');
+      
+      // Password changed successfully, ask them to login again
+      setRequirePasswordChange(false);
+      setTempToken('');
+      setPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      alert('Password updated successfully! Please log in with your new password.');
+    } catch (err) {
+      setError(err.message || 'Failed to update password.');
     } finally {
       setLoading(false);
     }
@@ -66,8 +107,41 @@ export default function LoginPage() {
 
         {error && <div className="login-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          {!requiresMfa ? (
+        {requirePasswordChange ? (
+          <form onSubmit={handleChangePassword}>
+            <div style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center' }}>
+              Your administrator has required you to change your password before logging in.
+            </div>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirm New Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
+              {loading ? 'Updating...' : 'Update Password'}
+            </button>
+            <button type="button" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setRequirePasswordChange(false)} disabled={loading}>
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {!requiresMfa ? (
             <>
               <div className="form-group">
                 <label className="form-label">Email or Username</label>
@@ -159,25 +233,21 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '8px' }}
-            disabled={loading}
-          >
-            {loading ? 'Signing in...' : requiresMfa ? 'Verify Code' : 'Sign in'}
-          </button>
-
-          {requiresMfa && (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{ width: '100%', marginTop: '8px' }}
-              onClick={() => { setRequiresMfa(false); setMfaCode(''); setPassword(''); }}
-            >
-              Back to login
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '24px' }} disabled={loading}>
+              {loading ? 'Authenticating...' : (requiresMfa ? 'Verify Code' : 'Sign In')}
             </button>
-          )}
+
+            {requiresMfa && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }}
+                onClick={() => { setRequiresMfa(false); setMfaCode(''); }}
+                disabled={loading}
+              >
+                Back to login
+              </button>
+            )}
 
           {!requiresMfa && (
             <div style={{ marginTop: '2rem', textAlign: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>

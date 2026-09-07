@@ -63,6 +63,10 @@ export function AuthProvider({ children }) {
       return { mfaRequired: true };
     }
 
+    if (data.requirePasswordChange) {
+      return { requirePasswordChange: true, tempToken: data.tempToken };
+    }
+
     setTokens(data.accessToken, data.refreshToken);
     setUser(data.user);
     sessionStorage.setItem('user', JSON.stringify(data.user));

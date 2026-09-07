@@ -66,7 +66,8 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
     password,
     full_name,
     role,
-    hotel_ids
+    hotel_ids,
+    force_password_change
   } = req.body;
 
   // Validate required fields
@@ -102,6 +103,7 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
       role,
       is_active: true,
       primary_hotel_id,
+      force_password_change: !!force_password_change,
       created_at: new Date(),
       updated_at: new Date()
     }).returning(['id', 'username', 'email', 'full_name', 'role', 'primary_hotel_id']);
@@ -158,7 +160,8 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
     role,
     is_active,
     email,
-    hotel_ids
+    hotel_ids,
+    force_password_change
   } = req.body;
   const updates = {
     updated_at: new Date()
@@ -166,6 +169,7 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
   if (full_name) updates.full_name = sanitize(full_name);
   if (role && ['admin', 'manager', 'technician', 'staff'].includes(role)) updates.role = role;
   if (is_active !== undefined) updates.is_active = is_active;
+  if (force_password_change !== undefined) updates.force_password_change = !!force_password_change;
   if (email) {
     const cleanEmail = email.trim();
     const existing = await db('users').whereRaw('LOWER(email) = LOWER(?)', [cleanEmail]).whereNot('id', req.params.id).first();
