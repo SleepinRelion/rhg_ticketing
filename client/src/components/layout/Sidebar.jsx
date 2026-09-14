@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { section: 'Hotel' },
     { path: '/rooms', icon: DoorOpen, label: 'Rooms' },
     { path: '/assets', icon: HardDrive, label: 'Assets', roles: ['admin', 'manager', 'technician'] },
-    { path: '/preventive-maintenance', icon: Wrench, label: 'Preventive Maint.' },
+    { path: '/preventive-maintenance', icon: Wrench, label: 'Reminders' },
 
     { section: 'Resources' },
     { path: '/knowledge-base', icon: BookOpen, label: 'Knowledge Base' },

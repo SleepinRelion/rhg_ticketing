@@ -87,7 +87,7 @@ export default function CalendarPage() {
           ...p,
           type: 'pm',
           date: parseISO(p.next_due_date),
-          titleDisplay: `PM: ${p.title} (${p.asset_name || 'N/A'})`
+          titleDisplay: `${p.title} (${p.asset_name || 'N/A'})`
         }))
       ];
 
@@ -199,7 +199,7 @@ export default function CalendarPage() {
           reason: rescheduleReason
         })
       });
-      success(`${item.type === 'pm' ? 'PM schedule' : 'Ticket deadline'} rescheduled.`);
+      success(`${item.type === 'pm' ? 'Reminder' : 'Ticket deadline'} rescheduled.`);
       setShowRescheduleModal(null);
       setRescheduleReason('');
       fetchData();
@@ -353,6 +353,21 @@ export default function CalendarPage() {
 
         {/* Hourly grid */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
+          {/* All Day Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', gap: '1px', background: 'var(--border-color)', borderBottom: '2px solid var(--border-color)' }}>
+            <div style={{ background: 'var(--bg-secondary)', padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right', fontWeight: 600 }}>
+              All Day
+            </div>
+            {weekDays.map(day => {
+              const allDayItems = filteredItems.filter(item => isSameDay(item.date, day) && item.type === 'pm');
+              return (
+                <div key={`allday-${day.toISOString()}`} style={{ background: 'var(--bg-primary)', padding: '2px', display: 'flex', flexDirection: 'column', gap: '1px', minHeight: '30px' }}>
+                  {allDayItems.map(item => renderItemChip(item, true))}
+                </div>
+              );
+            })}
+          </div>
+
           {hours.filter(h => h >= 6 && h <= 22).map(hour => (
             <div key={hour} style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', gap: '1px', background: 'var(--border-color)', minHeight: '50px' }}>
               <div style={{ background: 'var(--bg-secondary)', padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
@@ -456,7 +471,7 @@ export default function CalendarPage() {
                     <Ticket size={16} style={{ marginRight: '8px', color: 'var(--primary-400)' }} /> New Ticket
                   </button>
                   <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start' }} onMouseDown={(e) => { e.preventDefault(); navigate('/preventive-maintenance'); }}>
-                    <Wrench size={16} style={{ marginRight: '8px', color: 'var(--warning)' }} /> New PM Schedule
+                    <Wrench size={16} style={{ marginRight: '8px', color: 'var(--warning)' }} /> New Reminder
                   </button>
                 </div>
               )}
@@ -514,7 +529,7 @@ export default function CalendarPage() {
           <select className="form-input" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ height: '32px', fontSize: '13px', width: 'auto' }}>
             <option value="all">All Types</option>
             <option value="ticket">Tickets</option>
-            <option value="pm">PM Tasks</option>
+            <option value="pm">Reminders</option>
           </select>
           <select className="form-input" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} style={{ height: '32px', fontSize: '13px', width: 'auto' }}>
             <option value="">All Priorities</option>
@@ -609,7 +624,7 @@ export default function CalendarPage() {
                     </div>
                     <div style={{ marginTop: '16px' }}>
                       <button className="btn btn-primary" style={{ width: '100%', fontSize: '13px' }} onClick={() => navigate('/preventive-maintenance')}>
-                        <ExternalLink size={14} style={{ marginRight: '4px' }} /> View PM Schedules
+                        <ExternalLink size={14} style={{ marginRight: '4px' }} /> View Reminders
                       </button>
                     </div>
                   </>

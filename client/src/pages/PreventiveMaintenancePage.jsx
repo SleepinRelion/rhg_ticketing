@@ -121,7 +121,7 @@ export default function PreventiveMaintenancePage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Preventive Maintenance</h1>
+          <h1 className="page-title">Reminders</h1>
           <p className="page-subtitle">Manage recurring tasks and asset servicing schedules</p>
         </div>
         <button className="btn btn-primary" onClick={() => openModal()} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
