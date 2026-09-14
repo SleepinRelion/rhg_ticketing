@@ -9,6 +9,7 @@ import useSortableTable from '../hooks/useSortableTable.js';
 export default function PreventiveMaintenancePage() {
   const [schedules, setSchedules] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const { sortedItems, requestSort, sortConfig } = useSortableTable(schedules);
@@ -20,13 +21,15 @@ export default function PreventiveMaintenancePage() {
     title: '',
     description: '',
     frequency: 'monthly',
-    next_due_date: format(new Date(), 'yyyy-MM-dd')
+    next_due_date: format(new Date(), 'yyyy-MM-dd'),
+    assigned_to: ''
   });
   const { success, error } = useToast();
 
   useEffect(() => {
     fetchSchedules();
     fetchAssets();
+    fetchUsers();
   }, []);
 
   async function fetchSchedules() {
@@ -49,6 +52,15 @@ export default function PreventiveMaintenancePage() {
     }
   }
 
+  async function fetchUsers() {
+    try {
+      const res = await api('/users');
+      setUsers(res.users || []);
+    } catch (err) {
+      console.error('Failed to load users');
+    }
+  }
+
   const openModal = (schedule = null) => {
     if (schedule) {
       setEditingSchedule(schedule);
@@ -57,7 +69,8 @@ export default function PreventiveMaintenancePage() {
         title: schedule.title || '',
         description: schedule.description || '',
         frequency: schedule.frequency || 'monthly',
-        next_due_date: schedule.next_due_date ? format(new Date(schedule.next_due_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+        next_due_date: schedule.next_due_date ? format(new Date(schedule.next_due_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        assigned_to: schedule.assigned_to || ''
       });
     } else {
       setEditingSchedule(null);
@@ -66,7 +79,8 @@ export default function PreventiveMaintenancePage() {
         title: '',
         description: '',
         frequency: 'monthly',
-        next_due_date: format(new Date(), 'yyyy-MM-dd')
+        next_due_date: format(new Date(), 'yyyy-MM-dd'),
+        assigned_to: ''
       });
     }
     setIsModalOpen(true);
@@ -165,8 +179,9 @@ export default function PreventiveMaintenancePage() {
                 
                 <div>
                   <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--text-primary)' }}>{schedule.title}</h3>
-                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {schedule.asset_name} ({schedule.asset_tag})
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span><strong>Asset:</strong> {schedule.asset_name ? `${schedule.asset_name} (${schedule.asset_tag})` : 'Hotel-wide'}</span>
+                    <span><strong>Assigned to:</strong> {schedule.assigned_to_name || 'Everyone'}</span>
                   </p>
                 </div>
 
@@ -216,20 +231,34 @@ export default function PreventiveMaintenancePage() {
                 />
               </div>
               
-              <div className="form-group">
-                <label className="form-label">Asset</label>
-                <SearchableSelect 
-                  className="form-input" 
-                  required
-                  value={formData.asset_id}
-                  onChange={e => setFormData({...formData, asset_id: e.target.value})}
-                  disabled={!!editingSchedule}
-                >
-                  <option value="">Select an asset...</option>
-                  {assets.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
-                  ))}
-                </SearchableSelect>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Asset (Optional)</label>
+                  <SearchableSelect 
+                    className="form-input" 
+                    value={formData.asset_id}
+                    onChange={e => setFormData({...formData, asset_id: e.target.value})}
+                  >
+                    <option value="">Hotel-wide (No specific asset)</option>
+                    {assets.map(a => (
+                      <option key={a.id} value={a.id}>{a.name} ({a.asset_tag})</option>
+                    ))}
+                  </SearchableSelect>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Assign To</label>
+                  <SearchableSelect 
+                    className="form-input" 
+                    value={formData.assigned_to}
+                    onChange={e => setFormData({...formData, assigned_to: e.target.value})}
+                  >
+                    <option value="">Everyone (Hotel-wide)</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.full_name}</option>
+                    ))}
+                  </SearchableSelect>
+                </div>
               </div>
 
               <div className="form-group">
