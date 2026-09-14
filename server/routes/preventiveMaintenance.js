@@ -49,7 +49,8 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
     description,
     frequency,
     next_due_date,
-    assigned_to
+    assigned_to,
+    is_global
   } = req.body;
   if (!title || !frequency || !next_due_date) {
     return res.status(400).json({
@@ -59,6 +60,28 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
   
   const hotelId = req.headers['x-hotel-id'];
   if (!hotelId) return res.status(400).json({ error: 'Hotel context is required.' });
+
+  if (is_global && (req.user.role === 'admin' || req.user.role === 'manager')) {
+    // Fetch all active hotels
+    const allHotels = await db('hotels').where('is_active', true);
+    
+    // Build array of inserts
+    const inserts = allHotels.map(h => ({
+      hotel_id: h.id,
+      asset_id: null,
+      title: sanitize(title),
+      description: description ? sanitize(description) : null,
+      frequency,
+      next_due_date,
+      assigned_to: assigned_to || null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date()
+    }));
+    
+    const schedules = await db('preventive_maintenance').insert(inserts).returning('*');
+    return res.status(201).json(schedules[0]);
+  }
 
   // Verify asset belongs to hotel if asset_id is provided
   if (asset_id) {

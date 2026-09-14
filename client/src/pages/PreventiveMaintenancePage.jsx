@@ -5,12 +5,14 @@ import { Calendar, Plus, CheckCircle, Edit, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import useSortableTable from '../hooks/useSortableTable.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function PreventiveMaintenancePage() {
   const [schedules, setSchedules] = useState([]);
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser, isAdmin, isManager } = useAuth();
   
   const { sortedItems, requestSort, sortConfig } = useSortableTable(schedules);
   
@@ -22,7 +24,8 @@ export default function PreventiveMaintenancePage() {
     description: '',
     frequency: 'monthly',
     next_due_date: format(new Date(), 'yyyy-MM-dd'),
-    assigned_to: ''
+    assigned_to: '',
+    is_global: false
   });
   const { success, error } = useToast();
 
@@ -80,7 +83,8 @@ export default function PreventiveMaintenancePage() {
         description: '',
         frequency: 'monthly',
         next_due_date: format(new Date(), 'yyyy-MM-dd'),
-        assigned_to: ''
+        assigned_to: '',
+        is_global: false
       });
     }
     setIsModalOpen(true);
@@ -230,6 +234,27 @@ export default function PreventiveMaintenancePage() {
                   placeholder="e.g. Quarterly HVAC Filter Change"
                 />
               </div>
+
+              {!editingSchedule && (isAdmin || isManager) && (
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+                  <input
+                    type="checkbox"
+                    id="is_global_checkbox"
+                    checked={formData.is_global}
+                    onChange={e => {
+                      setFormData({
+                        ...formData, 
+                        is_global: e.target.checked,
+                        asset_id: e.target.checked ? '' : formData.asset_id 
+                      });
+                    }}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <label htmlFor="is_global_checkbox" style={{ margin: 0, fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                    Deploy to all hotels (Global Reminder)
+                  </label>
+                </div>
+              )}
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
@@ -238,6 +263,7 @@ export default function PreventiveMaintenancePage() {
                     className="form-input" 
                     value={formData.asset_id}
                     onChange={e => setFormData({...formData, asset_id: e.target.value})}
+                    disabled={formData.is_global}
                   >
                     <option value="">Hotel-wide (No specific asset)</option>
                     {assets.map(a => (
