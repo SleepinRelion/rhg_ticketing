@@ -208,7 +208,6 @@ app.use('/api/canned-responses', cannedResponseRoutes);
 app.use('/api/automations', automationRoutes);
 
 // Health check — verifies DB connectivity
-import db from './config/database.js';
 app.get('/api/health', async (req, res) => {
   try {
     await db.raw('SELECT 1');
