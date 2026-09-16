@@ -230,17 +230,30 @@ router.put('/:id/reset-password', authenticate, authorize('admin', 'manager'), a
     return res.status(400).json({ error: complexityError });
   }
   const passwordHash = await bcrypt.hash(new_password, 12);
-  await db('users').where({
-    id: req.params.id
-  }).update({
+  
+  // Core password update — only uses columns guaranteed to exist
+  const updateData = {
     password_hash: passwordHash,
     failed_login_attempts: 0,
     locked_until: null,
-    password_changed_at: new Date(),
     updated_at: new Date()
-  });
+  };
+
+  // Only set password_changed_at if the column exists
+  try {
+    const hasCol = await db.schema.hasColumn('users', 'password_changed_at');
+    if (hasCol) updateData.password_changed_at = new Date();
+  } catch (e) { /* column check failed, skip */ }
+
+  await db('users').where({ id: req.params.id }).update(updateData);
   
-  await updatePasswordHistory(req.params.id, passwordHash);
+  // Password history is optional — don't crash if the table doesn't exist yet
+  try {
+    await updatePasswordHistory(req.params.id, passwordHash);
+  } catch (e) {
+    console.error('Password history update skipped:', e.message);
+  }
+
   await createAuditEntry(req.user.id, 'password_reset', 'user', parseInt(req.params.id), req.ip, req.headers['user-agent'], {});
   res.json({
     message: 'Password has been reset.'
