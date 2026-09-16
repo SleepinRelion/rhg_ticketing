@@ -53,7 +53,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
     { section: 'Resources' },
     { path: '/knowledge-base', icon: BookOpen, label: 'Knowledge Base' },
-    { path: '/categories', icon: FolderOpen, label: 'Categories', roles: ['admin', 'manager'] },
+    { path: '/categories', icon: FolderOpen, label: 'Ticket Config', roles: ['admin', 'manager'] },
 
     { section: 'Analytics' },
     { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['admin', 'manager'] },

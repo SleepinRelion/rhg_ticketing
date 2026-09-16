@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Plus, Edit2, Trash2, X, Save, Layers, Tags, Building2, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Layers, Tags, Building2, ChevronRight, ChevronDown, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 
 export default function CategoriesPage() {
@@ -9,6 +9,8 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedTypes, setExpandedTypes] = useState({ task: true, request: true, issue: true });
   
@@ -24,6 +26,12 @@ export default function CategoriesPage() {
   const [editingDept, setEditingDept] = useState(null);
   const [deptForm, setDeptForm] = useState({ name: '', is_active: true });
 
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [templateForm, setTemplateForm] = useState({
+    name: '', title: '', description_template: '', category_id: '', priority: 'medium', default_assignee_id: '', is_active: true
+  });
+
   const [saving, setSaving] = useState(false);
   const { error, success } = useToast();
 
@@ -34,14 +42,18 @@ export default function CategoriesPage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [catRes, tagRes, deptRes] = await Promise.all([
+      const [catRes, tagRes, deptRes, tmplRes, techRes] = await Promise.all([
         api('/categories'),
         api('/categories/tags'),
-        api('/departments/all').catch(() => ({ departments: [] }))
+        api('/departments/all').catch(() => ({ departments: [] })),
+        api('/tickets/templates').catch(() => ({ templates: [] })),
+        api('/users/technicians').catch(() => ({ technicians: [] }))
       ]);
       setCategories(catRes.categories || []);
       setTags(tagRes.tags || []);
       setDepartments(deptRes.departments || []);
+      setTemplates(tmplRes.templates || []);
+      setTechnicians(techRes.technicians || []);
     } catch (err) {
       error('Failed to load data');
     } finally {
@@ -182,6 +194,83 @@ export default function CategoriesPage() {
     }
   }
 
+  // --- Template Actions ---
+  function openTemplateModal(tmpl = null) {
+    if (tmpl) {
+      setEditingTemplate(tmpl);
+      setTemplateForm({
+        name: tmpl.name || '',
+        title: tmpl.title || '',
+        description_template: tmpl.description_template || '',
+        category_id: tmpl.category_id ? String(tmpl.category_id) : '',
+        priority: tmpl.priority || 'medium',
+        default_assignee_id: tmpl.default_assignee_id ? String(tmpl.default_assignee_id) : '',
+        is_active: tmpl.is_active !== false
+      });
+    } else {
+      setEditingTemplate(null);
+      setTemplateForm({
+        name: '', title: '', description_template: '', category_id: '', priority: 'medium', default_assignee_id: '', is_active: true
+      });
+    }
+    setShowTemplateModal(true);
+  }
+
+  async function handleTemplateSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = {
+        ...templateForm,
+        category_id: templateForm.category_id || null,
+        default_assignee_id: templateForm.default_assignee_id || null
+      };
+      if (editingTemplate) {
+        await api(`/tickets/templates/${editingTemplate.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        success('Template updated');
+      } else {
+        await api('/tickets/templates', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        success('Template created');
+      }
+      setShowTemplateModal(false);
+      fetchData();
+    } catch (err) {
+      error(err.message || 'Failed to save template');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTemplateDelete(id) {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    try {
+      await api(`/tickets/templates/${id}`, { method: 'DELETE' });
+      success('Template deleted');
+      fetchData();
+    } catch (err) {
+      error(err.message || 'Failed to delete template');
+    }
+  }
+
+  async function handleTemplateToggle(tmpl) {
+    try {
+      await api(`/tickets/templates/${tmpl.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_active: !tmpl.is_active })
+      });
+      success(`Template ${tmpl.is_active ? 'deactivated' : 'activated'}`);
+      fetchData();
+    } catch (err) {
+      error(err.message || 'Failed to toggle template');
+    }
+  }
+
   // Group Categories hierarchically
   const groupedCategories = useMemo(() => {
     const types = { task: [], request: [], issue: [] };
@@ -202,30 +291,53 @@ export default function CategoriesPage() {
     setExpandedTypes(prev => ({ ...prev, [type]: !prev[type] }));
   };
 
+  const priorityColor = (p) => {
+    const map = { low: '#22c55e', medium: '#eab308', high: '#f97316', critical: '#ef4444' };
+    return map[p] || 'var(--text-muted)';
+  };
+
+  function getAddButtonLabel() {
+    if (activeTab === 'categories') return 'Add Category';
+    if (activeTab === 'tags') return 'Add Tag';
+    if (activeTab === 'departments') return 'Add Department';
+    if (activeTab === 'templates') return 'Add Template';
+    return 'Add';
+  }
+
+  function handleAddClick() {
+    if (activeTab === 'categories') openCatModal();
+    else if (activeTab === 'tags') openTagModal();
+    else if (activeTab === 'departments') openDeptModal();
+    else if (activeTab === 'templates') openTemplateModal();
+  }
+
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="page-title">Categories & Settings</h1>
-          <p className="page-subtitle">Manage classifications, tags, and departments</p>
+          <h1 className="page-title">Ticket Configuration</h1>
+          <p className="page-subtitle">Manage categories, templates, departments, and tags</p>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          if (activeTab === 'categories') openCatModal();
-          else if (activeTab === 'tags') openTagModal();
-          else openDeptModal();
-        }}>
+        <button className="btn btn-primary" onClick={handleAddClick}>
           <Plus size={16} /> 
-          {activeTab === 'categories' ? 'Add Category' : activeTab === 'tags' ? 'Add Tag' : 'Add Department'}
+          {getAddButtonLabel()}
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <button 
           className={`btn ${activeTab === 'categories' ? 'btn-primary' : 'btn-ghost'}`} 
           onClick={() => setActiveTab('categories')}
           style={{ borderRadius: '24px', padding: '8px 20px' }}
         >
           <Layers size={16} /> Categories
+        </button>
+        <button 
+          className={`btn ${activeTab === 'templates' ? 'btn-primary' : 'btn-ghost'}`} 
+          onClick={() => setActiveTab('templates')}
+          style={{ borderRadius: '24px', padding: '8px 20px' }}
+        >
+          <FileText size={16} /> Templates
         </button>
         <button 
           className={`btn ${activeTab === 'departments' ? 'btn-primary' : 'btn-ghost'}`} 
@@ -341,6 +453,83 @@ export default function CategoriesPage() {
               </div>
             ))}
           </div>
+
+        ) : activeTab === 'templates' ? (
+          /* ===== TEMPLATES TAB ===== */
+          <div>
+            {templates.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>
+                <FileText size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+                <p>No templates configured yet.</p>
+                <p style={{ fontSize: '13px' }}>Templates let staff create common tickets with one click — pre-filling the title, description, category, and priority.</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Template Name</th>
+                      <th>Auto-fill Title</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Default Assignee</th>
+                      <th>Status</th>
+                      <th style={{ width: 120 }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {templates.map(tmpl => (
+                      <tr key={tmpl.id}>
+                        <td style={{ fontWeight: 600 }}>{tmpl.name}</td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{tmpl.title}</td>
+                        <td>
+                          {tmpl.category_name ? (
+                            <span className="badge" style={{ background: 'var(--bg-elevated)' }}>{tmpl.category_name}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>—</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="badge" style={{ 
+                            background: `${priorityColor(tmpl.priority)}20`, 
+                            color: priorityColor(tmpl.priority),
+                            textTransform: 'capitalize'
+                          }}>
+                            {tmpl.priority}
+                          </span>
+                        </td>
+                        <td style={{ color: tmpl.default_assignee_name ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                          {tmpl.default_assignee_name || 'Unassigned'}
+                        </td>
+                        <td>
+                          <span className="badge" style={{ 
+                            background: tmpl.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                            color: tmpl.is_active ? '#34d399' : '#f87171' 
+                          }}>
+                            {tmpl.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn-icon" onClick={() => openTemplateModal(tmpl)} title="Edit">
+                              <Edit2 size={16} />
+                            </button>
+                            <button className="btn-icon" onClick={() => handleTemplateToggle(tmpl)} title={tmpl.is_active ? 'Deactivate' : 'Activate'} style={{ color: tmpl.is_active ? 'var(--text-muted)' : 'var(--success)' }}>
+                              {tmpl.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                            </button>
+                            <button className="btn-icon" onClick={() => handleTemplateDelete(tmpl.id)} style={{ color: 'var(--error)' }} title="Delete">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
         ) : activeTab === 'departments' ? (
           <div className="table-responsive">
             {departments.length === 0 ? (
@@ -503,6 +692,117 @@ export default function CategoriesPage() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowDeptModal(false)} disabled={saving}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   <Save size={16} /> {saving ? 'Saving...' : 'Save Department'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Template Modal */}
+      {showTemplateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '520px' }}>
+            <div className="modal-header">
+              <h2>{editingTemplate ? 'Edit Template' : 'Create Template'}</h2>
+              <button className="btn-icon" onClick={() => setShowTemplateModal(false)}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleTemplateSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label className="form-label">Template Name *</label>
+                <input 
+                  type="text" className="form-input" required 
+                  value={templateForm.name} 
+                  onChange={e => setTemplateForm({...templateForm, name: e.target.value})}
+                  placeholder="e.g., TV Not Working"
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Displayed in the template dropdown on the Create Ticket page.</span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Auto-fill Title *</label>
+                <input 
+                  type="text" className="form-input" required 
+                  value={templateForm.title} 
+                  onChange={e => setTemplateForm({...templateForm, title: e.target.value})}
+                  placeholder="e.g., TV not working in guest room"
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>This will be pre-filled as the ticket title when staff selects this template.</span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Description Template</label>
+                <textarea 
+                  className="form-textarea" 
+                  value={templateForm.description_template} 
+                  onChange={e => setTemplateForm({...templateForm, description_template: e.target.value})}
+                  placeholder="Pre-filled description text..."
+                  rows={3}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Category</label>
+                  <SearchableSelect 
+                    className="form-select" 
+                    value={templateForm.category_id} 
+                    onChange={e => setTemplateForm({...templateForm, category_id: e.target.value})}
+                  >
+                    <option value="">None</option>
+                    {categories.filter(c => !c.parent_id).map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.ticket_type})</option>
+                    ))}
+                  </SearchableSelect>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Default Priority</label>
+                  <SearchableSelect 
+                    className="form-select" 
+                    value={templateForm.priority} 
+                    onChange={e => setTemplateForm({...templateForm, priority: e.target.value})}
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </SearchableSelect>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Default Assignee</label>
+                <SearchableSelect 
+                  className="form-select" 
+                  value={templateForm.default_assignee_id} 
+                  onChange={e => setTemplateForm({...templateForm, default_assignee_id: e.target.value})}
+                >
+                  <option value="">Unassigned</option>
+                  {technicians.map(t => (
+                    <option key={t.id} value={t.id}>{t.full_name}</option>
+                  ))}
+                </SearchableSelect>
+              </div>
+
+              {editingTemplate && (
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <SearchableSelect 
+                    className="form-select" 
+                    value={templateForm.is_active ? 'active' : 'inactive'} 
+                    onChange={e => setTemplateForm({...templateForm, is_active: e.target.value === 'active'})}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </SearchableSelect>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowTemplateModal(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  <Save size={16} /> {saving ? 'Saving...' : editingTemplate ? 'Update Template' : 'Create Template'}
                 </button>
               </div>
             </form>
