@@ -45,9 +45,10 @@ export default function TicketDetailsForm({
   handleCategoryChange,
   REQUEST_CATEGORY_ICONS,
   ISSUE_CATEGORY_ICONS,
-  templates = [],
-  handleTemplateSelect,
-  technicians = []
+  technicians = [],
+  isEditingForm = false,
+  onEditCategory,
+  onDeleteCategory
 }) {
   const isTaskType = formData.ticket_type === 'task';
   const isRequestType = formData.ticket_type === 'request';
@@ -141,20 +142,6 @@ export default function TicketDetailsForm({
           <form className="card" onSubmit={onSubmit}>
             {/* === STEP 1: TITLE & CATEGORY === */}
             <div style={{ display: step === 1 ? 'block' : 'none' }}>
-              
-              {templates && templates.length > 0 && (
-                <div className="form-group" style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--primary-300)' }}>
-                  <label className="form-label" style={{ color: 'var(--primary-600)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Save size={16} /> Use a Template
-                  </label>
-                  <select className="form-input" onChange={handleTemplateSelect} defaultValue="">
-                    <option value="" disabled>Select a common issue...</option>
-                    {templates.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               <div className="form-group">
                 <label className="form-label">Title <span style={{ color: 'var(--error)' }}>*</span></label>
@@ -186,30 +173,42 @@ export default function TicketDetailsForm({
                 <label className="form-label">Category <span style={{ color: 'var(--error)' }}>*</span></label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
                   {parentCategories.map(cat => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleCategoryChange(String(cat.id))}
-                      style={{
-                        padding: '12px 16px',
-                        borderRadius: 'var(--radius-lg)',
-                        border: formData.category_id === String(cat.id)
-                          ? `2px solid ${typeConfig.color}`
-                          : '1px solid var(--border-color)',
-                        background: formData.category_id === String(cat.id)
-                          ? typeConfig.bg
-                          : 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        fontSize: '13px',
-                        fontWeight: formData.category_id === String(cat.id) ? 600 : 400,
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <FormatCategory name={cat.name} />
-                    </button>
+                    <div key={cat.id} style={{ position: 'relative', display: 'flex' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryChange(String(cat.id))}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: 'var(--radius-lg)',
+                          border: formData.category_id === String(cat.id)
+                            ? `2px solid ${typeConfig.color}`
+                            : '1px solid var(--border-color)',
+                          background: formData.category_id === String(cat.id)
+                            ? typeConfig.bg
+                            : 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          cursor: isEditingForm ? 'default' : 'pointer',
+                          textAlign: 'left',
+                          fontSize: '13px',
+                          fontWeight: formData.category_id === String(cat.id) ? 600 : 400,
+                          transition: 'all 0.15s ease',
+                          opacity: cat.is_active === false ? 0.5 : 1
+                        }}
+                      >
+                        <FormatCategory name={cat.name} />
+                      </button>
+                      {isEditingForm && (
+                        <div style={{ position: 'absolute', top: '-8px', right: '-8px', display: 'flex', gap: '4px', background: 'var(--bg-primary)', padding: '2px', borderRadius: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', border: '1px solid var(--border-color)' }}>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); onEditCategory(cat); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--text-secondary)' }}><Edit3 size={14} /></button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat.id); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--error)' }}><Trash2 size={14} /></button>
+                        </div>
+                      )}
+                    </div>
                   ))}
+                  {isEditingForm && (
+                    <button type="button" onClick={() => onEditCategory(null, '')} style={{ border: '1px dashed var(--primary-400)', background: 'transparent', color: 'var(--primary-600)', borderRadius: 'var(--radius-lg)', padding: '12px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>+ Add Category</button>
+                  )}
                 </div>
               </div>
             )}
@@ -219,140 +218,58 @@ export default function TicketDetailsForm({
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                   {parentCategories.map(cat => {
-                    const CatIcon = REQUEST_CATEGORY_ICONS[cat.name] || FileQuestion;
-                    const isSelected = formData.category_id === String(cat.id);
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleCategoryChange(String(cat.id))}
-                        style={{
-                          padding: '20px',
-                          borderRadius: 'var(--radius-xl)',
-                          border: isSelected
-                            ? `2px solid ${typeConfig.color}`
-                            : '1px solid var(--border-color)',
-                          background: isSelected ? typeConfig.bg : 'var(--bg-secondary)',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        <CatIcon size={20} style={{ color: isSelected ? typeConfig.color : 'var(--text-secondary)', marginBottom: '8px' }} />
-                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>{cat.name}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{cat.description}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {subcategories.length > 0 && (
-                  <div className="form-group">
-                    <label className="form-label">
-                      {isAccountRequest ? 'Action' : 'Device Type'} <span style={{ color: 'var(--error)' }}>*</span>
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
-                      {subcategories.map(sub => (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, subcategory_id: String(sub.id) })}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 'var(--radius-lg)',
-                            border: formData.subcategory_id === String(sub.id)
-                              ? `2px solid ${typeConfig.color}`
-                              : '1px solid var(--border-color)',
-                            background: formData.subcategory_id === String(sub.id)
-                              ? typeConfig.bg
-                              : 'var(--bg-secondary)',
-                            color: 'var(--text-primary)',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            fontSize: '13px',
-                            fontWeight: formData.subcategory_id === String(sub.id) ? 600 : 400,
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          {sub.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {isAccountRequest && (
-                  <div className="form-group" style={{ marginTop: '16px' }}>
-                    <label className="form-label">Requested For (Employee Name)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={formData.requested_for}
-                      onChange={e => setFormData({ ...formData, requested_for: e.target.value })}
-                      placeholder="Full name of the employee"
-                    />
-                  </div>
-                )}
-
-                {isAssetRequest && (
-                  <div className="form-group" style={{ marginTop: '16px' }}>
-                    <label className="form-label">Business Justification</label>
-                    <textarea
-                      className="form-textarea"
-                      value={formData.justification}
-                      onChange={e => setFormData({ ...formData, justification: e.target.value })}
-                      placeholder="Why is this device needed? e.g., New hire, replacement for damaged equipment..."
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* === ISSUE === */}
-            {isIssueType && (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-                  {parentCategories.map(cat => {
                     const CatIcon = getCategoryIcon(cat.name, AlertTriangle);
                     const isSelected = formData.category_id === String(cat.id);
                     return (
+                      <div key={cat.id} style={{ position: 'relative', display: 'flex' }}>
                       <button
-                        key={cat.id}
                         type="button"
                         onClick={() => handleCategoryChange(String(cat.id))}
                         style={{
+                          width: '100%',
                           padding: '16px 12px',
                           borderRadius: 'var(--radius-xl)',
                           border: isSelected
                             ? `2px solid ${typeConfig.color}`
                             : '1px solid var(--border-color)',
                           background: isSelected ? typeConfig.bg : 'var(--bg-secondary)',
-                          cursor: 'pointer',
+                          cursor: isEditingForm ? 'default' : 'pointer',
                           textAlign: 'center',
                           transition: 'all 0.2s ease',
+                          opacity: cat.is_active === false ? 0.5 : 1
                         }}
                       >
                         <CatIcon size={24} style={{ color: isSelected ? typeConfig.color : 'var(--text-secondary)', marginBottom: '8px' }} />
                         <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>{cat.name}</div>
                         {cat.description && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{cat.description}</div>}
                       </button>
+                      {isEditingForm && (
+                        <div style={{ position: 'absolute', top: '-8px', right: '-8px', display: 'flex', gap: '4px', background: 'var(--bg-primary)', padding: '2px', borderRadius: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', border: '1px solid var(--border-color)' }}>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); onEditCategory(cat); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--text-secondary)' }}><Edit3 size={14} /></button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat.id); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--error)' }}><Trash2 size={14} /></button>
+                        </div>
+                      )}
+                      </div>
                     );
                   })}
+                  {isEditingForm && (
+                    <button type="button" onClick={() => onEditCategory(null, '')} style={{ border: '1px dashed var(--primary-400)', background: 'transparent', color: 'var(--primary-600)', borderRadius: 'var(--radius-xl)', padding: '16px 12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>+ Add Category</button>
+                  )}
                 </div>
 
-                {subcategories.length > 0 && (
+                {(subcategories.length > 0 || (isEditingForm && formData.category_id)) && (
                   <div className="form-group">
                     <label className="form-label">
                       {isOutletIssue ? 'Select Outlet' : isSystemIssue ? 'System / Module' : 'Subcategory / Problem Type'} <span style={{ color: 'var(--error)' }}>*</span>
                     </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
                       {subcategories.map(sub => (
+                        <div key={sub.id} style={{ position: 'relative', display: 'flex' }}>
                         <button
-                          key={sub.id}
                           type="button"
-                          onClick={() => setFormData({ ...formData, subcategory_id: String(sub.id) })}
+                          onClick={() => { if (!isEditingForm) setFormData({ ...formData, subcategory_id: String(sub.id) }) }}
                           style={{
+                            width: '100%',
                             padding: '10px 14px',
                             borderRadius: 'var(--radius-lg)',
                             border: formData.subcategory_id === String(sub.id)
@@ -362,16 +279,27 @@ export default function TicketDetailsForm({
                               ? typeConfig.bg
                               : 'var(--bg-secondary)',
                             color: 'var(--text-primary)',
-                            cursor: 'pointer',
+                            cursor: isEditingForm ? 'default' : 'pointer',
                             textAlign: 'left',
                             fontSize: '13px',
                             fontWeight: formData.subcategory_id === String(sub.id) ? 600 : 400,
                             transition: 'all 0.15s ease',
+                            opacity: sub.is_active === false ? 0.5 : 1
                           }}
                         >
                           {sub.name}
                         </button>
+                        {isEditingForm && (
+                          <div style={{ position: 'absolute', top: '-8px', right: '-8px', display: 'flex', gap: '4px', background: 'var(--bg-primary)', padding: '2px', borderRadius: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', border: '1px solid var(--border-color)' }}>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onEditCategory(sub, formData.category_id); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--text-secondary)' }}><Edit3 size={14} /></button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onDeleteCategory(sub.id); }} style={{ cursor: 'pointer', padding: '4px', border: 'none', background: 'transparent', color: 'var(--error)' }}><Trash2 size={14} /></button>
+                          </div>
+                        )}
+                        </div>
                       ))}
+                      {isEditingForm && (
+                        <button type="button" onClick={() => onEditCategory(null, formData.category_id)} style={{ border: '1px dashed var(--primary-400)', background: 'transparent', color: 'var(--primary-600)', borderRadius: 'var(--radius-lg)', padding: '10px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>+ Add Option</button>
+                      )}
                     </div>
                   </div>
                 )}
