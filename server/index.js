@@ -15,6 +15,7 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import authConfig from './config/auth.js';
 import { ensureDefaultCategories } from './services/categoryInitService.js';
+import db from './config/database.js';
 
 // Routes
 import importRouter from './routes/import.js';
@@ -238,6 +239,14 @@ httpServer.listen(PORT, async () => {
   logger.info(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`   Timezone: ${process.env.APP_TIMEZONE || 'Indian/Mauritius'}\n`);
   
+  try {
+    logger.info('Running database migrations...');
+    await db.migrate.latest();
+    logger.info('Database migrations completed successfully.');
+  } catch (err) {
+    logger.error(`Failed to run database migrations: ${err.message}`);
+  }
+
   await initializeCronJobs();
   await ensureDefaultCategories();
 });
