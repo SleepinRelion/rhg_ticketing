@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
  */
 export const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300,
+  max: 3000,
   message: { error: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -42,7 +42,7 @@ export const guestTicketLimiter = rateLimit({
  */
 export const publicEndpointLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 30,
+  max: 1000,
   message: { error: 'Too many requests. Please wait a few minutes before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
