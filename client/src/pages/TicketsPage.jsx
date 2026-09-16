@@ -48,7 +48,7 @@ export default function TicketsPage() {
   const isInitialMount = useRef(true);
 
   const navigate = useNavigate();
-  const { user, isManager } = useAuth();
+  const { user, isManager, isTechnician } = useAuth();
   const { socket } = useSocket();
   const { error, success } = useToast();
 
@@ -555,7 +555,9 @@ export default function TicketsPage() {
                 <th onClick={() => handleSort('sla_status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   SLA {filters.sort_by === 'sla_status' && (filters.sort_order === 'asc' ? '↑' : '↓')}
                 </th>
-                {isManager() && <th style={{ textAlign: 'right' }}>Actions</th>}
+                <th>Requester</th>
+                <th>Assignee</th>
+                {isTechnician() && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -595,27 +597,35 @@ export default function TicketsPage() {
                      ticket.sla_status === 'at_risk' ? <span className="badge badge-sla-at_risk">At Risk</span> :
                      <span className="badge badge-sla-breached">Breached</span>}
                   </td>
-                  {isManager() && (
+                  <td>
+                    {ticket.creator_name ? ticket.creator_name : (ticket.guest_name ? `Guest: ${ticket.guest_name}` : 'Unknown')}
+                  </td>
+                  <td>
+                    {ticket.assignees && ticket.assignees.length > 0
+                      ? ticket.assignees.map(a => a.full_name).join(', ')
+                      : <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>}
+                  </td>
+                  {isTechnician() && (
                     <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
-                        {ticket.status !== 'in_progress' && (
-                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0 }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'in_progress')} title="Mark In Progress">
-                            <Play size={16} />
+                        {(ticket.status === 'open' || ticket.status === 'assigned') && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', height: '24px', minHeight: 0, fontSize: '11px', color: 'var(--primary)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'in_progress')} title="Start Working">
+                            <Play size={12} style={{ marginRight: '4px' }}/> Start
                           </button>
                         )}
-                        {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
-                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--success)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'resolved')} title="Mark Resolved">
-                            <CheckCircle2 size={16} />
+                        {ticket.status === 'in_progress' && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', height: '24px', minHeight: 0, fontSize: '11px', color: 'var(--success)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'resolved')} title="Mark Resolved">
+                            <CheckCircle2 size={12} style={{ marginRight: '4px' }}/> Resolve
                           </button>
                         )}
-                        {ticket.status !== 'closed' && (
-                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--text-muted)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'closed')} title="Close Ticket">
-                            <X size={16} />
+                        {ticket.status === 'resolved' && isManager() && (
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', height: '24px', minHeight: 0, fontSize: '11px', color: 'var(--text-muted)' }} onClick={() => handleSingleAction(ticket.id, 'change_status', 'closed')} title="Close Ticket">
+                            <X size={12} style={{ marginRight: '4px' }}/> Close
                           </button>
                         )}
                         {['admin', 'manager'].includes(user.role) && (
-                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: 'auto', minHeight: 0, color: 'var(--error)' }} onClick={() => handleSingleAction(ticket.id, 'soft_delete')} title="Delete">
-                            <Trash2 size={16} />
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px', height: '24px', minHeight: 0, color: 'var(--error)' }} onClick={() => handleSingleAction(ticket.id, 'soft_delete')} title="Delete">
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </div>

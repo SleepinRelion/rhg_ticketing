@@ -35,6 +35,7 @@ export default function CreateTicketPage() {
     department: '',
     requested_for: '',
     justification: '',
+    assigned_to: '',
   });
 
   const [allCategories, setAllCategories] = useState([]);
@@ -42,6 +43,7 @@ export default function CreateTicketPage() {
   const [assets, setAssets] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
 
@@ -57,15 +59,17 @@ export default function CreateTicketPage() {
       api('/rooms'),
       api('/assets'),
       api('/departments').catch(() => ({ departments: [] })),
-      api('/tickets/templates').catch(() => ({ templates: [] }))
-    ]).then(([catRes, roomRes, assetRes, deptRes, tmplRes]) => {
+      api('/tickets/templates').catch(() => ({ templates: [] })),
+      isIT ? api('/users/technicians').catch(() => ({ technicians: [] })) : Promise.resolve({ technicians: [] })
+    ]).then(([catRes, roomRes, assetRes, deptRes, tmplRes, techRes]) => {
       setAllCategories(catRes.categories || []);
       setRooms(roomRes.rooms || []);
       setAssets(assetRes.assets || []);
       setDepartments(deptRes.departments || []);
       setTemplates(tmplRes.templates || []);
+      setTechnicians(techRes.technicians || []);
     }).catch(() => error('Failed to load form data'));
-  }, []);
+  }, [isIT]);
 
   useEffect(() => {
     if (!formData.title || formData.title.length < 5) {
@@ -179,6 +183,7 @@ export default function CreateTicketPage() {
       assets={assets}
       departments={departments}
       templates={templates}
+      technicians={technicians}
       handleTemplateSelect={handleTemplateSelect}
       duplicates={duplicates}
       saving={saving}

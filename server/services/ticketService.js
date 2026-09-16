@@ -68,7 +68,7 @@ export async function createTicket(data, userId, activeHotelId = null) {
     guest_tracking_token: randomUUID(),
     title: sanitize(data.title),
     description: data.description ? sanitize(data.description) : null,
-    status: 'open',
+    status: data.assigned_to ? 'assigned' : 'open',
     priority: data.priority,
     ticket_type: data.ticket_type || 'issue',
     category_id: data.category_id || null,
@@ -100,9 +100,25 @@ export async function createTicket(data, userId, activeHotelId = null) {
     ticket_id: result.id,
     user_id: userId || null,
     action: 'ticket_created',
-    new_value: 'open',
+    new_value: data.assigned_to ? 'assigned' : 'open',
     created_at: new Date(),
   });
+
+  if (data.assigned_to) {
+    await db('ticket_assignees').insert({
+      ticket_id: result.id,
+      user_id: data.assigned_to,
+      assigned_by: userId || null,
+      assigned_at: new Date()
+    });
+    await db('activity_logs').insert({
+      ticket_id: result.id,
+      user_id: userId || null,
+      action: 'ticket_assigned',
+      new_value: data.assigned_to.toString(),
+      created_at: new Date(),
+    });
+  }
 
   // Process any matching automation rules asynchronously
   processAutomations(result.id, 'ticket_created').catch(err => console.error('Automation failed:', err));

@@ -46,7 +46,8 @@ export default function TicketDetailsForm({
   REQUEST_CATEGORY_ICONS,
   ISSUE_CATEGORY_ICONS,
   templates = [],
-  handleTemplateSelect
+  handleTemplateSelect,
+  technicians = []
 }) {
   const isTaskType = formData.ticket_type === 'task';
   const isRequestType = formData.ticket_type === 'request';
@@ -595,6 +596,22 @@ export default function TicketDetailsForm({
                 rows={5}
               />
             </div>
+
+            {isIT && technicians && technicians.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">Assign To (Optional)</label>
+                <select
+                  className="form-select"
+                  value={formData.assigned_to || ''}
+                  onChange={e => setFormData({ ...formData, assigned_to: e.target.value })}
+                >
+                  <option value="">Unassigned</option>
+                  {technicians.map(t => (
+                    <option key={t.id} value={t.id}>{t.full_name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             </div>
 
             {/* ===== SUBMIT / NAVIGATION ===== */}
