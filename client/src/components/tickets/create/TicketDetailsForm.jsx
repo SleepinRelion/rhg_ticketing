@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Save, X, FileQuestion, AlertTriangle, Bed, Building2, HardDrive, Server, Utensils } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, X, FileQuestion, AlertTriangle, Bed, Building2, HardDrive, Server, Utensils, Edit3, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../../ui/SearchableSelect.jsx';
 import FormatCategory from '../../ui/FormatCategory.jsx';
