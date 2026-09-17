@@ -49,7 +49,7 @@ import { randomUUID } from 'crypto';
  * Create a new ticket with SLA dates.
  */
 export async function createTicket(data, userId, activeHotelId = null) {
-  let finalHotelId = activeHotelId;
+  let finalHotelId = activeHotelId === 'all' ? (data.hotel_id || null) : activeHotelId;
   
   // Data Integrity: If assigned to a room or asset, enforce its hotel_id to prevent ghost tickets
   if (data.room_id) {
