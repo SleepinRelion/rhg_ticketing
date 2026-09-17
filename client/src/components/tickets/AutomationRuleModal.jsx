@@ -67,7 +67,7 @@ export default function AutomationRuleModal({ rule, onClose, onSave }) {
     ]).then(([catRes, depRes, userRes]) => {
       setCategories(catRes.categories?.map(c => ({ value: String(c.id), label: c.name })) || []);
       setDepartments(depRes.departments?.map(d => ({ value: String(d.id), label: d.name })) || []);
-      setUsers(userRes.users?.map(u => ({ value: String(u.id), label: u.name })) || []);
+      setUsers(userRes.users?.map(u => ({ value: String(u.id), label: u.full_name })) || []);
     });
   }, []);
 
