@@ -14,7 +14,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   let query = db('notifications').where({
     user_id: req.user.id
   });
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     query = query.where(function () {
       this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
     });
@@ -23,7 +23,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   let countQuery = db('notifications').where({
     user_id: req.user.id
   });
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     countQuery = countQuery.where(function () {
       this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
     });
@@ -47,7 +47,7 @@ router.get('/unread-count', authenticate, asyncHandler(async (req, res) => {
     user_id: req.user.id,
     is_read: false
   });
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     countQuery = countQuery.where(function () {
       this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
     });
@@ -79,7 +79,7 @@ router.put('/read-all', authenticate, asyncHandler(async (req, res) => {
     user_id: req.user.id,
     is_read: false
   });
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     updateQuery = updateQuery.where(function () {
       this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
     });

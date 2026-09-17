@@ -10,8 +10,8 @@ const router = Router();
 // GET /api/backups/schedules
 router.get('/schedules', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const hotelId = req.headers['x-hotel-id'];
-  if (!hotelId || hotelId === 'all') return res.status(400).json({
-    error: 'Please select a specific hotel to view backup schedules.'
+  if (!hotelId || hotelId === 'all') return res.json({
+    schedules: []
   });
   const schedules = await db('backup_schedules').where({
     hotel_id: hotelId

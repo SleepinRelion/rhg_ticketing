@@ -224,6 +224,16 @@ router.get('/hotel', authenticate, asyncHandler(async (req, res) => {
   if (!hotelId) return res.status(400).json({
     error: 'Hotel context is required.'
   });
+  if (hotelId === 'all') {
+    // Return defaults for global view
+    return res.json({
+      settings: {
+        TICKET_PREFIX: 'IT-',
+        DEFAULT_PRIORITY: 'medium',
+        ALLOW_GUEST_TICKETS: 'false'
+      }
+    });
+  }
   const settings = await db('settings').where({
     hotel_id: hotelId
   });

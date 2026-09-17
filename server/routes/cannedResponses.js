@@ -8,7 +8,7 @@ const router = Router();
 // GET /api/canned-responses
 router.get('/', authenticate, asyncHandler(async (req, res) => {
   let query = db('canned_responses').select('*').orderBy('title', 'asc');
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     query = query.where(function() {
       this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
     });
@@ -33,7 +33,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   const [response] = await db('canned_responses').insert({
     title,
     content,
-    hotel_id: hotel_id || req.user.activeHotelId || null,
+    hotel_id: hotel_id || (req.user.activeHotelId === 'all' ? null : req.user.activeHotelId) || null,
     created_by: req.user.id,
     created_at: new Date(),
     updated_at: new Date()

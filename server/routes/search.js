@@ -26,7 +26,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
     })
     .limit(5);
 
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     ticketsQuery = ticketsQuery.where('hotel_id', req.user.activeHotelId);
   }
 
@@ -75,7 +75,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
     })
     .limit(3);
 
-  if (req.user.activeHotelId) {
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     roomsQuery = roomsQuery.where('hotel_id', req.user.activeHotelId);
   }
 
