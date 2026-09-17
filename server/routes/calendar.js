@@ -11,15 +11,22 @@ router.get('/token', authenticate, asyncHandler(async (req, res) => {
   if (!hotelId) return res.status(400).json({
     error: 'Hotel context is required.'
   });
-  let setting = await db('settings').where({
-    hotel_id: hotelId,
-    key: 'CALENDAR_FEED_TOKEN'
-  }).first();
+  
+  const targetHotelId = hotelId === 'all' ? null : hotelId;
+  
+  let query = db('settings').where({ key: 'CALENDAR_FEED_TOKEN' });
+  if (targetHotelId === null) {
+    query = query.whereNull('hotel_id');
+  } else {
+    query = query.where('hotel_id', targetHotelId);
+  }
+  
+  let setting = await query.first();
   let token;
   if (!setting) {
     token = crypto.randomUUID();
     await db('settings').insert({
-      hotel_id: hotelId,
+      hotel_id: targetHotelId,
       key: 'CALENDAR_FEED_TOKEN',
       value: token
     });
@@ -43,20 +50,30 @@ router.get('/feed/:hotelId/:token.ics', asyncHandler(async (req, res) => {
     hotelId,
     token
   } = req.params;
-  const setting = await db('settings').where({
-    hotel_id: hotelId,
-    key: 'CALENDAR_FEED_TOKEN',
-    value: token
-  }).first();
+  const targetHotelId = hotelId === 'all' ? null : hotelId;
+  
+  let query = db('settings').where({ key: 'CALENDAR_FEED_TOKEN', value: token });
+  if (targetHotelId === null) {
+    query = query.whereNull('hotel_id');
+  } else {
+    query = query.where('hotel_id', targetHotelId);
+  }
+  const setting = await query.first();
   if (!setting) {
     return res.status(403).send('Invalid or expired calendar feed token.');
   }
-  const tickets = await db('tickets').where({
-    hotel_id: hotelId
-  }).whereNotNull('resolution_due_at').whereIn('status', ['open', 'in_progress', 'assigned', 'waiting_for_parts', 'waiting_for_vendor', 'waiting_for_guest']);
 
-  // Preventive Maintenance is linked to assets, which are linked to hotels. Or wait, let's just use a join to filter PMs by hotel.
-  const pmTasks = await db('preventive_maintenance').select('preventive_maintenance.*', 'assets.name as asset_name').join('assets', 'preventive_maintenance.asset_id', 'assets.id').where('assets.hotel_id', hotelId).where('preventive_maintenance.is_active', true).whereNotNull('preventive_maintenance.next_due_date');
+  let ticketsQuery = db('tickets').whereNotNull('resolution_due_at').whereIn('status', ['open', 'in_progress', 'assigned', 'waiting_for_parts', 'waiting_for_vendor', 'waiting_for_guest']);
+  if (hotelId !== 'all') {
+    ticketsQuery = ticketsQuery.where('hotel_id', hotelId);
+  }
+  const tickets = await ticketsQuery;
+
+  let pmQuery = db('preventive_maintenance').select('preventive_maintenance.*', 'assets.name as asset_name').leftJoin('assets', 'preventive_maintenance.asset_id', 'assets.id').where('preventive_maintenance.is_active', true).whereNotNull('preventive_maintenance.next_due_date');
+  if (hotelId !== 'all') {
+    pmQuery = pmQuery.where('preventive_maintenance.hotel_id', hotelId);
+  }
+  const pmTasks = await pmQuery;
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Hotel Ticketing System//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:Hotel IT Calendar`];
   const formatDate = dateString => {
     const d = new Date(dateString);

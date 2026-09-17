@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Save } from 'lucide-react';
 import SearchableSelect from '../ui/SearchableSelect.jsx';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 const FIELD_OPTIONS = [
   { value: 'category_id', label: 'Category' },
@@ -38,8 +39,10 @@ const STATUS_OPTIONS = [
 
 export default function AutomationRuleModal({ rule, onClose, onSave }) {
   const { error } = useToast();
+  const { user: currentUser } = useAuth();
   const [name, setName] = useState(rule?.name || '');
   const [isActive, setIsActive] = useState(rule ? rule.is_active : true);
+  const [isGlobal, setIsGlobal] = useState(rule ? rule.hotel_id === null : false);
   
   // Default to one empty condition and action
   const [conditions, setConditions] = useState(() => {
@@ -113,6 +116,7 @@ export default function AutomationRuleModal({ rule, onClose, onSave }) {
       id: rule?.id,
       name,
       is_active: isActive,
+      is_global: isGlobal,
       conditions: validConditions,
       actions: validActions
     });
@@ -198,20 +202,22 @@ export default function AutomationRuleModal({ rule, onClose, onSave }) {
               className="form-input" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              placeholder="e.g. Assign Hardware issues to IT"
-              required 
+              placeholder="e.g. Escalate VIP Tickets"
             />
           </div>
 
-          <div className="form-group" style={{ marginTop: '12px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={isActive} 
-                onChange={e => setIsActive(e.target.checked)} 
-              />
+          <div className="form-group" style={{ display: 'flex', gap: '16px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
+              <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} />
               Rule is active
             </label>
+            
+            {currentUser?.role === 'admin' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
+                <input type="checkbox" checked={isGlobal} onChange={e => setIsGlobal(e.target.checked)} />
+                Global Rule (Applies to all hotels)
+              </label>
+            )}
           </div>
 
           <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />

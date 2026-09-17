@@ -218,9 +218,10 @@ export async function updateTicketStatus(ticketId, newStatus, userId, userRole, 
  * Check ticket visibility based on user role and hotel context.
  */
 export function buildTicketVisibilityQuery(query, user) {
-  // Filter by active hotel
   if (user.activeHotelId && user.activeHotelId !== 'all') {
-    query = query.where('tickets.hotel_id', user.activeHotelId);
+    query = query.where(function() {
+      this.where('tickets.hotel_id', user.activeHotelId).orWhereNull('tickets.hotel_id');
+    });
   }
 
   if (user.role === 'admin' || user.role === 'manager') {

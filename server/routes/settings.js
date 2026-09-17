@@ -67,8 +67,8 @@ router.get('/sla', authenticate, asyncHandler(async (req, res) => {
 // PUT /api/settings/sla
 router.put('/sla', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const hotelId = req.headers['x-hotel-id'];
-  if (!hotelId) return res.status(400).json({
-    error: 'Hotel context is required.'
+  if (!hotelId || hotelId === 'all') return res.status(400).json({
+    error: 'Please select a specific hotel to modify its settings.'
   });
   const {
     configs
@@ -244,8 +244,8 @@ router.get('/hotel', authenticate, asyncHandler(async (req, res) => {
 // PUT /api/settings/hotel
 router.put('/hotel', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const hotelId = req.headers['x-hotel-id'];
-  if (!hotelId) return res.status(400).json({
-    error: 'Hotel context is required.'
+  if (!hotelId || hotelId === 'all') return res.status(400).json({
+    error: 'Please select a specific hotel to modify its settings.'
   });
   const {
     updates

@@ -18,19 +18,47 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [bgImage, setBgImage] = useState(null);
+  const [wallpapers, setWallpapers] = useState([]);
+  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const imageUrl = window.APP_BG_IMAGE_URL || '/login-bg.jpg';
-    if (!imageUrl) return;
+    async function fetchWallpapers() {
+      try {
+        const res = await fetch(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api/hotels/public' : '/api/hotels/public');
+        if (res.ok) {
+          const data = await res.json();
+          const urls = data.hotels.filter(h => h.wallpaper_url).map(h => h.wallpaper_url);
+          if (urls.length > 0) {
+            setWallpapers(urls);
+            urls.forEach(url => {
+              const img = new Image();
+              img.src = url;
+            });
+            return;
+          }
+        }
+      } catch (e) {}
 
-    const img = new Image();
-    img.src = imageUrl;
-    img.onload = () => setBgImage(imageUrl);
-    // If it fails to load (e.g., deleted), bgImage remains null and fallback CSS applies
+      const imageUrl = window.APP_BG_IMAGE_URL || '/login-bg.jpg';
+      if (imageUrl) {
+        const img = new Image();
+        img.src = imageUrl;
+        img.onload = () => setBgImage(imageUrl);
+      }
+    }
+    fetchWallpapers();
   }, []);
+
+  useEffect(() => {
+    if (wallpapers.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentWallpaperIndex(prev => (prev + 1) % wallpapers.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [wallpapers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,12 +116,18 @@ export default function LoginPage() {
     }
   };
 
+  const activeBg = wallpapers.length > 0 ? wallpapers[currentWallpaperIndex] : bgImage;
+
   return (
     <div 
-      className={`login-page ${bgImage ? 'has-bg-image' : ''}`}
-      style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+      className={`login-page ${activeBg ? 'has-bg-image' : ''}`}
+      style={{
+        position: 'relative',
+        transition: 'background-image 1s ease-in-out',
+        ...(activeBg ? { backgroundImage: `url(${activeBg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {})
+      }}
     >
-      <div className="login-card">
+      <div className="login-card" style={{ zIndex: 2, position: 'relative' }}>
         <div className="login-header" style={{ textAlign: 'center', marginBottom: '32px' }}>
           <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" className="app-logo-img" style={{ height: '48px', marginBottom: '24px', objectFit: 'contain' }} />
 

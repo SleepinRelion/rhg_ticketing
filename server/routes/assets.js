@@ -14,7 +14,12 @@ router.get('/', authenticate, authorize('admin', 'manager', 'technician'), async
     room_id,
     search
   } = req.query;
-  let query = db('assets').select('assets.*', 'categories.name as category_name', 'rooms.room_number').leftJoin('categories', 'assets.category_id', 'categories.id').leftJoin('rooms', 'assets.room_id', 'rooms.id').where('assets.is_active', true);
+  let query = db('assets')
+    .select('assets.*', 'categories.name as category_name', 'rooms.room_number', 'hotels.name as hotel_name')
+    .leftJoin('categories', 'assets.category_id', 'categories.id')
+    .leftJoin('rooms', 'assets.room_id', 'rooms.id')
+    .leftJoin('hotels', 'assets.hotel_id', 'hotels.id')
+    .where('assets.is_active', true);
   if (req.user.activeHotelId && req.user.activeHotelId !== 'all') query = query.where('assets.hotel_id', req.user.activeHotelId);
   if (status) query = query.where('assets.status', status);
   if (category_id) query = query.where('assets.category_id', category_id);
@@ -33,8 +38,13 @@ router.get('/', authenticate, authorize('admin', 'manager', 'technician'), async
 
 // GET /api/assets/:id — Full detail with history
 router.get('/:id', authenticate, authorize('admin', 'manager', 'technician'), asyncHandler(async (req, res) => {
-  let query = db('assets').select('assets.*', 'categories.name as category_name', 'rooms.room_number').leftJoin('categories', 'assets.category_id', 'categories.id').leftJoin('rooms', 'assets.room_id', 'rooms.id').where('assets.id', req.params.id);
-  if (req.user.activeHotelId) {
+  let query = db('assets')
+    .select('assets.*', 'categories.name as category_name', 'rooms.room_number', 'hotels.name as hotel_name')
+    .leftJoin('categories', 'assets.category_id', 'categories.id')
+    .leftJoin('rooms', 'assets.room_id', 'rooms.id')
+    .leftJoin('hotels', 'assets.hotel_id', 'hotels.id')
+    .where('assets.id', req.params.id);
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
     query = query.where('assets.hotel_id', req.user.activeHotelId);
   }
   const asset = await query.first();
@@ -71,12 +81,16 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
   if (!data.name || !data.asset_tag) return res.status(400).json({
     error: 'Name and asset tag are required.'
   });
+  const hotelId = req.headers['x-hotel-id'] || req.user.activeHotelId;
+  if (!hotelId || hotelId === 'all') {
+    return res.status(400).json({ error: 'Please select a specific hotel to add an asset.' });
+  }
   const [asset] = await db('assets').insert({
     name: sanitize(data.name),
     asset_tag: sanitize(data.asset_tag),
     category_id: data.category_id || null,
     room_id: data.room_id || null,
-    hotel_id: req.user.activeHotelId,
+    hotel_id: hotelId,
     location: data.location ? sanitize(data.location) : null,
     manufacturer: data.manufacturer ? sanitize(data.manufacturer) : null,
     model: data.model ? sanitize(data.model) : null,
@@ -101,6 +115,10 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), asyncHandler(a
       error: 'Assets array is required.'
     });
   }
+  const hotelId = req.headers['x-hotel-id'] || req.user.activeHotelId;
+  if (!hotelId || hotelId === 'all') {
+    return res.status(400).json({ error: 'Please select a specific hotel to bulk import assets.' });
+  }
   const insertedAssets = [];
   await db.transaction(async trx => {
     for (const data of assets) {
@@ -110,7 +128,7 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), asyncHandler(a
         asset_tag: sanitize(data.asset_tag),
         category_id: data.category_id || null,
         room_id: data.room_id || null,
-        hotel_id: req.user.activeHotelId,
+        hotel_id: hotelId,
         location: data.location ? sanitize(data.location) : null,
         manufacturer: data.manufacturer ? sanitize(data.manufacturer) : null,
         model: data.model ? sanitize(data.model) : null,
@@ -143,9 +161,11 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
   const query = db('assets').where({
     id: req.params.id
   });
-  if (req.user.activeHotelId) query.where({
-    hotel_id: req.user.activeHotelId
-  });
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
+    query.where({
+      hotel_id: req.user.activeHotelId
+    });
+  }
   await query.update(updates);
   const asset = await db('assets').where({
     id: req.params.id

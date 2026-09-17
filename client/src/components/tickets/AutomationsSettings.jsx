@@ -104,6 +104,7 @@ export default function AutomationsSettings() {
                 <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {rule.name}
                   {!rule.is_active && <span className="badge badge-warning">Disabled</span>}
+                  {rule.hotel_id === null && <span className="badge" style={{background: 'var(--primary-color)', color: 'white'}}>Global</span>}
                 </div>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                   {rule.conditions && rule.conditions.length > 0 ? (

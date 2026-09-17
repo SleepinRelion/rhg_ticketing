@@ -71,9 +71,11 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   const query = db('rooms').where({
     id: req.params.id
   });
-  if (req.user.activeHotelId) query.where({
-    hotel_id: req.user.activeHotelId
-  });
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
+    query.where({
+      hotel_id: req.user.activeHotelId
+    });
+  }
   const room = await query.first();
   if (!room) return res.status(404).json({
     error: 'Room not found.'
@@ -105,11 +107,16 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
   if (!room_number) return res.status(400).json({
     error: 'Room number is required.'
   });
+  const hotelId = req.headers['x-hotel-id'] || req.user.activeHotelId;
+  if (!hotelId || hotelId === 'all') {
+    return res.status(400).json({ error: 'Please select a specific hotel to add a room.' });
+  }
+
   const [room] = await db('rooms').insert({
     room_number: sanitize(room_number),
     floor: floor || null,
     room_type: room_type || null,
-    hotel_id: req.user.activeHotelId,
+    hotel_id: hotelId,
     description: description ? sanitize(description) : null,
     status: 'available',
     created_at: new Date(),
@@ -130,9 +137,11 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
   const query = db('rooms').where({
     id: req.params.id
   });
-  if (req.user.activeHotelId) query.where({
-    hotel_id: req.user.activeHotelId
-  });
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
+    query.where({
+      hotel_id: req.user.activeHotelId
+    });
+  }
   await query.update(updates);
   const room = await db('rooms').where({
     id: req.params.id

@@ -10,8 +10,8 @@ const router = Router();
 // GET /api/backups/schedules
 router.get('/schedules', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const hotelId = req.headers['x-hotel-id'];
-  if (!hotelId) return res.status(400).json({
-    error: 'Hotel context is required.'
+  if (!hotelId || hotelId === 'all') return res.status(400).json({
+    error: 'Please select a specific hotel to view backup schedules.'
   });
   const schedules = await db('backup_schedules').where({
     hotel_id: hotelId
@@ -34,8 +34,8 @@ router.post('/schedules', authenticate, authorize('admin', 'manager'), asyncHand
     is_active
   } = req.body;
   const hotelId = req.headers['x-hotel-id'];
-  if (!hotelId) return res.status(400).json({
-    error: 'Hotel context is required.'
+  if (!hotelId || hotelId === 'all') return res.status(400).json({
+    error: 'Please select a specific hotel to add a backup schedule.'
   });
   if (!frequency || !['daily', 'weekly', 'monthly', 'quarterly', 'yearly'].includes(frequency)) {
     return res.status(400).json({

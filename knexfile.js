@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const pgConnection = {
-  host:     process.env.DB_HOST     || 'localhost',
+  host:     process.env.DB_HOST     || '127.0.0.1',
   port:     parseInt(process.env.DB_PORT || '5432', 10),
   database: process.env.DB_NAME     || 'hotel_tickets',
   user:     process.env.DB_USER     || 'postgres',

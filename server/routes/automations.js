@@ -8,18 +8,32 @@ const router = Router();
 
 // GET /api/automations
 router.get('/', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
-  const rules = await db('automation_rules').orderBy('created_at', 'desc');
+  let query = db('automation_rules').orderBy('created_at', 'desc');
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') {
+    query = query.where(function() {
+      this.where('hotel_id', req.user.activeHotelId).orWhereNull('hotel_id');
+    });
+  }
+  const rules = await query;
   res.json({ rules });
 }));
 
 // POST /api/automations
 router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
-  const { name, conditions, actions, is_active } = req.body;
+  const { name, conditions, actions, is_active, is_global, hotel_id } = req.body;
+  
+  let targetHotelId = hotel_id || req.user.activeHotelId;
+  if (is_global && req.user.role === 'admin') targetHotelId = null;
+  else if (!targetHotelId || targetHotelId === 'all') {
+    return res.status(400).json({ error: 'Please select a specific hotel or mark as Global.' });
+  }
+
   const [rule] = await db('automation_rules').insert({
     name,
     conditions: JSON.stringify(conditions),
     actions: JSON.stringify(actions),
     is_active: is_active ?? true,
+    hotel_id: targetHotelId,
     created_by: req.user.id
   }).returning('*');
   res.status(201).json({ rule });
@@ -27,14 +41,22 @@ router.post('/', authenticate, authorize('admin', 'manager'), asyncHandler(async
 
 // PUT /api/automations/:id
 router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
-  const { name, conditions, actions, is_active } = req.body;
-  const [rule] = await db('automation_rules').where({ id: req.params.id }).update({
+  const { name, conditions, actions, is_active, is_global, hotel_id } = req.body;
+  
+  const updates = {
     name,
     conditions: JSON.stringify(conditions),
     actions: JSON.stringify(actions),
     is_active,
     updated_at: new Date()
-  }).returning('*');
+  };
+
+  if (is_global !== undefined) {
+    if (is_global && req.user.role === 'admin') updates.hotel_id = null;
+    else if (hotel_id) updates.hotel_id = hotel_id;
+  }
+
+  const [rule] = await db('automation_rules').where({ id: req.params.id }).update(updates).returning('*');
   res.json({ rule });
 }));
 

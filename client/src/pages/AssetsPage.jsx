@@ -141,8 +141,13 @@ export default function AssetsPage() {
                 <th onClick={() => requestSort('category_name')} style={{ cursor: 'pointer' }}>
                   Category {sortConfig?.key === 'category_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
                 </th>
-                <th onClick={() => requestSort('room_number')} style={{ cursor: 'pointer' }}>
-                  Location {sortConfig?.key === 'room_number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                {currentUser?.activeHotelId === 'all' && (
+                  <th onClick={() => requestSort('hotel_name')} style={{ cursor: 'pointer' }}>
+                    Hotel {sortConfig?.key === 'hotel_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                  </th>
+                )}
+                <th onClick={() => requestSort('location')} style={{ cursor: 'pointer' }}>
+                  Location {sortConfig?.key === 'location' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
                 </th>
                 <th onClick={() => requestSort('status')} style={{ cursor: 'pointer' }}>
                   Status {sortConfig?.key === 'status' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
@@ -161,6 +166,9 @@ export default function AssetsPage() {
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{asset.asset_tag}</div>
                   </td>
                   <td>{asset.category_name || '-'}</td>
+                  {currentUser?.activeHotelId === 'all' && (
+                    <td>{asset.hotel_name || '-'}</td>
+                  )}
                   <td>{asset.room_number ? `Room ${asset.room_number}` : (asset.location || '-')}</td>
                   <td><span className="badge" style={{ background: asset.status === 'operational' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: asset.status === 'operational' ? '#34d399' : '#fbbf24' }}>{asset.status}</span></td>
                   <td>{asset.next_maintenance_date ? new Date(asset.next_maintenance_date).toLocaleDateString() : '-'}</td>

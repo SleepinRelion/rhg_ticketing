@@ -7,8 +7,10 @@ export async function processAutomations(ticketId, eventType) {
     const ticket = await db('tickets').where({ id: ticketId }).first();
     if (!ticket) return;
 
-    // Get active rules
-    const rules = await db('automation_rules').where({ is_active: true });
+    // Get active rules for this ticket's hotel or global rules
+    const rules = await db('automation_rules').where({ is_active: true }).where(function() {
+      this.where('hotel_id', ticket.hotel_id).orWhereNull('hotel_id');
+    });
 
     for (const rule of rules) {
       let conditions = [];
