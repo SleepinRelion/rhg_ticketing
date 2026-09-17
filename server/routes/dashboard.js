@@ -71,6 +71,9 @@ router.get('/charts', authenticate, asyncHandler(async (req, res) => {
   // Tickets by priority
   const byPriority = await baseFilter(db('tickets').select('priority').count('* as count').groupBy('priority'));
 
+  // Tickets by type
+  const byType = await baseFilter(db('tickets').select('ticket_type').count('* as count').groupBy('ticket_type'));
+
   // Tickets by department
   const byDepartment = await baseFilter(db('tickets').select('department').count('* as count').whereNotNull('department').groupBy('department'));
 
@@ -122,6 +125,7 @@ router.get('/charts', authenticate, asyncHandler(async (req, res) => {
     charts: {
       byStatus: parseCount(byStatus),
       byPriority: parseCount(byPriority),
+      byType: parseCount(byType),
       byDepartment: parseCount(byDepartment),
       byCategory: parseCount(byCategory),
       topRooms: parseCount(topRooms),
