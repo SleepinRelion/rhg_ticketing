@@ -6,6 +6,8 @@ import { authorize } from '../middleware/authorize.js';
 import { publicEndpointLimiter } from '../middleware/rateLimiter.js';
 import { upload } from '../middleware/upload.js';
 import { sanitize } from '../utils/sanitize.js';
+import fs from 'fs';
+import path from 'path';
 const router = Router();
 
 // GET /api/hotels - Get hotels user has access to
@@ -28,9 +30,28 @@ router.get('/public', publicEndpointLimiter, asyncHandler(async (req, res) => {
   const hotels = await db('hotels').where({
     is_active: true
   }).select('id', 'name', 'wallpaper_url');
-  res.json({
-    hotels
-  });
+  
+  const transformed = hotels.map(h => ({
+    ...h,
+    wallpaper_url: h.wallpaper_url ? `/api/hotels/public/wallpaper/${h.id}?_t=${Date.now()}` : null
+  }));
+  
+  res.json({ hotels: transformed });
+}));
+
+// GET /api/hotels/public/wallpaper/:id - Serve wallpaper publicly for login page
+router.get('/public/wallpaper/:id', publicEndpointLimiter, asyncHandler(async (req, res) => {
+  const hotel = await db('hotels').where({ id: req.params.id }).first();
+  if (!hotel || !hotel.wallpaper_url) return res.status(404).send('Wallpaper not found');
+  
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+  const relativePath = hotel.wallpaper_url.replace('/uploads/', '');
+  const filePath = path.join(uploadDir, relativePath);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('File not found');
+  }
+  res.sendFile(filePath);
 }));
 
 // PUT /api/hotels/:id - Update hotel
@@ -52,7 +73,8 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
 router.post('/:id/wallpaper', authenticate, authorize('admin', 'manager'), upload.single('wallpaper'), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
   
-  const wallpaperUrl = `/uploads/${req.file.filename}`;
+  const dateFolder = new Date().toISOString().split('T')[0];
+  const wallpaperUrl = `/uploads/${dateFolder}/${req.file.filename}`;
   await db('hotels').where({ id: req.params.id }).update({
     wallpaper_url: wallpaperUrl,
     updated_at: new Date()
