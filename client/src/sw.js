@@ -6,6 +6,12 @@ import { BackgroundSyncPlugin } from 'workbox-background-sync';
 // Required for vite-plugin-pwa injectManifest
 precacheAndRoute(self.__WB_MANIFEST || []);
 
+// Force the waiting service worker to become the active service worker
+self.skipWaiting();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Configure Background Sync for tickets API
 const bgSyncPlugin = new BackgroundSyncPlugin('ticketQueue', {
   maxRetentionTime: 24 * 60 // Retry for max of 24 Hours (specified in minutes)
