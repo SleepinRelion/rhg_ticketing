@@ -19,7 +19,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   let query = db('rooms').where({
     is_active: true
   });
-  if (req.user.activeHotelId) query = query.where({
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') query = query.where({
     hotel_id: req.user.activeHotelId
   });
   if (status) query = query.where({

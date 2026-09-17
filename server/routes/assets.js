@@ -15,7 +15,7 @@ router.get('/', authenticate, authorize('admin', 'manager', 'technician'), async
     search
   } = req.query;
   let query = db('assets').select('assets.*', 'categories.name as category_name', 'rooms.room_number').leftJoin('categories', 'assets.category_id', 'categories.id').leftJoin('rooms', 'assets.room_id', 'rooms.id').where('assets.is_active', true);
-  if (req.user.activeHotelId) query = query.where('assets.hotel_id', req.user.activeHotelId);
+  if (req.user.activeHotelId && req.user.activeHotelId !== 'all') query = query.where('assets.hotel_id', req.user.activeHotelId);
   if (status) query = query.where('assets.status', status);
   if (category_id) query = query.where('assets.category_id', category_id);
   if (room_id) query = query.where('assets.room_id', room_id);
