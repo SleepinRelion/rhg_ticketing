@@ -114,6 +114,15 @@ export default function DashboardPage() {
     }
   }
 
+  const fullProblemData = useMemo(() => {
+    if (!charts) return [];
+    if (topProblemFilter === 'rooms') return charts.topRooms || [];
+    if (topProblemFilter === 'room_types') return charts.topRoomTypes || [];
+    if (topProblemFilter === 'assets') return charts.topAssets || [];
+    if (topProblemFilter === 'categories') return charts.byCategory || [];
+    return [...(charts.byDepartment || [])].sort((a, b) => b.count - a.count);
+  }, [charts, topProblemFilter]);
+
   if (fetchError) {
     return (
       <div style={{ padding: '2rem', color: 'red' }}>
@@ -134,15 +143,6 @@ export default function DashboardPage() {
 
   // Date 7 days ago for "Resolved (7d)" click-through
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  const fullProblemData = useMemo(() => {
-    if (!charts) return [];
-    if (topProblemFilter === 'rooms') return charts.topRooms || [];
-    if (topProblemFilter === 'room_types') return charts.topRoomTypes || [];
-    if (topProblemFilter === 'assets') return charts.topAssets || [];
-    if (topProblemFilter === 'categories') return charts.byCategory || [];
-    return [...(charts.byDepartment || [])].sort((a, b) => b.count - a.count);
-  }, [charts, topProblemFilter]);
 
   return (
     <div>
