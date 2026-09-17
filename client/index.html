@@ -13,6 +13,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <title>RHG MU Ticketing</title>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          let hasUnregistered = false;
+          for (let registration of registrations) {
+            registration.unregister();
+            hasUnregistered = true;
+          }
+          if (hasUnregistered && !window.location.search.includes('cleared=1')) {
+            window.location.replace(window.location.pathname + '?cleared=1');
+          }
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
