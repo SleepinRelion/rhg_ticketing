@@ -32,24 +32,10 @@ export default function HotelsSettings() {
     formData.append('wallpaper', file);
     
     try {
-      const token = localStorage.getItem('token');
-      const activeHotelId = localStorage.getItem('activeHotelId');
-      
-      const response = await fetch(`/api/hotels/${hotelId}/wallpaper`, {
+      const { hotel } = await api(`/hotels/${hotelId}/wallpaper`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'x-hotel-id': activeHotelId
-        },
         body: formData
       });
-      
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Upload failed');
-      }
-      
-      const { hotel } = await response.json();
       setHotels(hotels.map(h => h.id === hotel.id ? hotel : h));
       success('Wallpaper uploaded successfully');
     } catch (err) {
