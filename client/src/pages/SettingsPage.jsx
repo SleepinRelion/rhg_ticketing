@@ -295,7 +295,7 @@ export default function SettingsPage() {
         >
           Automations
         </button>
-        {currentUser?.role === 'admin' && (
+        {['admin', 'manager'].includes(currentUser?.role) && (
           <button 
             className={`btn ${activeTab === 'hotels' ? 'btn-primary' : 'btn-ghost'}`} 
             style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}

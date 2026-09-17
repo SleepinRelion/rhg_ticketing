@@ -61,7 +61,7 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
 }));
 
 // DELETE /api/automations/:id
-router.delete('/:id', authenticate, authorize('admin'), asyncHandler(async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   await db('automation_rules').where({ id: req.params.id }).del();
   res.json({ message: 'Rule deleted' });
 }));

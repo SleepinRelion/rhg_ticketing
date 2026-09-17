@@ -34,7 +34,7 @@ router.get('/public', publicEndpointLimiter, asyncHandler(async (req, res) => {
 }));
 
 // PUT /api/hotels/:id - Update hotel
-router.put('/:id', authenticate, authorize('admin'), asyncHandler(async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const { name, is_active } = req.body;
   const updates = {};
   if (name !== undefined) updates.name = sanitize(name);
@@ -49,7 +49,7 @@ router.put('/:id', authenticate, authorize('admin'), asyncHandler(async (req, re
 }));
 
 // POST /api/hotels/:id/wallpaper - Upload wallpaper
-router.post('/:id/wallpaper', authenticate, authorize('admin'), upload.single('wallpaper'), asyncHandler(async (req, res) => {
+router.post('/:id/wallpaper', authenticate, authorize('admin', 'manager'), upload.single('wallpaper'), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
   
   const wallpaperUrl = `/uploads/${req.file.filename}`;

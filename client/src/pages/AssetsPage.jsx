@@ -141,7 +141,7 @@ export default function AssetsPage() {
                 <th onClick={() => requestSort('category_name')} style={{ cursor: 'pointer' }}>
                   Category {sortConfig?.key === 'category_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
                 </th>
-                {currentUser?.activeHotelId === 'all' && (
+                {user?.activeHotelId === 'all' && (
                   <th onClick={() => requestSort('hotel_name')} style={{ cursor: 'pointer' }}>
                     Hotel {sortConfig?.key === 'hotel_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
                   </th>
@@ -166,7 +166,7 @@ export default function AssetsPage() {
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{asset.asset_tag}</div>
                   </td>
                   <td>{asset.category_name || '-'}</td>
-                  {currentUser?.activeHotelId === 'all' && (
+                  {user?.activeHotelId === 'all' && (
                     <td>{asset.hotel_name || '-'}</td>
                   )}
                   <td>{asset.room_number ? `Room ${asset.room_number}` : (asset.location || '-')}</td>
