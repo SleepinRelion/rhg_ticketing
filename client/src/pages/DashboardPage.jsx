@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import api from '../api/client.js';
 import { Ticket, AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle, Maximize2, X, Settings2 } from 'lucide-react';
@@ -30,7 +30,7 @@ function DashboardSkeleton() {
   );
 }
 
-const DashboardPage = memo(function DashboardPage() {
+export default function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [charts, setCharts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -603,6 +603,4 @@ const DashboardPage = memo(function DashboardPage() {
       )}
     </div>
   );
-});
-
-export default DashboardPage;
+}
