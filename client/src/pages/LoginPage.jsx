@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [tempToken, setTempToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [bgImage, setBgImage] = useState(null);
   const [wallpapers, setWallpapers] = useState([]);
@@ -66,7 +67,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await login(loginId.trim(), password, mfaCode, emailConfirm);
+      const res = await login(loginId.trim(), password, mfaCode, emailConfirm, rememberMe);
       if (res.requirePasswordChange) {
         setRequirePasswordChange(true);
         setTempToken(res.tempToken);
@@ -123,10 +124,52 @@ export default function LoginPage() {
       className={`login-page ${activeBg ? 'has-bg-image' : ''}`}
       style={{
         position: 'relative',
-        transition: 'background-image 1s ease-in-out',
-        ...(activeBg ? { backgroundImage: `url(${activeBg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {})
+        overflow: 'hidden',
       }}
     >
+      {/* Wallpaper slideshow layers */}
+      {wallpapers.length > 0 ? (
+        wallpapers.map((url, i) => (
+          <img
+            key={url}
+            src={url}
+            alt=""
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, width: '100%', height: '100%',
+              objectFit: 'cover',
+              opacity: i === currentWallpaperIndex ? 1 : 0,
+              transition: 'opacity 1.5s ease-in-out',
+              zIndex: 0,
+              pointerEvents: 'none',
+            }}
+          />
+        ))
+      ) : activeBg ? (
+        <img
+          src={activeBg}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, width: '100%', height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
+
+      {/* Dark overlay for readability */}
+      {activeBg && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0, 0, 0, 0.35)',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }} />
+      )}
+
       <div className="login-card" style={{ zIndex: 2, position: 'relative' }}>
         <div className="login-header" style={{ textAlign: 'center', marginBottom: '32px' }}>
           <img src={window.APP_LOGO_URL || "/logo.png"} alt="App Logo" className="app-logo-img" style={{ height: '48px', marginBottom: '24px', objectFit: 'contain' }} />
@@ -242,6 +285,18 @@ export default function LoginPage() {
                 <div style={{ textAlign: 'right', marginTop: '6px' }}>
                   <Link to="/forgot-password" style={{ fontSize: '13px', color: 'var(--primary-600)', textDecoration: 'none' }}>Forgot Password?</Link>
                 </div>
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', marginTop: '-4px', marginBottom: '24px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ accentColor: 'var(--primary-500)', cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                  Remember me for 30 days
+                </label>
               </div>
             </>
           ) : (

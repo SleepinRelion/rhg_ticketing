@@ -71,7 +71,7 @@ export default function HotelsSettings() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               {hotel.wallpaper_url && (
                 <img 
-                  src={hotel.wallpaper_url} 
+                  src={`/api/hotels/wallpaper-thumb/${hotel.id}?_t=${Date.now()}`}
                   alt="Wallpaper Thumbnail" 
                   style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
                 />

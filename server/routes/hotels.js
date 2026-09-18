@@ -69,12 +69,31 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), asyncHandler(asy
   res.json({ hotel });
 }));
 
+// GET /api/hotels/wallpaper-thumb/:id - Serve wallpaper thumbnail (authenticated, for settings page)
+router.get('/wallpaper-thumb/:id', authenticate, asyncHandler(async (req, res) => {
+  const hotel = await db('hotels').where({ id: req.params.id }).first();
+  if (!hotel || !hotel.wallpaper_url) return res.status(404).send('Wallpaper not found');
+  
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+  const relativePath = hotel.wallpaper_url.replace('/uploads/', '');
+  const filePath = path.join(uploadDir, relativePath);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('File not found');
+  }
+  res.sendFile(filePath);
+}));
+
 // POST /api/hotels/:id/wallpaper - Upload wallpaper
 router.post('/:id/wallpaper', authenticate, authorize('admin', 'manager'), upload.single('wallpaper'), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
   
-  const dateFolder = new Date().toISOString().split('T')[0];
-  const wallpaperUrl = `/uploads/${dateFolder}/${req.file.filename}`;
+  // req.file.destination is the absolute folder path, req.file.filename is just the UUID name
+  // Compute the relative path from the base upload dir
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+  const relativePath = path.relative(uploadDir, path.join(req.file.destination, req.file.filename));
+  const wallpaperUrl = `/uploads/${relativePath.replace(/\\/g, '/')}`;
+  
   await db('hotels').where({ id: req.params.id }).update({
     wallpaper_url: wallpaperUrl,
     updated_at: new Date()

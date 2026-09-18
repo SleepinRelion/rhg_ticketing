@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { api, setTokens, clearTokens, setLogoutHandler } from '../api/client.js';
+import { api, setTokens, clearTokens, setLogoutHandler, restoreSession } from '../api/client.js';
 
 const AuthContext = createContext(null);
 
@@ -49,11 +49,18 @@ export function AuthProvider({ children }) {
         })
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      // Attempt to restore session via Remember Me (refresh token in localStorage)
+      restoreSession().then(restoredUser => {
+        if (restoredUser) {
+          setUser(restoredUser);
+          sessionStorage.setItem('user', JSON.stringify(restoredUser));
+        }
+        setLoading(false);
+      });
     }
   }, [logout]);
 
-  const login = async (email, password, mfaCode, emailConfirm) => {
+  const login = async (email, password, mfaCode, emailConfirm, rememberMe = false) => {
     const data = await api('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, mfaCode, _email_confirm: emailConfirm }),
@@ -67,7 +74,7 @@ export function AuthProvider({ children }) {
       return { requirePasswordChange: true, tempToken: data.tempToken };
     }
 
-    setTokens(data.accessToken, data.refreshToken);
+    setTokens(data.accessToken, data.refreshToken, rememberMe);
     setUser(data.user);
     sessionStorage.setItem('user', JSON.stringify(data.user));
     return { success: true, user: data.user };

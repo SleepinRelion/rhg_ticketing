@@ -10,18 +10,28 @@ try {
 
   accessToken = sessionStorage.getItem('accessToken');
   refreshToken = sessionStorage.getItem('refreshToken');
+  
+  // If no refresh token in session, check local storage (Remember Me)
+  if (!refreshToken) {
+    refreshToken = localStorage.getItem('refreshToken');
+  }
 } catch (e) {
-  console.warn('sessionStorage is disabled or unavailable.');
+  console.warn('Storage is disabled or unavailable.');
 }
 
 let onLogout = null;
 
-export function setTokens(access, refresh) {
+export function setTokens(access, refresh, remember = false) {
   accessToken = access;
   refreshToken = refresh;
   try {
     sessionStorage.setItem('accessToken', access);
-    if (refresh) sessionStorage.setItem('refreshToken', refresh);
+    if (refresh) {
+      sessionStorage.setItem('refreshToken', refresh);
+      if (remember) {
+        localStorage.setItem('refreshToken', refresh);
+      }
+    }
   } catch (e) {}
 }
 
@@ -32,6 +42,7 @@ export function clearTokens() {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('refreshToken');
     sessionStorage.removeItem('user');
+    localStorage.removeItem('refreshToken'); // Clear remember me token as well
   } catch (e) {}
 }
 
@@ -73,6 +84,20 @@ async function refreshAccessToken() {
     }
   })();
   return refreshPromise;
+}
+
+export async function restoreSession() {
+  if (!refreshToken || accessToken) return null;
+  
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) return null;
+  
+  try {
+    const res = await api('/auth/me');
+    return res.user || null;
+  } catch (err) {
+    return null;
+  }
 }
 
 export async function api(url, options = {}) {
