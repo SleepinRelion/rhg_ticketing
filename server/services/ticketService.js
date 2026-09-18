@@ -1,5 +1,6 @@
 import db from '../config/database.js';
-import { calculateSLADates, determineSLAStatus } from '../utils/slaCalculator.js';
+import { determineSLAStatus, calculateSLADates } from '../utils/slaCalculator.js';
+import { sendEmail, buildEmailTemplate } from './emailService.js';
 import { generateTicketNumber } from '../utils/ticketNumber.js';
 import { sanitize } from '../utils/sanitize.js';
 import { createNotification } from './notificationService.js';
@@ -194,6 +195,25 @@ export async function updateTicketStatus(ticketId, newStatus, userId, userRole, 
       'status_change',
       ticket.hotel_id
     );
+
+    // If resolved, send CSAT email
+    if (newStatus === 'resolved' && ticket.created_by) {
+      const creator = await db('users').where({ id: ticket.created_by }).first();
+      if (creator && creator.email) {
+        const rateUrl = `${process.env.APP_URL || 'http://localhost:5173'}/staff-status?token=${ticket.guest_tracking_token}`;
+        await sendEmail({
+          to: creator.email,
+          subject: `Ticket Resolved: ${ticket.ticket_number}`,
+          text: `Your ticket "${ticket.title}" has been resolved. Please rate our service: ${rateUrl}`,
+          html: buildEmailTemplate({
+            title: `Ticket Resolved: ${ticket.ticket_number}`,
+            content: `<p>Your ticket <strong>${ticket.title}</strong> has been resolved!</p><p>We would love to hear your feedback. Please click the button below to rate your experience and provide any comments.</p>`,
+            buttonLabel: 'Rate our Service',
+            buttonUrl: rateUrl
+          })
+        });
+      }
+    }
   }
 
   // Notify assignees

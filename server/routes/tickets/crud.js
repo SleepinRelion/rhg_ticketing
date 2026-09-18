@@ -8,7 +8,7 @@ import { createTicket } from '../../services/ticketService.js';
 import { sanitize } from '../../utils/sanitize.js';
 import { createAuditEntry } from '../../middleware/auditLog.js';
 import { createNotification } from '../../services/notificationService.js';
-import { getMailTransporter, SMTP_FROM } from '../../config/email.js';
+import { sendEmail } from '../../services/emailService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../config/logger.js';
 
@@ -167,14 +167,11 @@ router.post('/', authenticate, validate(createTicketSchema), asyncHandler(async 
 
   if (ticket.priority === 'critical') {
     try {
-      const transporter = getMailTransporter();
-      const mailOptions = {
-        from: SMTP_FROM,
+      await sendEmail({
         to: process.env.MANAGER_EMAIL || 'managers@hotel.com',
         subject: `URGENT: Critical Ticket Created - ${ticket.ticket_number}`,
         text: `A new critical ticket has been created:\n\nTitle: ${ticket.title}\nDescription: ${ticket.description}\nDepartment: ${ticket.department}\n\nPlease review immediately in the system.`
-      };
-      await transporter.sendMail(mailOptions);
+      });
       logger.info(`Critical alert sent for ${ticket.ticket_number}`);
     } catch (err) {
       logger.error('Failed to send critical ticket alert:', err);

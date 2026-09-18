@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { HardDrive, Plus, Edit2, Trash2, X, Save, Camera } from 'lucide-react';
+import { HardDrive, Plus, Edit2, Trash2, X, Save, Camera, QrCode, Printer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import BulkScanModal from '../components/assets/BulkScanModal.jsx';
 import SearchableSelect from '../components/ui/SearchableSelect.jsx';
 import useSortableTable from '../hooks/useSortableTable.js';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState([]);
@@ -15,6 +16,7 @@ export default function AssetsPage() {
   
   const [showModal, setShowModal] = useState(false);
   const [showBulkScanModal, setShowBulkScanModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(null);
   const [editingAsset, setEditingAsset] = useState(null);
   const [formData, setFormData] = useState({ name: '', asset_tag: '', category_id: '', room_id: '', location: '', manufacturer: '', model: '', serial_number: '', status: 'operational' });
   const [saving, setSaving] = useState(false);
@@ -175,6 +177,7 @@ export default function AssetsPage() {
                   {isManager && (
                     <td>
                       <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn-icon" onClick={() => setShowQRModal(asset)} title="Generate QR Code"><QrCode size={16} /></button>
                         <button className="btn-icon" onClick={() => openModal(asset)}><Edit2 size={16} /></button>
                         <button className="btn-icon" onClick={() => handleDelete(asset.id)} style={{ color: 'var(--error)' }}><Trash2 size={16} /></button>
                       </div>
@@ -265,6 +268,38 @@ export default function AssetsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showQRModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <div className="modal-header">
+              <h2>Asset QR Code</h2>
+              <button className="btn-icon" onClick={() => setShowQRModal(null)}><X size={20} /></button>
+            </div>
+            <div className="modal-body" style={{ padding: '24px' }}>
+              <div id="qr-print-area" style={{ background: '#fff', padding: '16px', borderRadius: '8px', display: 'inline-block' }}>
+                <QRCodeSVG value={showQRModal.id.toString()} size={200} />
+                <div style={{ marginTop: '12px', fontWeight: 'bold', color: '#000' }}>{showQRModal.asset_tag || showQRModal.name}</div>
+              </div>
+              <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Attach this code to the physical asset so technicians can scan it.</p>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }}
+                onClick={() => {
+                  const printContent = document.getElementById('qr-print-area').innerHTML;
+                  const originalContent = document.body.innerHTML;
+                  document.body.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">${printContent}</div>`;
+                  window.print();
+                  document.body.innerHTML = originalContent;
+                  window.location.reload();
+                }}
+              >
+                <Printer size={16} /> Print Label
+              </button>
+            </div>
           </div>
         </div>
       )}

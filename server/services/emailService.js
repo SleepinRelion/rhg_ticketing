@@ -1,24 +1,6 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-let transporter = null;
-
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'localhost',
-      port: process.env.SMTP_PORT || 25,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: process.env.SMTP_USER ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      } : undefined,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000
-    });
-  }
-  return transporter;
-}
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export function buildEmailTemplate({ title, content, buttonLabel, buttonUrl }) {
   const buttonHtml = buttonLabel && buttonUrl ? `
@@ -78,9 +60,8 @@ export function buildEmailTemplate({ title, content, buttonLabel, buttonUrl }) {
 
 export async function sendEmail({ to, subject, text, html }, throwError = false) {
   try {
-    // If we're missing real SMTP credentials, just mock it out so the system doesn't crash
-    if (!process.env.SMTP_USER) {
-      console.log('\n--- 📧 MOCK EMAIL SENT ---');
+    if (!resend) {
+      console.log('\n--- 📧 MOCK EMAIL SENT (Resend API Key Missing) ---');
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);
       console.log(`Text Body:\n${text}`);
@@ -88,16 +69,21 @@ export async function sendEmail({ to, subject, text, html }, throwError = false)
       return true;
     }
 
-    const t = getTransporter();
-    const info = await t.sendMail({
-      from: process.env.SMTP_FROM || '"HotelOps System" <noreply@hotel.local>',
+    const data = await resend.emails.send({
+      from: process.env.SMTP_FROM || 'HotelOps System <onboarding@resend.dev>',
       to,
       subject,
       text,
       html,
     });
     
-    console.log(`Email sent: ${info.messageId}`);
+    if (data.error) {
+      console.error('Resend API Error:', data.error);
+      if (throwError) throw data.error;
+      return false;
+    }
+
+    console.log(`Email sent via Resend: ${data.data?.id}`);
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);

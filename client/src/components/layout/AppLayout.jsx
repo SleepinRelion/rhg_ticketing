@@ -6,11 +6,13 @@ import DailyBriefingModal from '../ui/DailyBriefingModal.jsx';
 import CommandPalette from '../ui/CommandPalette.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, QrCode } from 'lucide-react';
+import QRScanner from '../QRScanner.jsx';
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showBriefing, setShowBriefing] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const location = useLocation();
   const navigate = useNavigate();
@@ -170,7 +172,36 @@ export default function AppLayout() {
       {showBriefing && (
         <DailyBriefingModal onClose={() => setShowBriefing(false)} />
       )}
+
+      {showScanner && (
+        <QRScanner onClose={() => setShowScanner(false)} />
+      )}
       
+      {/* Mobile Floating Action Button for QR Scanner */}
+      <button 
+        className="mobile-qr-fab"
+        onClick={() => setShowScanner(true)}
+        style={{
+          display: 'none', // Hidden by default, shown via CSS media query
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '28px',
+          backgroundColor: 'var(--primary-500)',
+          color: 'white',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9000,
+          cursor: 'pointer'
+        }}
+      >
+        <QrCode size={24} />
+      </button>
+
       <CommandPalette />
     </div>
   );

@@ -2134,3 +2134,31 @@ body {
     max-height: 90vh;
   }
 }
+
+/* Inline Editing (Minimal UI) */
+.inline-edit-btn {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: opacity 0.2s, background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.inline-edit-wrapper:hover .inline-edit-btn {
+  opacity: 1;
+}
+.inline-edit-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .mobile-qr-fab {
+    display: flex !important;
+  }
+}

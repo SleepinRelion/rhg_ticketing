@@ -3,6 +3,7 @@ import { determineSLAStatus, getSLAConfig } from '../utils/slaCalculator.js';
 import { createNotification } from './notificationService.js';
 import { addMinutes, isBefore } from 'date-fns';
 import { ROLES } from '../constants/roles.js';
+import { sendEmail, buildEmailTemplate } from './emailService.js';
 
 /**
  * Run SLA check on all open tickets.
@@ -58,6 +59,19 @@ async function handleSLABreach(ticket) {
       `Ticket "${ticket.title}" has breached its SLA deadline. Priority: ${ticket.priority}.`,
       'sla_breach'
     );
+    if (manager.email) {
+      await sendEmail({
+        to: manager.email,
+        subject: `SLA BREACHED: ${ticket.ticket_number}`,
+        text: `Ticket "${ticket.title}" has breached its SLA deadline. Priority: ${ticket.priority}.`,
+        html: buildEmailTemplate({
+          title: `SLA Breached: ${ticket.ticket_number}`,
+          content: `<p>Ticket <strong>${ticket.title}</strong> has breached its SLA deadline.</p><p>Priority: ${ticket.priority}</p>`,
+          buttonLabel: 'View Ticket',
+          buttonUrl: `${process.env.APP_URL || 'http://localhost:5173'}/tickets/${ticket.id}`
+        })
+      });
+    }
   }
 
   // Notify ticket creator if one exists (guest tickets have created_by = null)
@@ -115,6 +129,19 @@ async function checkEscalation(ticket) {
           `${ticket.priority.toUpperCase()} priority ticket "${ticket.title}" has not been assigned within the escalation window.`,
           'escalation'
         );
+        if (manager.email) {
+          await sendEmail({
+            to: manager.email,
+            subject: `ESCALATION: Unassigned ${ticket.priority.toUpperCase()} Ticket - ${ticket.ticket_number}`,
+            text: `Ticket "${ticket.title}" has not been assigned within the escalation window.`,
+            html: buildEmailTemplate({
+              title: `Escalated: ${ticket.ticket_number}`,
+              content: `<p>${ticket.priority.toUpperCase()} priority ticket <strong>${ticket.title}</strong> has not been assigned within the required time window and has been auto-escalated.</p>`,
+              buttonLabel: 'View Ticket',
+              buttonUrl: `${process.env.APP_URL || 'http://localhost:5173'}/tickets/${ticket.id}`
+            })
+          });
+        }
       }
 
       // Activity log
@@ -144,6 +171,19 @@ async function checkEscalation(ticket) {
         `Ticket "${ticket.title}" SLA has been breached and requires immediate attention.`,
         'escalation'
       );
+      if (admin.email) {
+        await sendEmail({
+          to: admin.email,
+          subject: `CRITICAL ESCALATION: ${ticket.ticket_number}`,
+          text: `Ticket "${ticket.title}" SLA has been breached and requires immediate attention.`,
+          html: buildEmailTemplate({
+            title: `Critical Escalation: ${ticket.ticket_number}`,
+            content: `<p>Ticket <strong>${ticket.title}</strong> SLA has been breached and requires immediate administrator attention.</p>`,
+            buttonLabel: 'View Ticket',
+            buttonUrl: `${process.env.APP_URL || 'http://localhost:5173'}/tickets/${ticket.id}`
+          })
+        });
+      }
     }
   }
 }

@@ -29,6 +29,8 @@ export default function TicketDetailPage() {
   const [technicians, setTechnicians] = useState([]);
   const [selectedTech, setSelectedTech] = useState('');
   const [isEditingTicket, setIsEditingTicket] = useState(false);
+  const [inlineEditField, setInlineEditField] = useState(null);
+  const [inlineEditValue, setInlineEditValue] = useState('');
   const [cannedResponses, setCannedResponses] = useState([]);
 
   const { socket } = useSocket();
@@ -111,6 +113,24 @@ export default function TicketDetailPage() {
       fetchTicket();
     } catch (err) {
       error('Failed to remove assignee');
+    }
+  };
+
+  const handleInlineSave = async (field) => {
+    if (!inlineEditValue.trim()) {
+      setInlineEditField(null);
+      return;
+    }
+    try {
+      await api(`/tickets/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ [field]: inlineEditValue.trim() })
+      });
+      success(`${field === 'title' ? 'Title' : 'Description'} updated`);
+      setInlineEditField(null);
+      fetchTicket();
+    } catch (err) {
+      error(`Failed to update ${field}`);
     }
   };
 
@@ -233,7 +253,30 @@ export default function TicketDetailPage() {
               )}
               {ticketData.sla_status === 'breached' && <span className="badge badge-sla-breached">SLA Breached</span>}
             </div>
-            <p className="page-subtitle">{ticketData.title}</p>
+            {inlineEditField === 'title' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  value={inlineEditValue} 
+                  onChange={(e) => setInlineEditValue(e.target.value)}
+                  style={{ width: '400px', fontSize: '16px' }}
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleInlineSave('title')}
+                />
+                <button className="btn btn-primary" onClick={() => handleInlineSave('title')} style={{ padding: '6px' }}><CheckSquare size={16} /></button>
+                <button className="btn btn-ghost" onClick={() => setInlineEditField(null)} style={{ padding: '6px' }}><X size={16} /></button>
+              </div>
+            ) : (
+              <div className="inline-edit-wrapper" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <p className="page-subtitle" style={{ margin: 0 }}>{ticketData.title}</p>
+                {canEditTicket() && (
+                  <button className="inline-edit-btn" onClick={() => { setInlineEditValue(ticketData.title); setInlineEditField('title'); }} title="Quick edit title">
+                    <Edit size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: '8px' }}>
@@ -274,10 +317,34 @@ export default function TicketDetailPage() {
         {/* Main Content Column */}
         <div className="ticket-detail-main">
           <div className="card" style={{ marginBottom: '24px' }}>
-            <h3 className="detail-section-title"><FileText size={18}/> Description</h3>
-            <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6 }}>
-              {ticketData.description || <em style={{ opacity: 0.5 }}>No description provided.</em>}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 className="detail-section-title" style={{ margin: 0 }}><FileText size={18}/> Description</h3>
+              {canEditTicket() && inlineEditField !== 'description' && (
+                <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '13px' }} onClick={() => { setInlineEditValue(ticketData.description || ''); setInlineEditField('description'); }}>
+                  <Edit size={14} /> Quick Edit
+                </button>
+              )}
             </div>
+            
+            {inlineEditField === 'description' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <textarea 
+                  className="form-textarea" 
+                  value={inlineEditValue} 
+                  onChange={(e) => setInlineEditValue(e.target.value)}
+                  rows={5}
+                  autoFocus
+                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-primary" onClick={() => handleInlineSave('description')}><CheckSquare size={16} /> Save</button>
+                  <button className="btn btn-ghost" onClick={() => setInlineEditField(null)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6 }}>
+                {ticketData.description || <em style={{ opacity: 0.5 }}>No description provided.</em>}
+              </div>
+            )}
 
             {ticketData.guest_impact !== 'none' && (
               <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
